@@ -1,0 +1,1107 @@
+{
+  "info": {
+    "_postman_id": "0f6f3a2f-28f7-4f91-9d76-0f8c2b6f4f11",
+    "name": "Kontrak Central Saga API",
+    "description": "Collection Postman siap import untuk API backend Kontrak Central Saga. Default base URL menggunakan http://localhost/api/v1 dan login memakai akun seed admin. Untuk endpoint upload proof, pilih file manual pada field form-data 'file' sebelum klik Send.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{health_url}}",
+              "host": [
+                "{{health_url}}"
+              ]
+            },
+            "description": "Cek apakah backend aktif."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health check returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Health payload has ok status', function () {",
+                  "    pm.expect(json.status).to.eql('ok');",
+                  "    pm.expect(json.service).to.eql('backend');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST Login Admin",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\",\n  \"device_name\": \"{{device_name}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login dengan akun seed admin dan simpan token ke environment."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Login response contains token', function () {",
+                  "    pm.expect(json.data.token).to.be.a('string');",
+                  "    pm.expect(json.data.user.email).to.eql(pm.environment.get('admin_email'));",
+                  "});",
+                  "pm.environment.set('token', json.data.token);",
+                  "pm.environment.set('user_id', json.data.user.id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET Auth Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Auth me returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Auth me returns current user', function () {",
+                  "    pm.expect(json.data.email).to.eql(pm.environment.get('admin_email'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.environment.unset('token');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard and Activity",
+      "item": [
+        {
+          "name": "GET Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dashboard",
+                "summary"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard summary returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Dashboard summary contains seeded metrics', function () {",
+                  "    pm.expect(json.data.clients.total).to.be.a('number');",
+                  "    pm.expect(json.data.contracts.total).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET Activity Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/activity-logs?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "activity-logs"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Activity logs returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Activity logs has data array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "GET Clients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Clients index returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Clients index has data array', function () {",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST Create Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_code\": \"CL-{{$timestamp}}\",\n  \"company_name\": \"PT Demo Postman {{$timestamp}}\",\n  \"contact_person\": \"Sari Utama\",\n  \"email\": \"sari+{{$timestamp}}@demo-postman.test\",\n  \"phone\": \"0812-9999-0010\",\n  \"address\": \"Bandung, Jawa Barat\",\n  \"status\": \"active\",\n  \"portal_access_enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/clients",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create client returns 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('created_client_id', json.data.id);",
+                  "pm.test('Created client has id', function () {",
+                  "    pm.expect(json.data.id).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET Created Client",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients/{{created_client_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{created_client_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Created Client",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"PT Demo Postman Updated\",\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/clients/{{created_client_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{created_client_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Created Client",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients/{{created_client_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{created_client_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete client returns 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "pm.environment.unset('created_client_id');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contracts",
+      "item": [
+        {
+          "name": "GET Contracts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/contracts?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Seeded Contract Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/contracts/{{contract_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "{{contract_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Contract",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_id\": {{client_id}},\n  \"contract_number\": \"KCS-PM-{{$timestamp}}\",\n  \"contract_title\": \"Kontrak Uji Postman {{$timestamp}}\",\n  \"project_name\": \"Project Uji API\",\n  \"contract_date\": \"2026-03-28\",\n  \"start_date\": \"2026-04-01\",\n  \"end_date\": \"2026-06-30\",\n  \"contract_value\": 125000000,\n  \"project_scope\": \"Starter contract untuk pengujian API.\",\n  \"payment_scheme_summary\": \"50%-50%\",\n  \"contract_status\": \"draft\",\n  \"notes\": \"Dibuat dari Postman\",\n  \"created_by\": {{user_id}},\n  \"updated_by\": {{user_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/contracts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create contract returns 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('created_contract_id', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PATCH Created Contract",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contract_status\": \"active\",\n  \"notes\": \"Status diperbarui dari Postman\",\n  \"updated_by\": {{user_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/contracts/{{created_contract_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "{{created_contract_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment Terms",
+      "item": [
+        {
+          "name": "GET Payment Terms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment-terms?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-terms"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Payment Term",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contract_id\": {{contract_id}},\n  \"term_number\": {{$randomInt}},\n  \"term_title\": \"Termin tambahan\",\n  \"due_date\": \"2026-06-15\",\n  \"amount\": 50000000,\n  \"description\": \"Termin tambahan hasil perubahan lingkup kerja.\",\n  \"status\": \"pending\",\n  \"payable_after_condition\": \"Setelah UAT\",\n  \"created_by\": {{user_id}},\n  \"updated_by\": {{user_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payment-terms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-terms"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create payment term returns 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('created_payment_term_id', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PATCH Created Payment Term",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"term_title\": \"Termin tambahan updated\",\n  \"status\": \"upcoming\",\n  \"updated_by\": {{user_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payment-terms/{{created_payment_term_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-terms",
+                "{{created_payment_term_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Created Payment Term",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment-terms/{{created_payment_term_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-terms",
+                "{{created_payment_term_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete payment term returns 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "pm.environment.unset('created_payment_term_id');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "GET Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_term_id\": {{payment_term_id}},\n  \"payment_date\": \"2026-04-20\",\n  \"amount\": 160000000,\n  \"method\": \"transfer\",\n  \"status\": \"pending_review\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create payment returns 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('created_payment_id', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PATCH Created Payment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\",\n  \"method\": \"transfer\",\n  \"amount\": 160000000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/{{created_payment_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "{{created_payment_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Upload Payment Proof",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "notes",
+                  "value": "Bukti transfer dari client",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/{{payment_id}}/proof",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "{{payment_id}}",
+                "proof"
+              ]
+            },
+            "description": "Pilih file manual sebelum kirim request. Default payment_id mengarah ke payment seeded pending_review."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Created Payment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/{{created_payment_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "{{created_payment_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete payment returns 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "pm.environment.unset('created_payment_id');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Project Progress",
+      "item": [
+        {
+          "name": "GET Project Progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/project-progress?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "project-progress"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Project Progress",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contract_id\": {{contract_id}},\n  \"progress_date\": \"2026-03-28\",\n  \"progress_title\": \"Update progres sprint backend {{$timestamp}}\",\n  \"progress_description\": \"API v1 kontrak dan pembayaran sudah siap diuji via Postman.\",\n  \"percentage\": 85,\n  \"status\": \"in_progress\",\n  \"milestone_reference\": \"Milestone backend API\",\n  \"notes\": \"Disiapkan untuk validasi bersama tim\",\n  \"updated_by\": {{user_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/project-progress",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "project-progress"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create project progress returns 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('created_progress_id', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PATCH Created Project Progress",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"percentage\": 90,\n  \"status\": \"in_progress\",\n  \"notes\": \"Progress diperbarui dari Postman\",\n  \"updated_by\": {{user_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/project-progress/{{created_progress_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "project-progress",
+                "{{created_progress_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Created Project Progress",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/project-progress/{{created_progress_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "project-progress",
+                "{{created_progress_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete project progress returns 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "pm.environment.unset('created_progress_id');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Exports",
+      "item": [
+        {
+          "name": "GET Export Contracts PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exports/contracts?format=pdf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exports",
+                "contracts"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "pdf"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Export Payments CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exports/payments?format=csv",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exports",
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Export Project Progress XLSX",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exports/project-progress?format=xlsx",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exports",
+                "project-progress"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "xlsx"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
