@@ -8,9 +8,10 @@ node_modules/
 .cursor/
 .codex/
 .amp/
+.playwright-mcp/
+.sisyphus/
 *.log
-docker/proxy/certs/*.crt
-docker/proxy/certs/*.key
+docker/proxy/certs/*
 !docker/proxy/certs/.gitkeep
 
 # backend
