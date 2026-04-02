@@ -22,7 +22,6 @@ type AppUserMenuProps = {
 
 export function AppUserMenu({ user }: AppUserMenuProps) {
   const primaryRole = user.roles[0] ?? "Akun internal"
-  const username = user.username ? `@${user.username}` : "Username belum diatur"
 
   return (
     <DropdownMenu>
@@ -37,7 +36,7 @@ export function AppUserMenu({ user }: AppUserMenuProps) {
           <UserAvatar className="size-10 border border-border/70" imageUrl={user.avatarUrl} name={user.name} />
           <div className="hidden min-w-0 flex-col sm:flex">
             <span className="truncate text-sm font-semibold text-foreground">{user.name}</span>
-            <span className="truncate text-xs text-muted">{username}</span>
+            <span className="truncate text-xs text-muted">{user.email}</span>
           </div>
           <ChevronDown className="text-muted" />
         </button>
@@ -49,7 +48,6 @@ export function AppUserMenu({ user }: AppUserMenuProps) {
             <UserAvatar className="size-11 border border-border/70" imageUrl={user.avatarUrl} name={user.name} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-              <p className="truncate text-xs text-muted">{username}</p>
               <p className="truncate text-xs text-muted">{user.email}</p>
               <p className="truncate text-xs text-muted">{primaryRole}</p>
             </div>

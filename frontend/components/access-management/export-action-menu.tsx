@@ -76,7 +76,7 @@ export function ExportActionMenu({ moduleLabel, queryString = "", resource }: Ex
             const Icon = option.icon;
 
             return (
-              <DropdownMenuItem asChild key={option.format}>
+              <DropdownMenuItem asChild className="group items-start gap-3 py-3" key={option.format}>
                 <a
                   data-testid={`${resource}-export-${option.format}`}
                   href={buildExportHref(resource, queryString, option.format)}
@@ -84,7 +84,7 @@ export function ExportActionMenu({ moduleLabel, queryString = "", resource }: Ex
                   <Icon aria-hidden />
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span>{option.label}</span>
-                    <span className="text-xs text-muted">{option.description}</span>
+                    <span className="text-xs text-foreground/70 group-data-[highlighted]:text-accent-foreground/80">{option.description}</span>
                   </div>
                 </a>
               </DropdownMenuItem>

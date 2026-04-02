@@ -25,7 +25,7 @@ function getInitials(name: string) {
 export function UserAvatar({ className, fallbackClassName, imageUrl, name }: UserAvatarProps) {
   return (
     <Avatar className={className}>
-      {imageUrl ? <AvatarImage alt={`Avatar ${name}`} src={imageUrl} /> : null}
+      {imageUrl ? <AvatarImage alt={`Avatar ${name}`} key={imageUrl} src={imageUrl} /> : null}
       <AvatarFallback className={cn("bg-accent-soft text-accent", fallbackClassName)}>
         {getInitials(name)}
       </AvatarFallback>

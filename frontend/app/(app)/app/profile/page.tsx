@@ -46,8 +46,7 @@ export default async function ProfilePage() {
               />
               <div className="flex flex-col gap-1">
                 <p className="text-2xl font-semibold text-foreground">{session.user.name}</p>
-                <p className="text-sm text-muted">{session.user.username ? `@${session.user.username}` : "Username belum diatur"}</p>
-                <p className="text-sm text-muted">{session.user.email}</p>
+                <p className="text-sm text-muted break-all">{session.user.email}</p>
               </div>
             </div>
 

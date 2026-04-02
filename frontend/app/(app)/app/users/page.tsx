@@ -67,13 +67,13 @@ export default async function UsersPage({
           {usersResponse ? (
             usersResponse.data.length ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
+                <table className="min-w-full table-fixed border-separate border-spacing-0 text-left text-sm">
                   <thead>
                     <tr>
-                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nama</th>
-                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Email</th>
-                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Peran</th>
-                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
+                      <th className="w-[22%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nama</th>
+                      <th className="w-[34%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Email</th>
+                      <th className="w-[28%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Peran</th>
+                      <th className="w-[16%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -88,7 +88,7 @@ export default async function UsersPage({
                               <span className="text-xs text-muted">ID #{user.id}</span>
                             </div>
                           </td>
-                          <td className="border border-line px-4 py-4 align-top text-muted">{user.email}</td>
+                          <td className="border border-line px-4 py-4 align-top text-muted break-all">{user.email}</td>
                           <td className="border border-line px-4 py-4 align-top">
                             <PillList emptyLabel="Belum ada peran" items={(user.roles ?? []).map((role) => role.name)} />
                           </td>
