@@ -122,7 +122,7 @@ export function RolePermissionsPanel({ modules, selectedPermissionIds }: RolePer
                       data-testid={`role-permissions-module-clear-all-${moduleGroup.moduleKey}`}
                       size="sm"
                       type="button"
-                      variant="ghost"
+                      variant="destructive"
                       onClick={() =>
                         updateSelection(selection.filter((permissionId) => !modulePermissionIds.includes(permissionId)))
                       }

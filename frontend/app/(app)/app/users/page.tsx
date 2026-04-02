@@ -1,10 +1,9 @@
-import Link from "next/link";
-
 import { deleteUserAction } from "@/app/(app)/app/access-management/actions";
 import { listUsers } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { RowActionButtons } from "@/components/access-management/row-action-buttons";
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
-import { buttonVariants, Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyStateCard, PageHeaderCard, PageStack, PillList, StatusBanner } from "@/components/access-management/shared";
@@ -65,10 +64,10 @@ export default async function UsersPage({
                 <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
                   <thead>
                     <tr>
-                      <th className="rounded-l-xl border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nama</th>
+                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nama</th>
                       <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Email</th>
                       <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Peran</th>
-                      <th className="rounded-r-xl border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
+                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -88,20 +87,14 @@ export default async function UsersPage({
                             <PillList emptyLabel="Belum ada peran" items={(user.roles ?? []).map((role) => role.name)} />
                           </td>
                           <td className="border border-line px-4 py-4 align-top">
-                            <div className="flex flex-wrap gap-2">
-                              <Link
-                                aria-label={`Ubah ${user.name}`}
-                                className={buttonVariants({ size: "sm", variant: "outline" })}
-                                href={`/app/users/${user.id}/edit`}
-                              >
-                                Ubah
-                              </Link>
-                              <form action={deleteAction}>
-                                <Button aria-label={`Hapus ${user.name}`} size="sm" type="submit" variant="destructive">
-                                  Hapus
-                                </Button>
-                              </form>
-                            </div>
+                            <RowActionButtons
+                              deleteAction={deleteAction}
+                              deleteLabel={`Hapus ${user.name}`}
+                              deleteTestId={`users-row-delete-${user.id}`}
+                              editHref={`/app/users/${user.id}/edit`}
+                              editLabel={`Ubah ${user.name}`}
+                              editTestId={`users-row-edit-${user.id}`}
+                            />
                           </td>
                         </tr>
                       );

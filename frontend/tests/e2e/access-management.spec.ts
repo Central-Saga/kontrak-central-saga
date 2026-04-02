@@ -90,7 +90,7 @@ test("app shell keeps sidebar full-height while only content pane scrolls and na
   await expect(page.getByTestId("app-shell-heading")).toContainText("Pengguna");
 
   await page.getByTestId("sidebar-nav-roles").click();
-  await expect(page).toHaveURL(/\/app\/roles$/);
+  await expect(page).toHaveURL(/\/app\/roles(\?|$)/);
   await expect(page.getByTestId("roles-list-page")).toBeVisible();
   await expect(page.getByTestId("app-shell-heading")).toContainText("Peran");
 
@@ -184,14 +184,93 @@ test("roles module supports search create edit and delete happy path", async ({ 
   await expect(page.getByText(createdName)).toBeVisible();
   await expect(page.getByText("read users")).toHaveCount(0);
 
+  const roleId = page.url().match(/\/app\/roles\/(\d+)\/edit$/)?.[1];
+  expect(roleId).toBeTruthy();
+
   await page.getByTestId("role-form-name").fill(updatedName);
   await page.getByTestId("role-form-submit").click();
 
   await expect(page).toHaveURL(new RegExp(`/app/roles/\\d+/edit$`));
   await expect(page.getByText(updatedName)).toBeVisible();
 
-  await page.getByRole("button", { name: "Hapus peran" }).click();
+  await page.goto(`/app/roles?search=${encodeURIComponent(updatedName)}`);
+  await expect(page.getByTestId("roles-list-page")).toBeVisible();
+  await expect(page.getByText(updatedName)).toBeVisible();
 
-  await expect(page).toHaveURL(/\/app\/roles$/);
+  const editRoleLink = page.getByRole("link", { name: `Ubah ${updatedName}` });
+  await editRoleLink.hover();
+  await expect(page.getByRole("tooltip")).toContainText("Ubah");
+
+  await page.getByTestId(`roles-row-permissions-${roleId}`).click();
+  await expect(page.getByRole("heading", { name: "Detail izin akses" })).toBeVisible();
+  await expect(page.getByText("Baca pengguna")).toBeVisible();
+  await page.getByRole("button", { name: "Tutup" }).click();
+  await expect(page.getByRole("heading", { name: "Detail izin akses" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: `Hapus ${updatedName}` }).click();
+
+  await expect(page).toHaveURL(/\/app\/roles(\?|$)/);
+  await expect(page.getByText("Peran berhasil dihapus.")).toBeVisible();
+});
+
+test("users module supports single-role assignment and icon-only row actions", async ({ page }) => {
+  const seed = Date.now();
+  const roleName = `playwright-user-role-${seed}`;
+  const userName = `Playwright User ${seed}`;
+  const userEmail = `playwright-user-${seed}@centralsaga.test`;
+
+  await login(page);
+
+  await page.goto("/app/roles/new");
+  await expect(page).toHaveURL(/\/app\/roles\/new$/);
+  await page.getByTestId("role-form-name").fill(roleName);
+  await page.getByTestId("role-form-submit").click();
+  await expect(page).toHaveURL(new RegExp(`/app/roles/\\d+/edit$`));
+
+  await page.goto("/app/users/new");
+  await expect(page).toHaveURL(/\/app\/users\/new$/);
+
+  await page.getByTestId("user-form-name").fill(userName);
+  await page.getByTestId("user-form-email").fill(userEmail);
+  await page.getByTestId("user-form-password").fill("PasswordBaru123!");
+  await expect(page.getByTestId("role_ids-option-empty")).toBeChecked();
+  await page.getByLabel(roleName).check();
+  await expect(page.getByLabel(roleName)).toBeChecked();
+  await expect(page.getByTestId("role_ids-option-empty")).not.toBeChecked();
+  await page.getByTestId("user-form-submit").click();
+
+  await expect(page).toHaveURL(/\/app\/users(\?|$)/);
+  await expect(page.getByText("Pengguna baru berhasil ditambahkan.")).toBeVisible();
+
+  await page.getByTestId("users-search-input").fill(userEmail);
+  await page.getByRole("button", { name: "Cari" }).click();
+  await expect(page.getByText(userEmail)).toBeVisible();
+
+  const editUserLink = page.getByRole("link", { name: `Ubah ${userName}` });
+  await editUserLink.hover();
+  await expect(page.getByRole("tooltip")).toContainText("Ubah");
+  await editUserLink.click();
+
+  await expect(page).toHaveURL(new RegExp(`/app/users/\\d+/edit$`));
+  await expect(page.getByLabel(roleName)).toBeChecked();
+  await page.getByTestId("role_ids-option-empty").check();
+  await expect(page.getByTestId("role_ids-option-empty")).toBeChecked();
+  await expect(page.getByLabel(roleName)).not.toBeChecked();
+  await page.getByTestId("user-form-submit").click();
+
+  await expect(page).toHaveURL(/\/app\/users(\?|$)/);
+  await expect(page.getByText("Data pengguna berhasil diperbarui.")).toBeVisible();
+
+  await page.getByTestId("users-search-input").fill(userEmail);
+  await page.getByRole("button", { name: "Cari" }).click();
+  await expect(page.getByText(userEmail)).toBeVisible();
+  await page.getByRole("button", { name: `Hapus ${userName}` }).click();
+  await expect(page).toHaveURL(/\/app\/users(\?|$)/);
+  await expect(page.getByText("Pengguna berhasil dihapus.")).toBeVisible();
+
+  await page.goto(`/app/roles?search=${encodeURIComponent(roleName)}`);
+  await expect(page.getByText(roleName)).toBeVisible();
+  await page.getByRole("button", { name: `Hapus ${roleName}` }).click();
+  await expect(page).toHaveURL(/\/app\/roles(\?|$)/);
   await expect(page.getByText("Peran berhasil dihapus.")).toBeVisible();
 });

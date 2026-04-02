@@ -1,13 +1,13 @@
-import Link from "next/link";
-
 import { deleteRoleAction } from "@/app/(app)/app/access-management/actions";
 import { listRoles } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { RolePermissionsDetailSheet } from "@/components/access-management/role-permissions-detail-sheet";
+import { RowActionButtons } from "@/components/access-management/row-action-buttons";
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
-import { buttonVariants, Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { EmptyStateCard, PageHeaderCard, PageStack, PillList, StatusBanner } from "@/components/access-management/shared";
+import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared";
 
 const statusMessages = {
   created: "Peran baru berhasil ditambahkan.",
@@ -61,10 +61,10 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
                 <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
                   <thead>
                     <tr>
-                      <th className="rounded-l-xl border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Peran</th>
+                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Peran</th>
                       <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Izin akses</th>
                       <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Ringkasan</th>
-                      <th className="rounded-r-xl border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
+                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -80,26 +80,24 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
                             </div>
                           </td>
                           <td className="border border-line px-4 py-4 align-top">
-                            <PillList emptyLabel="Belum ada izin akses" items={(role.permissions ?? []).map((permission) => permission.name)} />
+                            <RolePermissionsDetailSheet
+                              permissions={role.permissions ?? []}
+                              roleName={role.name}
+                              triggerTestId={`roles-row-permissions-${role.id}`}
+                            />
                           </td>
                           <td className="border border-line px-4 py-4 align-top text-muted">
                             {role.users_count ?? 0} pengguna • {role.permissions_count ?? 0} izin akses
                           </td>
                           <td className="border border-line px-4 py-4 align-top">
-                            <div className="flex flex-wrap gap-2">
-                              <Link
-                                aria-label={`Ubah ${role.name}`}
-                                className={buttonVariants({ size: "sm", variant: "outline" })}
-                                href={`/app/roles/${role.id}/edit`}
-                              >
-                                Ubah
-                              </Link>
-                              <form action={deleteAction}>
-                                <Button aria-label={`Hapus ${role.name}`} size="sm" type="submit" variant="destructive">
-                                  Hapus
-                                </Button>
-                              </form>
-                            </div>
+                            <RowActionButtons
+                              deleteAction={deleteAction}
+                              deleteLabel={`Hapus ${role.name}`}
+                              deleteTestId={`roles-row-delete-${role.id}`}
+                              editHref={`/app/roles/${role.id}/edit`}
+                              editLabel={`Ubah ${role.name}`}
+                              editTestId={`roles-row-edit-${role.id}`}
+                            />
                           </td>
                         </tr>
                       );

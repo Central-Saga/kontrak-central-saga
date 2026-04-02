@@ -28,12 +28,14 @@ type SelectionGroupProps = {
   emptyMessage: string;
   inputName: string;
   legend: string;
+  mode?: "multiple" | "single";
   options: Array<{
     id: number;
     name: string;
     meta?: string;
   }>;
   selectedIds?: number[];
+  singleEmptyOptionLabel?: string;
 };
 
 export function PageStack({ className, ...props }: ComponentProps<"div">) {
@@ -141,9 +143,13 @@ export function SelectionGroup({
   emptyMessage,
   inputName,
   legend,
+  mode = "multiple",
   options,
   selectedIds = [],
+  singleEmptyOptionLabel = "Tanpa peran",
 }: SelectionGroupProps) {
+  const selectedId = selectedIds[0];
+
   return (
     <FieldSet>
       <div className="flex flex-col gap-2">
@@ -154,7 +160,25 @@ export function SelectionGroup({
       {options.length ? <input name={`${inputName}_present`} type="hidden" value="1" /> : null}
 
       {options.length ? (
-        <div data-slot="checkbox-group" className="grid gap-3">
+        <div data-slot={mode === "single" ? "radio-group" : "checkbox-group"} className="grid gap-3">
+          {mode === "single" ? (
+            <Field className="rounded-2xl border border-line bg-card-strong px-4 py-3" orientation="horizontal">
+              <input
+                className="mt-1 size-4 border border-input accent-primary"
+                defaultChecked={!selectedId}
+                data-testid={`${inputName}-option-empty`}
+                id={`${inputName}-empty`}
+                name={inputName}
+                type="radio"
+                value=""
+              />
+              <FieldContent>
+                <FieldLabel htmlFor={`${inputName}-empty`}>{singleEmptyOptionLabel}</FieldLabel>
+                <FieldDescription>Simpan pengguna tanpa peran bila aksesnya belum perlu ditetapkan.</FieldDescription>
+              </FieldContent>
+            </Field>
+          ) : null}
+
           {options.map((option) => {
             const inputId = `${inputName}-${option.id}`;
 
@@ -165,11 +189,12 @@ export function SelectionGroup({
                 orientation="horizontal"
               >
                 <input
-                  className="mt-1 size-4 rounded-sm border border-input accent-primary"
-                  defaultChecked={selectedIds.includes(option.id)}
+                  className="mt-1 size-4 border border-input accent-primary"
+                  defaultChecked={mode === "single" ? selectedId === option.id : selectedIds.includes(option.id)}
+                  data-testid={`${inputName}-option-${option.id}`}
                   id={inputId}
                   name={inputName}
-                  type="checkbox"
+                  type={mode === "single" ? "radio" : "checkbox"}
                   value={option.id}
                 />
                 <FieldContent>

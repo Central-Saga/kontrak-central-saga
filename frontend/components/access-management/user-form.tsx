@@ -72,16 +72,18 @@ export function UserForm({ action, mode, roles, values }: UserFormProps) {
             </Field>
 
             <SelectionGroup
-              description="Peran dikirim sebagai `role_ids[]` ke backend supaya tetap sinkron dengan API CRUD pengguna."
+              description="Pilih satu peran utama untuk pengguna. Form tetap mengirim field `role_ids` yang sama agar kontraknya tetap cocok dengan backend."
               emptyMessage="Belum ada peran yang bisa dipilih dari backend. Pengguna tetap bisa disimpan tanpa peran."
               inputName="role_ids"
               legend="Peran pengguna"
+              mode="single"
               options={roles.map((role) => ({
                 id: role.id,
                 name: role.name,
                 meta: `Penjaga: ${role.guard_name}`,
               }))}
               selectedIds={values?.roleIds ?? []}
+              singleEmptyOptionLabel="Tanpa peran"
             />
           </FieldGroup>
 
