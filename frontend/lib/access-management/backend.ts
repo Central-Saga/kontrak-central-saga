@@ -85,6 +85,14 @@ export type RoleMutationInput = {
 
 type OptionPageLoader<T extends AccessManagementOption> = (page: number) => Promise<PaginatedCollection<T>>;
 
+const exportResourcePaths = {
+  permissions: "/api/v1/exports/permissions",
+  roles: "/api/v1/exports/roles",
+  users: "/api/v1/exports/users",
+} as const;
+
+export type AccessManagementExportResource = keyof typeof exportResourcePaths;
+
 export class AccessManagementError extends Error {
   constructor(
     message: string,
@@ -110,6 +118,20 @@ function buildQueryString(searchParams: Record<string, string | number | undefin
   const serialized = query.toString();
 
   return serialized ? `?${serialized}` : "";
+}
+
+function getDefaultApiErrorMessage(status: number) {
+  return status === 401
+    ? "Sesi Anda sudah tidak valid."
+    : status === 403
+      ? "Anda tidak memiliki akses ke modul ini."
+      : status === 404
+        ? "Data yang diminta tidak ditemukan."
+        : status === 409
+          ? "Data tidak dapat diproses karena masih dipakai oleh relasi lain."
+          : status === 422
+            ? "Data yang dikirim belum valid."
+            : "Terjadi kesalahan saat berkomunikasi dengan backend.";
 }
 
 async function requestBackend<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -147,27 +169,58 @@ async function requestBackend<T>(path: string, init: RequestInit = {}): Promise<
 
   if (!response.ok) {
     const errorPayload = payload as ApiErrorPayload | null;
-    const defaultMessage =
-      response.status === 401
-        ? "Sesi Anda sudah tidak valid."
-        : response.status === 403
-          ? "Anda tidak memiliki akses ke modul ini."
-          : response.status === 404
-            ? "Data yang diminta tidak ditemukan."
-            : response.status === 409
-              ? "Data tidak dapat diproses karena masih dipakai oleh relasi lain."
-              : response.status === 422
-                ? "Data yang dikirim belum valid."
-                : "Terjadi kesalahan saat berkomunikasi dengan backend.";
 
     throw new AccessManagementError(
-      errorPayload?.message ?? defaultMessage,
+      errorPayload?.message ?? getDefaultApiErrorMessage(response.status),
       response.status,
       errorPayload?.errors,
     );
   }
 
   return payload as T;
+}
+
+async function requestBackendResponse(path: string, init: RequestInit = {}): Promise<Response> {
+  const token = await getSessionToken();
+
+  if (!token) {
+    throw new AccessManagementError("Sesi login tidak ditemukan.", 401);
+  }
+
+  const headers = new Headers(init.headers);
+  headers.set("Accept", headers.get("Accept") ?? "*/*");
+  headers.set("Authorization", `Bearer ${token}`);
+
+  if (!headers.has("Content-Type") && init.body) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${getServerApiBaseUrl()}${path}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
+  } catch {
+    throw new AccessManagementError("Layanan backend tidak dapat dijangkau.", 503);
+  }
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    const errorPayload = contentType.includes("application/json")
+      ? ((await response.json().catch(() => null)) as ApiErrorPayload | null)
+      : null;
+
+    throw new AccessManagementError(
+      errorPayload?.message ?? getDefaultApiErrorMessage(response.status),
+      response.status,
+      errorPayload?.errors,
+    );
+  }
+
+  return response;
 }
 
 export function isAccessManagementError(error: unknown): error is AccessManagementError {
@@ -338,6 +391,18 @@ export async function listPermissionOptions(): Promise<AccessManagementOption[]>
     name: permission.name,
     guard_name: permission.guard_name,
   }));
+}
+
+export async function exportAccessManagementDataset(
+  resource: AccessManagementExportResource,
+  searchParams: URLSearchParams,
+): Promise<Response> {
+  const query = searchParams.toString();
+  const path = exportResourcePaths[resource];
+
+  return requestBackendResponse(query ? `${path}?${query}` : path, {
+    method: "GET",
+  });
 }
 
 async function loadAllOptions<T extends AccessManagementOption>(

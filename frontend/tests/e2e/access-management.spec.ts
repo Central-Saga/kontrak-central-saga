@@ -11,6 +11,29 @@ async function login(page: Page, email = adminEmail, password = adminPassword) {
   await page.waitForURL("**/app");
 }
 
+async function expectExportDownload(
+  page: Page,
+  requests: string[],
+  resource: "users" | "roles" | "permissions",
+  format: "csv" | "pdf",
+) {
+  const requestCount = requests.length;
+
+  await page.getByTestId(`${resource}-export-trigger`).click();
+  await expect(page.getByTestId(`${resource}-export-csv`)).toBeVisible();
+  await expect(page.getByTestId(`${resource}-export-pdf`)).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByTestId(`${resource}-export-${format}`).click();
+
+  const download = await downloadPromise;
+
+  await expect.poll(() => requests.length).toBe(requestCount + 1);
+  expect(download.suggestedFilename()).toBe(`${resource}.${format}`);
+
+  return new URL(requests.at(-1) ?? "http://localhost");
+}
+
 test("app shell keeps sidebar full-height while only content pane scrolls and nav routes work", async ({
   page,
 }) => {
@@ -273,4 +296,76 @@ test("users module supports single-role assignment and icon-only row actions", a
   await page.getByRole("button", { name: `Hapus ${roleName}` }).click();
   await expect(page).toHaveURL(/\/app\/roles(\?|$)/);
   await expect(page.getByText("Peran berhasil dihapus.")).toBeVisible();
+});
+
+test("access-management export actions show both formats and keep the active query string", async ({ page }) => {
+  const requests: string[] = [];
+
+  await page.route("**/api/access-management/exports/**", async (route) => {
+    const requestUrl = route.request().url();
+    const parsedUrl = new URL(requestUrl);
+    const resource = parsedUrl.pathname.split("/").at(-1) ?? "export";
+    const format = parsedUrl.searchParams.get("format") === "pdf" ? "pdf" : "csv";
+
+    requests.push(requestUrl);
+
+    await route.fulfill({
+      body: format === "pdf" ? "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF" : "id,nama\n1,Contoh\n",
+      headers: {
+        "content-disposition": `attachment; filename="${resource}.${format}"`,
+        "content-type": format === "pdf" ? "application/pdf" : "text/csv; charset=utf-8",
+      },
+      status: 200,
+    });
+  });
+
+  await login(page);
+
+  await page.goto("/app/users?search=admin%40centralsaga.test&page=2&status=created");
+  await expect(page.getByTestId("users-list-page")).toBeVisible();
+
+  const usersCsvUrl = await expectExportDownload(page, requests, "users", "csv");
+  expect(usersCsvUrl.searchParams.get("search")).toBe("admin@centralsaga.test");
+  expect(usersCsvUrl.searchParams.get("page")).toBe("2");
+  expect(usersCsvUrl.searchParams.get("format")).toBe("csv");
+  expect(usersCsvUrl.searchParams.has("status")).toBe(false);
+
+  await page.goto("/app/users?search=admin%40centralsaga.test&page=2&status=created");
+  await expect(page.getByTestId("users-list-page")).toBeVisible();
+
+  const usersPdfUrl = await expectExportDownload(page, requests, "users", "pdf");
+  expect(usersPdfUrl.searchParams.get("search")).toBe("admin@centralsaga.test");
+  expect(usersPdfUrl.searchParams.get("page")).toBe("2");
+  expect(usersPdfUrl.searchParams.get("format")).toBe("pdf");
+  expect(usersPdfUrl.searchParams.has("status")).toBe(false);
+
+  await page.goto("/app/roles?search=admin&page=3&error=backend_unavailable");
+  await expect(page.getByTestId("roles-list-page")).toBeVisible();
+
+  const rolesCsvUrl = await expectExportDownload(page, requests, "roles", "csv");
+  expect(rolesCsvUrl.searchParams.get("search")).toBe("admin");
+  expect(rolesCsvUrl.searchParams.get("page")).toBe("3");
+  expect(rolesCsvUrl.searchParams.get("format")).toBe("csv");
+  expect(rolesCsvUrl.searchParams.has("error")).toBe(false);
+
+  await page.goto("/app/roles?search=admin&page=3&error=backend_unavailable");
+  await expect(page.getByTestId("roles-list-page")).toBeVisible();
+
+  const rolesPdfUrl = await expectExportDownload(page, requests, "roles", "pdf");
+  expect(rolesPdfUrl.searchParams.get("search")).toBe("admin");
+  expect(rolesPdfUrl.searchParams.get("page")).toBe("3");
+  expect(rolesPdfUrl.searchParams.get("format")).toBe("pdf");
+  expect(rolesPdfUrl.searchParams.has("error")).toBe(false);
+
+  await page.goto("/app/permissions");
+  await expect(page.getByTestId("permissions-list-page")).toBeVisible();
+
+  const permissionsCsvUrl = await expectExportDownload(page, requests, "permissions", "csv");
+  expect(permissionsCsvUrl.searchParams.get("format")).toBe("csv");
+
+  await page.goto("/app/permissions");
+  await expect(page.getByTestId("permissions-list-page")).toBeVisible();
+
+  const permissionsPdfUrl = await expectExportDownload(page, requests, "permissions", "pdf");
+  expect(permissionsPdfUrl.searchParams.get("format")).toBe("pdf");
 });

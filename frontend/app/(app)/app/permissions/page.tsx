@@ -1,11 +1,14 @@
 import { listPermissionOptions } from "@/lib/access-management/backend";
 import { buildPermissionModuleGroups } from "@/lib/access-management/permissions";
-import { handleModulePageError } from "@/lib/access-management/page";
+import { buildForwardedSearchParams, handleModulePageError, type PageSearchParams } from "@/lib/access-management/page";
+import { ExportActionMenu } from "@/components/access-management/export-action-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyStateCard, PageHeaderCard, PageStack, PillList } from "@/components/access-management/shared";
 
-export default async function PermissionsPage() {
+export default async function PermissionsPage({ searchParams }: { searchParams: PageSearchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const exportQueryString = buildForwardedSearchParams(resolvedSearchParams).toString();
   let message: string | null = null;
   let modules = [] as ReturnType<typeof buildPermissionModuleGroups>;
 
@@ -28,11 +31,15 @@ export default async function PermissionsPage() {
         <EmptyStateCard description={message} title="Izin akses belum dapat dimuat" />
       ) : modules.length ? (
         <Card>
-          <CardHeader className="gap-4">
-            <CardTitle className="text-2xl">Referensi izin akses</CardTitle>
-            <CardDescription>
-              Setiap modul diringkas di accordion tersendiri agar daftar panjang tetap nyaman dibaca tanpa membuka halaman CRUD apa pun.
-            </CardDescription>
+          <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-3">
+              <CardTitle className="text-2xl">Referensi izin akses</CardTitle>
+              <CardDescription>
+                Setiap modul diringkas di accordion tersendiri agar daftar panjang tetap nyaman dibaca tanpa membuka halaman CRUD apa pun.
+              </CardDescription>
+            </div>
+
+            <ExportActionMenu moduleLabel="referensi izin akses" queryString={exportQueryString} resource="permissions" />
           </CardHeader>
           <CardContent>
             <Accordion defaultValue={modules.length ? [modules[0].moduleKey] : []} type="multiple">

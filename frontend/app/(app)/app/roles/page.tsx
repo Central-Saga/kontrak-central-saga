@@ -1,6 +1,7 @@
 import { deleteRoleAction } from "@/app/(app)/app/access-management/actions";
 import { listRoles } from "@/lib/access-management/backend";
-import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { buildForwardedSearchParams, handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { ExportActionMenu } from "@/components/access-management/export-action-menu";
 import { RolePermissionsDetailSheet } from "@/components/access-management/role-permissions-detail-sheet";
 import { RowActionButtons } from "@/components/access-management/row-action-buttons";
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
@@ -20,6 +21,7 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
   const search = readSearchParam(resolvedSearchParams, "search") ?? "";
   const status = readSearchParam(resolvedSearchParams, "status");
   const error = readSearchParam(resolvedSearchParams, "error");
+  const exportQueryString = buildForwardedSearchParams(resolvedSearchParams).toString();
 
   let message: string | null = null;
   let rolesResponse: Awaited<ReturnType<typeof listRoles>> | null = null;
@@ -49,10 +51,14 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
             <CardDescription>Cari peran yang dibutuhkan, lalu buka halaman ubah untuk menyesuaikan izin akses terkait.</CardDescription>
           </div>
 
-          <form className="flex w-full max-w-xl flex-col gap-3 sm:flex-row" method="GET">
-            <Input data-testid="roles-search-input" defaultValue={search} name="search" placeholder="Cari nama peran" />
-            <Button type="submit" variant="outline">Cari</Button>
-          </form>
+          <div className="flex w-full max-w-2xl flex-col gap-3 lg:items-end">
+            <form className="flex w-full flex-col gap-3 sm:flex-row" method="GET">
+              <Input data-testid="roles-search-input" defaultValue={search} name="search" placeholder="Cari nama peran" />
+              <Button type="submit" variant="outline">Cari</Button>
+            </form>
+
+            <ExportActionMenu moduleLabel="daftar peran" queryString={exportQueryString} resource="roles" />
+          </div>
         </CardHeader>
         <CardContent>
           {rolesResponse ? (

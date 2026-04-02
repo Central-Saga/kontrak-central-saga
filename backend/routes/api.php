@@ -53,6 +53,15 @@ Route::prefix('v1')->group(function (): void {
             Route::get('project-progress', [ExportController::class, 'projectProgress']);
         });
 
+        Route::prefix('exports')->group(function (): void {
+            Route::get('users', [ExportController::class, 'users'])
+                ->middleware('permission:export users');
+            Route::get('roles', [ExportController::class, 'roles'])
+                ->middleware('permission:export roles');
+            Route::get('permissions', [ExportController::class, 'permissions'])
+                ->middleware('permission:export permissions');
+        });
+
         Route::apiResource('clients', ClientController::class)
             ->middleware('permission:manage clients');
 

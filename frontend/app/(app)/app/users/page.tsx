@@ -1,6 +1,7 @@
 import { deleteUserAction } from "@/app/(app)/app/access-management/actions";
 import { listUsers } from "@/lib/access-management/backend";
-import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { buildForwardedSearchParams, handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { ExportActionMenu } from "@/components/access-management/export-action-menu";
 import { RowActionButtons } from "@/components/access-management/row-action-buttons";
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export default async function UsersPage({
   const search = readSearchParam(resolvedSearchParams, "search") ?? "";
   const status = readSearchParam(resolvedSearchParams, "status");
   const error = readSearchParam(resolvedSearchParams, "error");
+  const exportQueryString = buildForwardedSearchParams(resolvedSearchParams).toString();
 
   let message: string | null = null;
   let usersResponse: Awaited<ReturnType<typeof listUsers>> | null = null;
@@ -52,10 +54,14 @@ export default async function UsersPage({
             <CardDescription>Cari berdasarkan nama atau email, lalu lanjutkan ke halaman tambah atau ubah sesuai kebutuhan.</CardDescription>
           </div>
 
-          <form className="flex w-full max-w-xl flex-col gap-3 sm:flex-row" method="GET">
-            <Input data-testid="users-search-input" defaultValue={search} name="search" placeholder="Cari nama atau email" />
-            <Button type="submit" variant="outline">Cari</Button>
-          </form>
+          <div className="flex w-full max-w-2xl flex-col gap-3 lg:items-end">
+            <form className="flex w-full flex-col gap-3 sm:flex-row" method="GET">
+              <Input data-testid="users-search-input" defaultValue={search} name="search" placeholder="Cari nama atau email" />
+              <Button type="submit" variant="outline">Cari</Button>
+            </form>
+
+            <ExportActionMenu moduleLabel="daftar pengguna" queryString={exportQueryString} resource="users" />
+          </div>
         </CardHeader>
         <CardContent>
           {usersResponse ? (

@@ -7,6 +7,8 @@ export type PageSearchParams = Promise<Record<string, string | string[] | undefi
 
 export type PageRouteParams<T extends Record<string, string>> = Promise<T>;
 
+const exportSearchParamExclusions = new Set(["error", "status"]);
+
 export function readSearchParam(
   searchParams: Record<string, string | string[] | undefined>,
   key: string,
@@ -18,6 +20,34 @@ export function readSearchParam(
   }
 
   return value;
+}
+
+export function buildForwardedSearchParams(
+  searchParams: Record<string, string | string[] | undefined>,
+): URLSearchParams {
+  const forwardedSearchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (exportSearchParamExclusions.has(key) || value === undefined) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item) {
+          forwardedSearchParams.append(key, item);
+        }
+      }
+
+      continue;
+    }
+
+    if (value) {
+      forwardedSearchParams.set(key, value);
+    }
+  }
+
+  return forwardedSearchParams;
 }
 
 export function handleModulePageError(error: unknown): string {
