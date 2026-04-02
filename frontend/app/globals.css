@@ -137,6 +137,7 @@ h6 {
   --background: #0e1b16;
   --foreground: #eef8f1;
   --card: rgba(14, 27, 22, 0.92);
+  --card-strong: #14231d;
   --card-foreground: #eef8f1;
   --popover: #11241d;
   --popover-foreground: #eef8f1;
@@ -149,6 +150,7 @@ h6 {
   --accent: #2f9d73;
   --accent-foreground: #eef8f1;
   --destructive: #d57a59;
+  --line: rgba(238, 248, 241, 0.08);
   --border: rgba(238, 248, 241, 0.12);
   --input: rgba(238, 248, 241, 0.16);
   --ring: rgba(127, 209, 166, 0.35);

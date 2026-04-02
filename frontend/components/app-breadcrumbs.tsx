@@ -3,10 +3,10 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import { cn } from "@/lib/utils"
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -67,9 +67,9 @@ export function AppBreadcrumbs() {
         {crumbs.length ? (
           <>
             <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href="/app">Beranda</Link>
-              </BreadcrumbLink>
+              <Link className={cn("transition-colors hover:text-foreground")} href="/app">
+                Beranda
+              </Link>
             </BreadcrumbItem>
 
             {crumbs.map((crumb, index) => {
@@ -78,14 +78,14 @@ export function AppBreadcrumbs() {
               return (
                 <BreadcrumbItem key={crumb.href}>
                   <BreadcrumbSeparator />
-                  {isLast ? (
-                    <BreadcrumbPage data-testid="app-shell-heading">{crumb.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink asChild>
-                      <Link href={crumb.href}>{crumb.label}</Link>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage data-testid="app-shell-heading">{crumb.label}</BreadcrumbPage>
+                    ) : (
+                      <Link className={cn("transition-colors hover:text-foreground")} href={crumb.href}>
+                        {crumb.label}
+                      </Link>
+                    )}
+                  </BreadcrumbItem>
               )
             })}
           </>

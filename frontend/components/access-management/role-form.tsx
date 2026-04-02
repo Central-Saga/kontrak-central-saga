@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -80,9 +80,9 @@ export function RoleForm({ action, deleteAction, mode, permissions, values }: Ro
           <Button data-testid="role-form-submit" size="lg" type="submit">
             {isCreate ? "Simpan peran" : "Simpan perubahan"}
           </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href="/app/roles">Batal</Link>
-          </Button>
+          <Link className={buttonVariants({ size: "lg", variant: "outline" })} href="/app/roles">
+            Batal
+          </Link>
           {!isCreate && deleteAction ? (
             <Button formAction={deleteAction} size="lg" type="submit" variant="destructive">
               Hapus peran

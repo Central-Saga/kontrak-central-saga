@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldContent, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 
@@ -59,9 +59,9 @@ export function PageHeaderCard({
         </div>
 
         {actionHref && actionLabel ? (
-          <Button asChild size="lg">
-            <Link href={actionHref}>{actionLabel}</Link>
-          </Button>
+          <Link className={buttonVariants({ size: "lg" })} href={actionHref}>
+            {actionLabel}
+          </Link>
         ) : null}
       </CardHeader>
     </Card>
@@ -130,9 +130,9 @@ export function PillList({
 
 export function BackLinkButton({ href }: { href: string }) {
   return (
-    <Button asChild size="sm" variant="outline">
-      <Link href={href}>Kembali ke daftar</Link>
-    </Button>
+    <Link className={buttonVariants({ size: "sm", variant: "outline" })} href={href}>
+      Kembali ke daftar
+    </Link>
   );
 }
 
