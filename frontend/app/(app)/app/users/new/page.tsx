@@ -1,6 +1,7 @@
 import { createUserAction } from "@/app/(app)/app/access-management/actions";
 import { listRoleOptions } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared";
 import { UserForm } from "@/components/access-management/user-form";
 
@@ -24,7 +25,8 @@ export default async function NewUserPage({ searchParams }: { searchParams: Page
         title="Tambah pengguna"
       />
 
-      <StatusBanner error={error ?? message ?? undefined} />
+      <StatusToastBridge error={error ?? undefined} />
+      <StatusBanner error={message ?? undefined} />
       <UserForm action={createUserAction} mode="create" roles={roles} />
     </PageStack>
   );

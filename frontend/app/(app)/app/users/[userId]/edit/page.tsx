@@ -6,6 +6,7 @@ import {
   type PageRouteParams,
   type PageSearchParams,
 } from "@/lib/access-management/page";
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared";
 import { UserForm } from "@/components/access-management/user-form";
 
@@ -45,7 +46,8 @@ export default async function EditUserPage({
           description="Detail pengguna atau opsi peran tidak bisa dimuat. Periksa akses Anda atau kembali ke daftar untuk mencoba lagi."
           title="Ubah pengguna"
         />
-        <StatusBanner error={error ?? rolesError ?? message ?? undefined} />
+        <StatusToastBridge error={error ?? undefined} />
+        <StatusBanner error={rolesError ?? message ?? undefined} />
       </PageStack>
     );
   }
@@ -59,7 +61,7 @@ export default async function EditUserPage({
         title={`Ubah pengguna: ${user.name}`}
       />
 
-      <StatusBanner error={error ?? undefined} />
+      <StatusToastBridge error={error ?? undefined} />
       <UserForm
         action={updateAction}
         mode="edit"

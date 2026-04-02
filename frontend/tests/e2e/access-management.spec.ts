@@ -128,7 +128,7 @@ test("menu profil membuka pengaturan akun yang mendukung profil, keamanan, tema,
 
   await page.getByTestId("settings-profile-submit").click();
 
-  await expect(page).toHaveURL(/\/app\/settings\?status=profile_updated$/);
+  await expect(page).toHaveURL(/\/app\/settings$/);
   await expect(page.getByText("Profil akun berhasil diperbarui.")).toBeVisible();
 
   await page.getByTestId("theme-option-dark").click();
@@ -146,12 +146,12 @@ test("menu profil membuka pengaturan akun yang mendukung profil, keamanan, tema,
   await page.getByTestId("settings-password-confirmation-input").fill("PasswordBaru123!");
   await page.getByTestId("settings-password-submit").click();
 
-  await expect(page).toHaveURL(/\/app\/settings\?error=/);
+  await expect(page).toHaveURL(/\/app\/settings$/);
   await expect(page.getByText("Password saat ini tidak sesuai.")).toBeVisible();
 
   await page.getByTestId("profile-photo-submit").click();
 
-  await expect(page).toHaveURL(/\/app\/settings\?error=/);
+  await expect(page).toHaveURL(/\/app\/settings$/);
   await expect(page.getByText("Pilih file foto profil terlebih dahulu.")).toBeVisible();
 });
 
@@ -180,17 +180,18 @@ test("roles module supports search create edit and delete happy path", async ({ 
   await page.getByLabel("Baca pengguna").check();
   await page.getByTestId("role-form-submit").click();
 
-  await expect(page).toHaveURL(new RegExp(`/app/roles/\\d+/edit\\?status=created$`));
+  await expect(page).toHaveURL(new RegExp(`/app/roles/\\d+/edit$`));
   await expect(page.getByText(createdName)).toBeVisible();
   await expect(page.getByText("read users")).toHaveCount(0);
 
   await page.getByTestId("role-form-name").fill(updatedName);
   await page.getByTestId("role-form-submit").click();
 
-  await expect(page).toHaveURL(new RegExp(`/app/roles/\\d+/edit\\?status=updated$`));
+  await expect(page).toHaveURL(new RegExp(`/app/roles/\\d+/edit$`));
   await expect(page.getByText(updatedName)).toBeVisible();
 
   await page.getByRole("button", { name: "Hapus peran" }).click();
 
-  await expect(page).toHaveURL(/\/app\/roles\?status=deleted$/);
+  await expect(page).toHaveURL(/\/app\/roles$/);
+  await expect(page.getByText("Peran berhasil dihapus.")).toBeVisible();
 });

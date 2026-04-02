@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeScript } from "@/components/theme/theme-script";
+import { Toaster } from "@/components/ui/sonner";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -42,7 +43,10 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster closeButton position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

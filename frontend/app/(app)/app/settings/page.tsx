@@ -8,11 +8,12 @@ import {
 } from "@/app/(app)/app/settings/actions";
 import { readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
 import { buildSessionExpiredRedirectPath, LOGIN_PATH, readSessionState } from "@/lib/auth";
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared";
+import { PageHeaderCard, PageStack } from "@/components/access-management/shared";
 import { ThemePreferenceCard } from "@/components/settings/theme-preference-card";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -50,7 +51,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
         title="Pengaturan akun"
       />
 
-      <StatusBanner error={error ?? undefined} messages={statusMessages} status={status} />
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
 
       <Card>
         <CardHeader className="gap-4">

@@ -6,6 +6,7 @@ import {
   type PageRouteParams,
   type PageSearchParams,
 } from "@/lib/access-management/page";
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared";
 import { RoleForm } from "@/components/access-management/role-form";
 
@@ -51,7 +52,8 @@ export default async function EditRolePage({
           description="Detail peran atau opsi izin akses tidak bisa dimuat. Periksa akses Anda atau kembali ke daftar peran."
           title="Ubah peran"
         />
-        <StatusBanner error={error ?? permissionsError ?? message ?? undefined} />
+        <StatusToastBridge error={error ?? undefined} />
+        <StatusBanner error={permissionsError ?? message ?? undefined} />
       </PageStack>
     );
   }
@@ -66,7 +68,7 @@ export default async function EditRolePage({
         title={`Ubah peran: ${role.name}`}
       />
 
-      <StatusBanner error={error ?? undefined} messages={statusMessages} status={status} />
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
       <RoleForm
         action={updateAction}
         deleteAction={deleteAction}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { deleteUserAction } from "@/app/(app)/app/access-management/actions";
 import { listUsers } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,14 +36,15 @@ export default async function UsersPage({
 
   return (
     <PageStack data-testid="users-list-page">
-        <PageHeaderCard
-          actionHref="/app/users/new"
-          actionLabel="Tambah pengguna"
-          description="Daftar pengguna kini berada di halaman terpisah dengan pencarian, ubah, dan hapus yang terhubung langsung ke API backend `/api/v1/users`."
-          title="Kelola pengguna"
-        />
+      <PageHeaderCard
+        actionHref="/app/users/new"
+        actionLabel="Tambah pengguna"
+        description="Daftar pengguna kini berada di halaman terpisah dengan pencarian, ubah, dan hapus yang terhubung langsung ke API backend `/api/v1/users`."
+        title="Kelola pengguna"
+      />
 
-      <StatusBanner error={error ?? message ?? undefined} messages={statusMessages} status={status} />
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
+      <StatusBanner error={message ?? undefined} />
 
       <Card>
         <CardHeader className="gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -110,8 +112,8 @@ export default async function UsersPage({
             ) : (
               <EmptyStateCard
                 description="Coba ubah kata kunci pencarian atau tambahkan pengguna baru dari tombol di atas."
-                  title="Belum ada pengguna yang cocok dengan pencarian ini"
-                />
+                title="Belum ada pengguna yang cocok dengan pencarian ini"
+              />
             )
           ) : null}
         </CardContent>

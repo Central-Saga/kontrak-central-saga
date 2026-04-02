@@ -3,6 +3,7 @@ import Link from "next/link";
 import { deleteRoleAction } from "@/app/(app)/app/access-management/actions";
 import { listRoles } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,7 +39,8 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
         title="Kelola peran"
       />
 
-      <StatusBanner error={error ?? message ?? undefined} messages={statusMessages} status={status} />
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
+      <StatusBanner error={message ?? undefined} />
 
       <Card>
         <CardHeader className="gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -107,9 +109,9 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
               </div>
             ) : (
               <EmptyStateCard
-                  description="Ubah kata kunci pencarian atau tambahkan peran baru bila belum tersedia."
-                  title="Tidak ada peran yang cocok dengan pencarian"
-                />
+                description="Ubah kata kunci pencarian atau tambahkan peran baru bila belum tersedia."
+                title="Tidak ada peran yang cocok dengan pencarian"
+              />
             )
           ) : null}
         </CardContent>
