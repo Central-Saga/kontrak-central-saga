@@ -20,7 +20,27 @@ class ModuleStarterSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $permissions = collect([
+        $modules = [
+            'users',
+            'roles',
+            'permissions',
+            'clients',
+            'contracts',
+            'payment_terms',
+            'payments',
+            'payment_proofs',
+            'project_progress',
+        ];
+
+        $permissionActions = ['create', 'read', 'update', 'delete', 'export', 'verification'];
+
+        $modulePermissions = collect($modules)
+            ->flatMap(fn (string $module): array => collect($permissionActions)
+                ->map(fn (string $action): string => sprintf('%s %s', $action, str_replace('_', ' ', $module)))
+                ->all())
+            ->all();
+
+        $legacyPermissions = [
             'manage clients',
             'manage contracts',
             'manage payment terms',
@@ -31,7 +51,9 @@ class ModuleStarterSeeder extends Seeder
             'view activity logs',
             'export reports',
             'access client portal',
-        ])->mapWithKeys(fn (string $name): array => [
+        ];
+
+        $permissions = collect([...$modulePermissions, ...$legacyPermissions])->unique()->values()->mapWithKeys(fn (string $name): array => [
             $name => Permission::findOrCreate($name, 'web'),
         ]);
 
@@ -42,20 +64,53 @@ class ModuleStarterSeeder extends Seeder
 
         $adminRole->syncPermissions($permissions->values());
         $financeRole->syncPermissions([
+            $permissions['read clients'],
+            $permissions['read contracts'],
+            $permissions['read payment terms'],
+            $permissions['create payment terms'],
+            $permissions['update payment terms'],
+            $permissions['read payment proofs'],
+            $permissions['verification payment proofs'],
+            $permissions['read project progress'],
+            $permissions['read users'],
             $permissions['manage payment terms'],
             $permissions['manage payments'],
             $permissions['upload payment proofs'],
             $permissions['view reporting dashboard'],
             $permissions['view activity logs'],
             $permissions['export reports'],
+            $permissions['read payments'],
+            $permissions['create payments'],
+            $permissions['update payments'],
+            $permissions['verification payments'],
+            $permissions['export payment terms'],
+            $permissions['export payments'],
         ]);
         $projectManagerRole->syncPermissions([
+            $permissions['read clients'],
+            $permissions['read contracts'],
+            $permissions['create contracts'],
+            $permissions['update contracts'],
+            $permissions['export contracts'],
+            $permissions['read payment terms'],
+            $permissions['read payments'],
+            $permissions['read payment proofs'],
+            $permissions['read project progress'],
+            $permissions['create project progress'],
+            $permissions['update project progress'],
+            $permissions['export project progress'],
             $permissions['manage contracts'],
             $permissions['manage project progress'],
             $permissions['view reporting dashboard'],
             $permissions['export reports'],
         ]);
         $clientRole->syncPermissions([
+            $permissions['read contracts'],
+            $permissions['read payment terms'],
+            $permissions['read payments'],
+            $permissions['read payment proofs'],
+            $permissions['create payment proofs'],
+            $permissions['read project progress'],
             $permissions['upload payment proofs'],
             $permissions['access client portal'],
         ]);
@@ -81,6 +136,27 @@ class ModuleStarterSeeder extends Seeder
         $finance->syncRoles([$financeRole]);
         $projectManager->syncRoles([$projectManagerRole]);
         $clientUser->syncRoles([$clientRole]);
+
+        $admin->givePermissionTo([
+            $permissions['create users'],
+            $permissions['read users'],
+            $permissions['update users'],
+            $permissions['delete users'],
+            $permissions['export users'],
+            $permissions['verification users'],
+            $permissions['create roles'],
+            $permissions['read roles'],
+            $permissions['update roles'],
+            $permissions['delete roles'],
+            $permissions['export roles'],
+            $permissions['verification roles'],
+            $permissions['create permissions'],
+            $permissions['read permissions'],
+            $permissions['update permissions'],
+            $permissions['delete permissions'],
+            $permissions['export permissions'],
+            $permissions['verification permissions'],
+        ]);
 
         $clients = collect([
             [

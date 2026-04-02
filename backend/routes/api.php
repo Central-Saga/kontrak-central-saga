@@ -9,7 +9,10 @@ use App\Http\Controllers\Api\V1\ExportController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PaymentProofController;
 use App\Http\Controllers\Api\V1\PaymentTermController;
+use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\ProjectProgressController;
+use App\Http\Controllers\Api\V1\RoleController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +29,9 @@ Route::prefix('v1')->group(function (): void {
 
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('me', [AuthController::class, 'me']);
+            Route::post('avatar', [AuthController::class, 'updateAvatar']);
+            Route::put('profile', [AuthController::class, 'updateProfile']);
+            Route::put('password', [AuthController::class, 'updatePassword']);
             Route::post('logout', [AuthController::class, 'logout']);
         });
     });
@@ -64,5 +70,23 @@ Route::prefix('v1')->group(function (): void {
 
         Route::apiResource('project-progress', ProjectProgressController::class)
             ->middleware('permission:manage project progress');
+
+        Route::apiResource('users', UserController::class)
+            ->middlewareFor(['index', 'show'], 'permission:read users')
+            ->middlewareFor('store', 'permission:create users')
+            ->middlewareFor('update', 'permission:update users')
+            ->middlewareFor('destroy', 'permission:delete users');
+
+        Route::apiResource('roles', RoleController::class)
+            ->middlewareFor(['index', 'show'], 'permission:read roles')
+            ->middlewareFor('store', 'permission:create roles')
+            ->middlewareFor('update', 'permission:update roles')
+            ->middlewareFor('destroy', 'permission:delete roles');
+
+        Route::apiResource('permissions', PermissionController::class)
+            ->middlewareFor(['index', 'show'], 'permission:read permissions')
+            ->middlewareFor('store', 'permission:create permissions')
+            ->middlewareFor('update', 'permission:update permissions')
+            ->middlewareFor('destroy', 'permission:delete permissions');
     });
 });
