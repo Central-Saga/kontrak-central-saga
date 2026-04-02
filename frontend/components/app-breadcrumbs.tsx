@@ -1,0 +1,100 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+
+const segmentLabels: Record<string, string> = {
+  app: "Beranda",
+  permissions: "Izin akses",
+  profile: "Profil",
+  roles: "Peran",
+  settings: "Pengaturan",
+  users: "Pengguna",
+  new: "Tambah",
+  edit: "Ubah",
+}
+
+function isDynamicSegment(segment: string) {
+  return /^\d+$/.test(segment) || /^[0-9a-f]{8,}$/i.test(segment)
+}
+
+function formatSegment(segment: string) {
+  const label = segmentLabels[segment]
+
+  if (label) {
+    return label
+  }
+
+  return segment
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+export function AppBreadcrumbs() {
+  const pathname = usePathname()
+  const rawSegments = pathname.split("/").filter(Boolean)
+  const segments = rawSegments.filter((segment, index) => {
+    if (index === 0) {
+      return segment === "app"
+    }
+
+    return !isDynamicSegment(segment)
+  })
+
+  const crumbs = segments.slice(1).map((segment, index) => {
+    const href = `/${segments.slice(0, index + 2).join("/")}`
+
+    return {
+      href,
+      label: formatSegment(segment),
+    }
+  })
+
+  return (
+    <Breadcrumb data-testid="app-breadcrumbs">
+      <BreadcrumbList>
+        {crumbs.length ? (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/app">Beranda</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+
+            {crumbs.map((crumb, index) => {
+              const isLast = index === crumbs.length - 1
+
+              return (
+                <BreadcrumbItem key={crumb.href}>
+                  <BreadcrumbSeparator />
+                  {isLast ? (
+                    <BreadcrumbPage data-testid="app-shell-heading">{crumb.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link href={crumb.href}>{crumb.label}</Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              )
+            })}
+          </>
+        ) : (
+          <BreadcrumbItem>
+            <BreadcrumbPage data-testid="app-shell-heading">Beranda</BreadcrumbPage>
+          </BreadcrumbItem>
+        )}
+      </BreadcrumbList>
+    </Breadcrumb>
+  )
+}
