@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { KeyRound, ShieldCheck, UsersRound } from "lucide-react"
 
 import {
@@ -63,20 +62,19 @@ function BrandBadge({ hasLogoAsset, logoPath }: { hasLogoAsset: boolean; logoPat
 
 export function AppSidebar({ hasLogoAsset, logoPath, ...props }: AppSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
 
   return (
     <Sidebar collapsible="offcanvas" data-testid="app-sidebar" variant="inset" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/app">
-                <BrandBadge hasLogoAsset={hasLogoAsset} logoPath={logoPath} />
-                <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
-                  <span className="font-medium">Kontrak Central Saga</span>
-                  <span className="text-xs text-sidebar-foreground/70">PT Central Saga Mandala</span>
-                </div>
-              </Link>
+            <SidebarMenuButton size="lg" onClick={() => router.push("/app")}>
+              <BrandBadge hasLogoAsset={hasLogoAsset} logoPath={logoPath} />
+              <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
+                <span className="font-medium">Kontrak Central Saga</span>
+                <span className="text-xs text-sidebar-foreground/70">PT Central Saga Mandala</span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -86,11 +84,13 @@ export function AppSidebar({ hasLogoAsset, logoPath, ...props }: AppSidebarProps
           <SidebarMenu>
             {navigation.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)}>
-                  <Link className="font-medium" data-testid={item.testId} href={item.url}>
-                    <item.icon />
-                    {item.title}
-                  </Link>
+                <SidebarMenuButton
+                  data-testid={item.testId}
+                  isActive={pathname.startsWith(item.url)}
+                  onClick={() => router.push(item.url)}
+                >
+                  <item.icon />
+                  <span className="font-medium">{item.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}

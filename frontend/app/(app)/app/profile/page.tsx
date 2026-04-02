@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { buildSessionExpiredRedirectPath, LOGIN_PATH, readSessionState } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeaderCard, PageStack, PillList } from "@/components/access-management/shared";
 import { UserAvatar } from "@/components/user-avatar";
@@ -81,9 +81,9 @@ export default async function ProfilePage() {
             <div className="rounded-3xl border border-line bg-card-strong p-5 text-sm leading-7 text-muted">
               Setelah foto diperbarui dari halaman pengaturan, avatar baru akan tampil di menu pengguna pada navbar atas.
             </div>
-            <Button asChild size="lg">
-              <Link href="/app/settings">Ubah foto profil</Link>
-            </Button>
+            <Link className={buttonVariants({ size: "lg" })} href="/app/settings">
+              Ubah foto profil
+            </Link>
           </CardContent>
         </Card>
       </div>

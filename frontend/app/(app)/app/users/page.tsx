@@ -3,7 +3,7 @@ import Link from "next/link";
 import { deleteUserAction } from "@/app/(app)/app/access-management/actions";
 import { listUsers } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
-import { Button } from "@/components/ui/button";
+import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyStateCard, PageHeaderCard, PageStack, PillList, StatusBanner } from "@/components/access-management/shared";
@@ -87,11 +87,13 @@ export default async function UsersPage({
                           </td>
                           <td className="border border-line px-4 py-4 align-top">
                             <div className="flex flex-wrap gap-2">
-                              <Button asChild size="sm" variant="outline">
-                                <Link aria-label={`Ubah ${user.name}`} href={`/app/users/${user.id}/edit`}>
-                                  Ubah
-                                </Link>
-                              </Button>
+                              <Link
+                                aria-label={`Ubah ${user.name}`}
+                                className={buttonVariants({ size: "sm", variant: "outline" })}
+                                href={`/app/users/${user.id}/edit`}
+                              >
+                                Ubah
+                              </Link>
                               <form action={deleteAction}>
                                 <Button aria-label={`Hapus ${user.name}`} size="sm" type="submit" variant="destructive">
                                   Hapus

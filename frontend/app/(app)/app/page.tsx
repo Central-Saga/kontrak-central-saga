@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { listPermissionOptions, listRoles, listUsers } from "@/lib/access-management/backend";
 import { handleModulePageError } from "@/lib/access-management/page";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeaderCard, PageStack, PillList } from "@/components/access-management/shared";
 
@@ -80,9 +80,9 @@ export default async function AppHomePage() {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                    <p className="text-sm leading-7 text-muted">{handleModulePageError(result.reason)}</p>
-                   <Button asChild variant="outline">
-                     <Link href={module.href}>{module.actionLabel}</Link>
-                   </Button>
+                    <Link className={buttonVariants({ variant: "outline" })} href={module.href}>
+                      {module.actionLabel}
+                    </Link>
                 </CardContent>
               </Card>
             );
@@ -107,9 +107,9 @@ export default async function AppHomePage() {
                    <PillList emptyLabel="Belum ada data." items={latestNames} />
                  </div>
 
-                <Button asChild>
-                  <Link href={module.href}>{module.actionLabel}</Link>
-                </Button>
+                 <Link className={buttonVariants({})} href={module.href}>
+                   {module.actionLabel}
+                 </Link>
               </CardContent>
             </Card>
           );

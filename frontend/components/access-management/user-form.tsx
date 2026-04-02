@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -89,9 +89,9 @@ export function UserForm({ action, mode, roles, values }: UserFormProps) {
             <Button data-testid="user-form-submit" size="lg" type="submit">
               {isCreate ? "Simpan pengguna" : "Simpan perubahan"}
             </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/app/users">Batal</Link>
-            </Button>
+            <Link className={buttonVariants({ size: "lg", variant: "outline" })} href="/app/users">
+              Batal
+            </Link>
           </div>
         </form>
       </CardContent>

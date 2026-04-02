@@ -8,7 +8,7 @@ import {
 } from "@/app/(app)/app/settings/actions";
 import { readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
 import { buildSessionExpiredRedirectPath, LOGIN_PATH, readSessionState } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -121,9 +121,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
                     <Button data-testid="profile-photo-submit" size="lg" type="submit">
                       Unggah avatar
                     </Button>
-                    <Button asChild size="lg" variant="outline">
-                      <Link href="/app/profile">Lihat profil</Link>
-                    </Button>
+                    <Link className={buttonVariants({ size: "lg", variant: "outline" })} href="/app/profile">
+                      Lihat profil
+                    </Link>
                   </div>
                 </form>
               </CardContent>
@@ -174,9 +174,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
               <Button data-testid="settings-profile-submit" size="lg" type="submit">
                 Simpan profil akun
               </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/app/profile">Batal</Link>
-              </Button>
+              <Link className={buttonVariants({ size: "lg", variant: "outline" })} href="/app/profile">
+                Batal
+              </Link>
             </div>
           </form>
         </CardContent>
