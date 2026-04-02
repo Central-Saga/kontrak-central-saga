@@ -146,7 +146,6 @@ test("menu profil membuka pengaturan akun yang mendukung profil, keamanan, tema,
   await expect(page.getByTestId("settings-page")).toBeVisible();
   await expect(page.getByTestId("settings-name-input")).toHaveValue(/.+/);
   await expect(page.getByTestId("settings-email-input")).toHaveValue(adminEmail);
-  await expect(page.getByTestId("settings-username-input")).toBeVisible();
   await expect(page.getByTestId("profile-photo-input")).toBeVisible();
 
   await page.getByTestId("settings-profile-submit").click();

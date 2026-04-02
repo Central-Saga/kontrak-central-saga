@@ -19,12 +19,6 @@ function readString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-function readNullableString(formData: FormData, key: string) {
-  const value = readString(formData, key);
-
-  return value ? value : null;
-}
-
 function translateAuthValidationMessage(message: string) {
   const normalizedMessage = message.trim().toLowerCase();
 
@@ -145,7 +139,6 @@ export async function updateAccountProfileAction(redirectPath: string, formData:
   let nextPath = appendMessage(redirectPath, "status", "profile_updated");
   const name = readString(formData, "name");
   const email = readString(formData, "email");
-  const username = readNullableString(formData, "username");
 
   if (!name) {
     nextPath = appendMessage(redirectPath, "error", "Nama akun wajib diisi.");
@@ -163,7 +156,7 @@ export async function updateAccountProfileAction(redirectPath: string, formData:
     await updateCurrentUserProfile(token, {
       email,
       name,
-      username,
+      username: null,
     });
   } catch (error) {
     const message = getAuthActionErrorMessage(

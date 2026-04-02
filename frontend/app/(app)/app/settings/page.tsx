@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import {
   updateAccountPasswordAction,
   updateAccountProfileAction,
-  updateProfilePhotoAction,
 } from "@/app/(app)/app/settings/actions";
 import { readSearchParam, type PageSearchParams } from "@/lib/access-management/page";
 import { buildSessionExpiredRedirectPath, LOGIN_PATH, readSessionState } from "@/lib/auth";
@@ -14,11 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PageHeaderCard, PageStack } from "@/components/access-management/shared";
+import { AvatarUploadCard } from "@/components/settings/avatar-upload-card";
 import { ThemePreferenceCard } from "@/components/settings/theme-preference-card";
 import { UserAvatar } from "@/components/user-avatar";
 
 const statusMessages = {
-  avatar_updated: "Foto profil berhasil dikirim untuk diperbarui.",
   password_updated: "Password akun berhasil diperbarui.",
   profile_updated: "Profil akun berhasil diperbarui.",
 };
@@ -39,8 +38,6 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
   const error = readSearchParam(resolvedSearchParams, "error");
   const profileAction = updateAccountProfileAction.bind(null, "/app/settings");
   const passwordAction = updateAccountPasswordAction.bind(null, "/app/settings");
-  const avatarAction = updateProfilePhotoAction.bind(null, "/app/settings");
-
   return (
     <PageStack data-testid="settings-page">
       <PageHeaderCard
@@ -57,7 +54,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
         <CardHeader className="gap-4">
           <CardTitle className="text-2xl">Profil akun</CardTitle>
           <CardDescription>
-            Nama, username, email, dan avatar menggunakan data akun aktif dari backend. Semua pembaruan tetap dikirim lewat server action agar token sesi tidak pernah bocor ke sisi klien.
+            Nama, email, dan avatar menggunakan data akun aktif dari backend. Semua pembaruan tetap dikirim lewat alur aman agar token sesi tidak pernah bocor ke sisi klien.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -72,63 +69,23 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
                 />
                 <div className="flex flex-col gap-1">
                   <p className="text-xl font-semibold text-foreground">{session.user.name}</p>
-                  <p className="text-sm text-muted">{session.user.email}</p>
-                  <p className="text-sm text-muted">{session.user.username ? `@${session.user.username}` : "Username belum diatur"}</p>
+                  <p className="text-sm text-muted break-all">{session.user.email}</p>
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-3xl border border-line bg-background px-4 py-4">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-highlight">Nama</p>
                   <p className="mt-2 text-sm font-medium text-foreground">{session.user.name}</p>
                 </div>
                 <div className="rounded-3xl border border-line bg-background px-4 py-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-highlight">Username</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{session.user.username ? `@${session.user.username}` : "Belum ada"}</p>
-                </div>
-                <div className="rounded-3xl border border-line bg-background px-4 py-4">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-highlight">Email</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{session.user.email}</p>
+                  <p className="mt-2 break-all text-sm font-medium text-foreground">{session.user.email}</p>
                 </div>
               </div>
             </div>
 
-            <Card className="rounded-[2rem] bg-card-strong shadow-none">
-              <CardHeader className="gap-3 p-6">
-                <CardTitle className="text-xl">Perbarui avatar</CardTitle>
-                <CardDescription>
-                  Gunakan gambar JPG, PNG, WEBP, atau GIF. Avatar baru akan langsung dipakai oleh menu pengguna dan halaman profil setelah backend menyimpan perubahan.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-6 pb-6">
-                <form action={avatarAction} className="flex flex-col gap-5">
-                  <FieldGroup>
-                    <Field>
-                      <FieldLabel htmlFor="profile-photo-input">Berkas foto</FieldLabel>
-                      <Input
-                        accept="image/gif,image/jpeg,image/png,image/webp"
-                        data-testid="profile-photo-input"
-                        id="profile-photo-input"
-                        name="avatar"
-                        type="file"
-                      />
-                      <FieldDescription>
-                        Pilih satu berkas gambar yang mewakili identitas akun Anda dengan jelas.
-                      </FieldDescription>
-                    </Field>
-                  </FieldGroup>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button data-testid="profile-photo-submit" size="lg" type="submit">
-                      Unggah avatar
-                    </Button>
-                    <Link className={buttonVariants({ size: "lg", variant: "outline" })} href="/app/profile">
-                      Lihat profil
-                    </Link>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+            <AvatarUploadCard name={session.user.name} />
           </div>
 
           <form action={profileAction} className="flex flex-col gap-6 rounded-[2rem] border border-line bg-card-strong p-6">
@@ -138,20 +95,6 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
                 <Input data-testid="settings-name-input" defaultValue={session.user.name} id="settings-name" name="name" required />
                 <FieldDescription>
                   Nama ini muncul di navbar, profil, dan area ringkasan akun lain di dalam aplikasi.
-                </FieldDescription>
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="settings-username">Username</FieldLabel>
-                <Input
-                  data-testid="settings-username-input"
-                  defaultValue={session.user.username ?? ""}
-                  id="settings-username"
-                  name="username"
-                  placeholder="mis. central-admin"
-                />
-                <FieldDescription>
-                  Username bersifat opsional, tetapi membantu membuat identitas akun lebih ringkas dan mudah dikenali.
                 </FieldDescription>
               </Field>
 
