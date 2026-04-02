@@ -11,8 +11,8 @@ services:
       - "${PROXY_HTTP_PORT:-80}:80"
       - "${PROXY_HTTPS_PORT:-443}:443"
     environment:
-      FRONTEND_APP_DOMAIN: ${FRONTEND_APP_DOMAIN:-app.kontrak-centralsaga.test}
-      BACKEND_APP_DOMAIN: ${BACKEND_APP_DOMAIN:-api.kontrak-centralsaga.test}
+      FRONTEND_APP_DOMAIN: ${FRONTEND_APP_DOMAIN:-app.kontrak-centralsaga.site}
+      BACKEND_APP_DOMAIN: ${BACKEND_APP_DOMAIN:-api.kontrak-centralsaga.site}
       LOCAL_TLS_ENABLED: ${LOCAL_TLS_ENABLED:-true}
     volumes:
       - ./docker/proxy/default.conf.template:/etc/nginx/templates/default.conf.template:ro
@@ -29,8 +29,8 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3000
-      NEXT_PUBLIC_APP_URL: ${FRONTEND_APP_URL:-http://app.kontrak-centralsaga.test}
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://api.kontrak-centralsaga.test}
+      NEXT_PUBLIC_APP_URL: ${FRONTEND_APP_URL:-http://app.kontrak-centralsaga.site}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://api.kontrak-centralsaga.site}
       SERVER_API_BASE_URL: ${SERVER_API_BASE_URL:-http://backend}
     expose:
       - "3000"
@@ -62,7 +62,7 @@ services:
       APP_ENV: ${BACKEND_APP_ENV:-local}
       APP_DEBUG: ${BACKEND_APP_DEBUG:-true}
       APP_KEY: ${BACKEND_APP_KEY:-}
-      APP_URL: ${BACKEND_APP_URL:-http://api.kontrak-centralsaga.test}
+      APP_URL: ${BACKEND_APP_URL:-http://api.kontrak-centralsaga.site}
       LOG_CHANNEL: stack
       LOG_STACK: single
       LOG_LEVEL: ${BACKEND_LOG_LEVEL:-debug}
@@ -81,7 +81,7 @@ services:
       QUEUE_CONNECTION: sync
       FILESYSTEM_DISK: ${BACKEND_FILESYSTEM_DISK:-public}
       MEDIA_DISK: ${BACKEND_MEDIA_DISK:-public}
-      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1,app.kontrak-centralsaga.test}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1,app.kontrak-centralsaga.site}
       APP_LOCALE: en
       APP_FALLBACK_LOCALE: en
       APP_FAKER_LOCALE: en_US

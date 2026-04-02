@@ -58,14 +58,13 @@ e2e-down:
 
 tls-dev-cert:
 	@mkdir -p docker/proxy/certs
-	@if [ ! -f docker/proxy/certs/local-dev.crt ] || [ ! -f docker/proxy/certs/local-dev.key ]; then \
-		if command -v mkcert >/dev/null 2>&1; then \
-			cd docker/proxy/certs && mkcert -cert-file local-dev.crt -key-file local-dev.key app.kontrak-centralsaga.test api.kontrak-centralsaga.test; \
-		else \
-			openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-				-keyout docker/proxy/certs/local-dev.key \
-				-out docker/proxy/certs/local-dev.crt \
-				-subj "/CN=app.kontrak-centralsaga.test" \
-				-addext "subjectAltName=DNS:app.kontrak-centralsaga.test,DNS:api.kontrak-centralsaga.test"; \
-		fi; \
+	@rm -f docker/proxy/certs/local-dev.crt docker/proxy/certs/local-dev.key
+	@if command -v mkcert >/dev/null 2>&1; then \
+		cd docker/proxy/certs && mkcert -cert-file local-dev.crt -key-file local-dev.key app.kontrak-centralsaga.site api.kontrak-centralsaga.site; \
+	else \
+		openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+			-keyout docker/proxy/certs/local-dev.key \
+			-out docker/proxy/certs/local-dev.crt \
+			-subj "/CN=app.kontrak-centralsaga.site" \
+			-addext "subjectAltName=DNS:app.kontrak-centralsaga.site,DNS:api.kontrak-centralsaga.site"; \
 	fi

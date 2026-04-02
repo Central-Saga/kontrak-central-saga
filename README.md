@@ -6,20 +6,20 @@ Web-based system for managing client contracts, payment validation, project prog
 
 Preferred local domains:
 
-- `https://app.kontrak-centralsaga.test` - Next.js frontend
-- `https://api.kontrak-centralsaga.test` - Laravel API
+- `https://app.kontrak-centralsaga.site` - Next.js frontend
+- `https://api.kontrak-centralsaga.site` - Laravel API
 
 Add these to your hosts file for local development:
 
-- `127.0.0.1 app.kontrak-centralsaga.test`
-- `127.0.0.1 api.kontrak-centralsaga.test`
+- `127.0.0.1 app.kontrak-centralsaga.site`
+- `127.0.0.1 api.kontrak-centralsaga.site`
 
 For automated E2E/bootstrap flows, the project still uses `app.127.0.0.1.nip.io` and `api.127.0.0.1.nip.io` overrides through `make e2e-bootstrap`.
 
 If ports `80` or `443` are already occupied on your machine, change `PROXY_HTTP_PORT` / `PROXY_HTTPS_PORT` in `.env` (for example `8080` and `8443`).
 
 Local HTTPS is terminated by the nginx proxy container using dev certificates in `docker/proxy/certs/`.
-Run `make tls-dev-cert` once if you need to regenerate the local certificate.
+Run `make tls-dev-cert` once if you need to regenerate the local certificate for the `.site` domains.
 
 - If `mkcert` is installed, the generated certificate will be locally trusted.
 - If `mkcert` is not installed, the fallback is a self-signed certificate and your browser may show a warning until you trust it manually.
