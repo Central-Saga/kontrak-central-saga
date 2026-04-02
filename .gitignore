@@ -4,11 +4,14 @@
 !.env.example
 
 # root tool caches
-*.log
+node_modules/
 .cursor/
 .codex/
 .amp/
-opencode.json
+*.log
+docker/proxy/certs/*.crt
+docker/proxy/certs/*.key
+!docker/proxy/certs/.gitkeep
 
 # backend
 backend/.env

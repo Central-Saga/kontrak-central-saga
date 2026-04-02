@@ -1,0 +1,71 @@
+SHELL := /bin/sh
+
+.PHONY: up down rebuild ps fresh health test-local boost-mcp boost-stdio boost-inspector e2e-up e2e-seed e2e-bootstrap e2e-down tls-dev-cert
+
+E2E_FRONTEND_APP_DOMAIN := app.127.0.0.1.nip.io
+E2E_BACKEND_APP_DOMAIN := api.127.0.0.1.nip.io
+E2E_PROXY_HTTP_PORT := 8080
+E2E_BACKEND_APP_URL := http://$(E2E_BACKEND_APP_DOMAIN):$(E2E_PROXY_HTTP_PORT)
+E2E_FRONTEND_APP_URL := http://$(E2E_FRONTEND_APP_DOMAIN):$(E2E_PROXY_HTTP_PORT)
+E2E_NEXT_PUBLIC_API_BASE_URL := http://$(E2E_BACKEND_APP_DOMAIN):$(E2E_PROXY_HTTP_PORT)
+E2E_SANCTUM_STATEFUL_DOMAINS := localhost,127.0.0.1,$(E2E_FRONTEND_APP_DOMAIN)
+E2E_COMPOSE_ENV := FRONTEND_APP_DOMAIN=$(E2E_FRONTEND_APP_DOMAIN) BACKEND_APP_DOMAIN=$(E2E_BACKEND_APP_DOMAIN) PROXY_HTTP_PORT=$(E2E_PROXY_HTTP_PORT) BACKEND_APP_URL=$(E2E_BACKEND_APP_URL) FRONTEND_APP_URL=$(E2E_FRONTEND_APP_URL) NEXT_PUBLIC_API_BASE_URL=$(E2E_NEXT_PUBLIC_API_BASE_URL) SANCTUM_STATEFUL_DOMAINS=$(E2E_SANCTUM_STATEFUL_DOMAINS)
+
+up:
+	$(MAKE) tls-dev-cert
+	docker compose up -d --build
+
+down:
+	docker compose down
+
+rebuild:
+	$(MAKE) tls-dev-cert
+	docker compose up -d --build --force-recreate
+
+ps:
+	docker compose ps
+
+fresh:
+	docker compose exec -T backend php artisan migrate:fresh --seed --force
+
+health:
+	docker compose exec -T backend php -r "echo file_get_contents('http://127.0.0.1/api/health');"
+
+test-local:
+	cd backend && php artisan test --compact
+
+boost-mcp: boost-inspector
+
+boost-stdio:
+	cd backend && php artisan boost:mcp
+
+boost-inspector:
+	cd backend && php artisan mcp:inspector laravel-boost --host=127.0.0.1 --port=6277
+
+e2e-up:
+	$(MAKE) tls-dev-cert
+	$(E2E_COMPOSE_ENV) docker compose up -d --build
+	$(E2E_COMPOSE_ENV) docker compose exec -T backend php -r "for (\$$i = 0; \$$i < 30; \$$i++) { if (@file_get_contents('http://127.0.0.1/api/health') !== false) { exit(0); } sleep(1); } fwrite(STDERR, 'Backend health check failed'.PHP_EOL); exit(1);"
+
+e2e-seed:
+	$(E2E_COMPOSE_ENV) docker compose exec -T backend php artisan migrate --force
+	$(E2E_COMPOSE_ENV) docker compose exec -T backend php artisan db:seed --class=Database\\Seeders\\E2eAuthUserSeeder --force
+
+e2e-bootstrap: e2e-up e2e-seed
+
+e2e-down:
+	$(E2E_COMPOSE_ENV) docker compose down
+
+tls-dev-cert:
+	@mkdir -p docker/proxy/certs
+	@if [ ! -f docker/proxy/certs/local-dev.crt ] || [ ! -f docker/proxy/certs/local-dev.key ]; then \
+		if command -v mkcert >/dev/null 2>&1; then \
+			cd docker/proxy/certs && mkcert -cert-file local-dev.crt -key-file local-dev.key app.kontrak-centralsaga.test api.kontrak-centralsaga.test; \
+		else \
+			openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+				-keyout docker/proxy/certs/local-dev.key \
+				-out docker/proxy/certs/local-dev.crt \
+				-subj "/CN=app.kontrak-centralsaga.test" \
+				-addext "subjectAltName=DNS:app.kontrak-centralsaga.test,DNS:api.kontrak-centralsaga.test"; \
+		fi; \
+	fi
