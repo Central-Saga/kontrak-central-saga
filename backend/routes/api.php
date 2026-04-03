@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\ContractController;
+use App\Http\Controllers\Api\V1\ContractDocumentVersionController;
 use App\Http\Controllers\Api\V1\DashboardSummaryController;
 use App\Http\Controllers\Api\V1\ExportController;
 use App\Http\Controllers\Api\V1\PaymentController;
@@ -67,6 +68,13 @@ Route::prefix('v1')->group(function (): void {
 
         Route::apiResource('contracts', ContractController::class)
             ->middleware('permission:manage contracts');
+
+        Route::prefix('contracts/{contract}')->middleware('permission:manage contracts')->group(function (): void {
+            Route::get('document-versions', [ContractDocumentVersionController::class, 'index']);
+            Route::post('document-versions', [ContractDocumentVersionController::class, 'store']);
+            Route::get('document-versions/compare', [ContractDocumentVersionController::class, 'compare']);
+            Route::get('document-versions/{version}', [ContractDocumentVersionController::class, 'show']);
+        });
 
         Route::apiResource('payment-terms', PaymentTermController::class)
             ->middleware('permission:manage payment terms');

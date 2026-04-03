@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ContractResource;
 use App\Http\Requests\StoreContractRequest;
 use App\Http\Requests\UpdateContractRequest;
+use App\Http\Resources\ContractResource;
 use App\Models\Contract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,6 +49,7 @@ class ContractController extends Controller
     {
         $contract->load([
             'client:id,client_code,company_name',
+            'documentVersions' => fn ($query) => $query->with(['media', 'uploader:id,name,email']),
             'paymentTerms' => fn ($query) => $query->with('payments')->orderBy('term_number'),
             'projectProgressUpdates' => fn ($query) => $query->latest('progress_date')->latest('id'),
             'latestProgress',
