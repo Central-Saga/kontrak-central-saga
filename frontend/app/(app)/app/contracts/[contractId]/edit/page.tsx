@@ -1,3 +1,5 @@
+import Link from "next/link"
+import { GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import {
@@ -7,6 +9,8 @@ import {
 import { ContractForm } from "@/components/contract-management/contract-form"
 import { ContractDocumentVersionsSection } from "@/components/contract-management/contract-document-versions-section"
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { buttonVariants } from "@/components/ui/button"
 import {
   compareContractDocumentVersions,
   getAccessManagementErrorMessage,
@@ -21,10 +25,33 @@ const statusMessages = {
   document_uploaded: "Versi dokumen kontrak berhasil diunggah dan masuk ke arsip versi.",
 }
 
+const versionStatusLabels: Record<string, string> = {
+  draft: "Draft",
+  final: "Final",
+  review: "Review",
+}
+
 function readPositiveInteger(value?: string) {
   const parsedValue = Number(value ?? "")
 
   return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : undefined
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date)
 }
 
 export default async function EditContractPage({
@@ -103,11 +130,46 @@ export default async function EditContractPage({
 
   const action = updateContractAction.bind(null, contract.id)
   const uploadAction = uploadContractDocumentVersionAction.bind(null, contract.id)
+  const documentVersionsCount = contract.document_versions_count ?? documentVersions.length
+  const compareReady = documentVersionsCount >= 2
+  const latestDocumentVersion = contract.latest_document_version ?? documentVersions[0]
+  const latestDocumentVersionSummary = latestDocumentVersion
+    ? [
+        `V${String(latestDocumentVersion.version_number).padStart(2, "0")}`,
+        versionStatusLabels[latestDocumentVersion.version_status] ?? latestDocumentVersion.version_status,
+        formatDateTime(latestDocumentVersion.uploaded_at ?? latestDocumentVersion.created_at) ?? "Belum tercatat",
+      ].join(" • ")
+    : null
 
   return (
     <PageStack>
-      <PageHeaderCard description="Perbarui identitas kontrak, proyek, status, dan detail administrasinya dari satu halaman edit yang ringkas." title={`Ubah kontrak: ${contract.contract_number}`} />
+      <PageHeaderCard description="Perbarui identitas kontrak, proyek, status, serta akses ke riwayat versi dokumen dan compare metadata dari satu halaman edit yang tetap ringkas." title={`Ubah kontrak: ${contract.contract_number}`} />
       <StatusBanner error={error ?? undefined} messages={statusMessages} status={status} />
+
+      <Alert>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-1">
+            <AlertTitle>Riwayat versi dokumen tersedia di halaman ini</AlertTitle>
+            <AlertDescription>
+              {documentVersionsCount > 0
+                ? `Saat ini tersimpan ${documentVersionsCount} versi dokumen.${latestDocumentVersionSummary ? ` Versi terbaru ${latestDocumentVersionSummary}.` : ""} ${compareReady ? "Compare metadata sudah siap dipakai." : "Unggah minimal dua versi agar compare metadata aktif."}`
+                : "Belum ada arsip dokumen untuk kontrak ini. Lompat ke bagian riwayat dokumen di bawah untuk mengunggah versi pertama dan mulai membangun histori revisi."}
+            </AlertDescription>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link className={buttonVariants({ variant: "outline" })} href="#contract-document-history">
+              <HistoryIcon aria-hidden data-icon="inline-start" />
+              Lompat ke riwayat dokumen
+            </Link>
+            <Link className={buttonVariants({ variant: compareReady ? "secondary" : "outline" })} href="#contract-document-compare">
+              <GitCompareArrowsIcon aria-hidden data-icon="inline-start" />
+              {compareReady ? "Buka compare metadata" : "Lihat panel compare"}
+            </Link>
+          </div>
+        </div>
+      </Alert>
+
       <ContractForm
         action={action}
         clients={clients}

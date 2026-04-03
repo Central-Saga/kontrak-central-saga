@@ -9,6 +9,7 @@ import {
   UploadIcon,
 } from "lucide-react"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -162,17 +163,18 @@ export function ContractDocumentVersionsSection({
   const nextVersionNumber = (latestVersion?.version_number ?? 0) + 1
   const selectedVersionIds = new Set([compareSelection?.fromVersionId, compareSelection?.toVersionId].filter(Boolean))
   const latestUploadLabel = latestVersion ? formatDateTime(latestVersion.uploaded_at ?? latestVersion.created_at) : "Belum ada arsip"
+  const compareReady = sortedVersions.length >= 2
 
   return (
-    <Card>
+    <Card id="contract-document-history">
       <CardHeader className="gap-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex max-w-3xl flex-col gap-3">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-highlight">Dokumen kontrak</p>
             <div className="flex flex-col gap-2">
-              <CardTitle className="text-2xl">Riwayat versi & metadata compare</CardTitle>
+              <CardTitle className="text-2xl">Riwayat versi dokumen & compare metadata</CardTitle>
               <CardDescription>
-                Unggah revisi dokumen utama {contractNumber}, simpan arsip setiap versi, lalu bandingkan dua versi berdasarkan metadata tanpa membuka isi file.
+                Arsip revisi dokumen utama {contractNumber} tersimpan di sini. Unggah versi baru dari panel kiri, lalu gunakan compare metadata di panel kanan untuk melacak perubahan tanpa membuka isi file.
               </CardDescription>
             </div>
           </div>
@@ -186,12 +188,21 @@ export function ContractDocumentVersionsSection({
       </CardHeader>
 
       <CardContent className="flex flex-col gap-8">
+        <Alert>
+          <AlertTitle>Cara pakai riwayat versi dokumen</AlertTitle>
+          <AlertDescription>
+            {sortedVersions.length
+              ? `Arsip saat ini menyimpan ${sortedVersions.length} versi. Unggah revisi baru untuk menambah histori, lalu pilih dua versi di panel compare. Hasil compare muncul tepat di bawah form compare dan versi yang dipakai akan disorot di timeline.`
+              : "Mulai dengan mengunggah versi pertama dokumen kontrak utama. Setelah versi kedua tersedia, panel compare metadata di sebelah kanan akan langsung bisa digunakan."}
+          </AlertDescription>
+        </Alert>
+
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <section className="rounded-3xl border border-line bg-card-strong p-6">
+          <section className="rounded-3xl border border-line bg-card-strong p-6" id="contract-document-upload">
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-foreground">Unggah versi baru</p>
+              <p className="text-sm font-semibold text-foreground">Unggah versi baru ke arsip</p>
               <p className="text-sm leading-7 text-muted">
-                Simpan setiap revisi kontrak utama sebagai arsip baru dengan status versi dan ringkasan perubahan yang mudah dilacak tim legal maupun operasional.
+                Simpan setiap revisi kontrak utama sebagai arsip baru lengkap dengan status versi dan ringkasan perubahan. Setelah diunggah, versi baru langsung muncul di timeline untuk audit cepat.
               </p>
             </div>
 
@@ -241,15 +252,15 @@ export function ContractDocumentVersionsSection({
             </form>
           </section>
 
-          <section className="rounded-3xl border border-line bg-card-strong p-6">
+          <section className="rounded-3xl border border-line bg-card-strong p-6" id="contract-document-compare">
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-foreground">Bandingkan metadata versi</p>
+              <p className="text-sm font-semibold text-foreground">Bandingkan dua versi dokumen</p>
               <p className="text-sm leading-7 text-muted">
-                Pilih dua arsip untuk melihat perbedaan nama file, status versi, checksum, waktu unggah, dan ringkasan perubahan secara berdampingan.
+                Pilih versi lama di kolom kiri dan versi pembanding di kolom kanan untuk melihat perbedaan nama file, status versi, checksum, waktu unggah, dan ringkasan perubahan secara berdampingan.
               </p>
             </div>
 
-            {sortedVersions.length >= 2 ? (
+            {compareReady ? (
               <form className="mt-6 flex flex-col gap-6" method="GET">
                 <FieldGroup>
                   <Field>
@@ -299,10 +310,13 @@ export function ContractDocumentVersionsSection({
                     </Link>
                   ) : null}
                 </div>
+                <p className="text-sm leading-7 text-muted">
+                  Setelah tombol compare dijalankan, hasil perbedaan metadata akan tampil di panel bawah dan versi yang terpilih akan diberi penanda pada timeline arsip.
+                </p>
               </form>
             ) : (
               <div className="mt-6 rounded-3xl border border-dashed border-line bg-background px-4 py-5 text-sm text-muted">
-                Minimal dua versi diperlukan sebelum metadata dapat dibandingkan.
+                Minimal dua versi diperlukan sebelum compare metadata aktif. Unggah versi kedua dari panel kiri, lalu kembali ke area compare ini.
               </div>
             )}
 
@@ -354,7 +368,7 @@ export function ContractDocumentVersionsSection({
                 </div>
               ) : (
                 <p className="text-sm leading-7 text-muted">
-                  Pilih dua versi dari panel compare untuk menampilkan ringkasan perbedaan metadata di sini.
+                  Pilih dua versi di panel compare di atas, lalu klik <span className="font-medium text-foreground">Bandingkan metadata</span>. Ringkasan perbedaan akan tampil di sini, sementara versi yang dipakai ikut disorot pada timeline di bawah.
                 </p>
               )}
             </div>
@@ -367,7 +381,7 @@ export function ContractDocumentVersionsSection({
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold text-foreground">Timeline arsip versi</p>
             <p className="text-sm leading-7 text-muted">
-              Lihat urutan revisi dokumen, pengunggah, checksum, dan catatan perubahan untuk memudahkan audit cepat saat ada revisi kontrak.
+              Lihat urutan revisi dokumen, pengunggah, checksum, dan catatan perubahan dalam satu timeline. Jika sebuah versi sedang dipakai di compare, kartu versinya akan diberi penanda khusus.
             </p>
           </div>
 
@@ -460,7 +474,7 @@ export function ContractDocumentVersionsSection({
                 <div className="flex flex-col gap-2">
                   <p className="text-base font-semibold text-foreground">Belum ada versi dokumen</p>
                   <p className="text-sm leading-7 text-muted">
-                    Arsip pertama akan muncul di sini setelah Anda mengunggah dokumen kontrak utama melalui panel upload di atas.
+                    Arsip pertama akan muncul di sini setelah Anda mengunggah dokumen kontrak utama melalui panel upload di atas. Setelah versi kedua tersedia, compare metadata juga otomatis siap dipakai.
                   </p>
                 </div>
               </div>
