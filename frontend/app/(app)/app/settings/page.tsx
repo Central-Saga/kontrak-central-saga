@@ -140,6 +140,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
                 <Field>
                   <FieldLabel htmlFor="settings-current-password">Password saat ini</FieldLabel>
                   <Input
+                    autoComplete="current-password"
                     data-testid="settings-current-password-input"
                     id="settings-current-password"
                     name="current_password"
@@ -154,6 +155,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
                 <Field>
                   <FieldLabel htmlFor="settings-password">Password baru</FieldLabel>
                   <Input
+                    autoComplete="new-password"
                     data-testid="settings-password-input"
                     id="settings-password"
                     minLength={8}
@@ -169,6 +171,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
                 <Field>
                   <FieldLabel htmlFor="settings-password-confirmation">Konfirmasi password baru</FieldLabel>
                   <Input
+                    autoComplete="new-password"
                     data-testid="settings-password-confirmation-input"
                     id="settings-password-confirmation"
                     minLength={8}

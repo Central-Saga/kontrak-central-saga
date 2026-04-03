@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
@@ -7,6 +8,15 @@ import { useThemePreference } from "@/components/theme/theme-provider";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { resolvedTheme } = useThemePreference();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <Sonner
