@@ -59,6 +59,47 @@ export type RoleRecord = {
   updated_at?: string;
 };
 
+export type ClientRecord = {
+  id: number;
+  client_code: string;
+  company_name: string;
+  contact_person?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  status: string;
+  portal_access_enabled: boolean;
+  contracts_count?: number;
+  active_contracts_count?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ContractRecord = {
+  id: number;
+  client_id: number;
+  client?: {
+    id: number;
+    client_code: string;
+    company_name: string;
+  } | null;
+  contract_number: string;
+  contract_title: string;
+  project_name: string;
+  contract_date: string;
+  start_date: string;
+  end_date: string;
+  contract_value: string | number;
+  project_scope: string;
+  payment_scheme_summary?: string | null;
+  contract_status: string;
+  notes?: string | null;
+  payment_terms_count?: number;
+  project_progress_updates_count?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
 type PermissionRecord = {
   id: number;
   name: string;
@@ -81,6 +122,32 @@ export type UserMutationInput = {
 export type RoleMutationInput = {
   name: string;
   permission_ids?: number[];
+};
+
+export type ClientMutationInput = {
+  client_code: string;
+  company_name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  status: string;
+  portal_access_enabled?: boolean;
+};
+
+export type ContractMutationInput = {
+  client_id: number;
+  contract_number: string;
+  contract_title: string;
+  project_name: string;
+  contract_date: string;
+  start_date: string;
+  end_date: string;
+  contract_value: string;
+  project_scope: string;
+  payment_scheme_summary?: string;
+  contract_status: string;
+  notes?: string;
 };
 
 type OptionPageLoader<T extends AccessManagementOption> = (page: number) => Promise<PaginatedCollection<T>>;
@@ -391,6 +458,96 @@ export async function listPermissionOptions(): Promise<AccessManagementOption[]>
     name: permission.name,
     guard_name: permission.guard_name,
   }));
+}
+
+export async function listClients(options: {
+  search?: string;
+  status?: string;
+  perPage?: number;
+} = {}): Promise<PaginatedCollection<ClientRecord>> {
+  const query = buildQueryString({
+    search: options.search,
+    status: options.status,
+    per_page: options.perPage ?? 10,
+  });
+
+  return requestBackend<PaginatedCollection<ClientRecord>>(`/api/v1/clients${query}`);
+}
+
+export async function getClient(clientId: number): Promise<ClientRecord> {
+  const response = await requestBackend<DetailEnvelope<ClientRecord>>(`/api/v1/clients/${clientId}`);
+
+  return response.data;
+}
+
+export async function createClient(input: ClientMutationInput): Promise<ClientRecord> {
+  const response = await requestBackend<DetailEnvelope<ClientRecord>>("/api/v1/clients", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function updateClient(clientId: number, input: ClientMutationInput): Promise<ClientRecord> {
+  const response = await requestBackend<DetailEnvelope<ClientRecord>>(`/api/v1/clients/${clientId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function deleteClient(clientId: number): Promise<void> {
+  await requestBackend<void>(`/api/v1/clients/${clientId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listContracts(options: {
+  search?: string;
+  status?: string;
+  clientId?: number;
+  perPage?: number;
+} = {}): Promise<PaginatedCollection<ContractRecord>> {
+  const query = buildQueryString({
+    client_id: options.clientId,
+    search: options.search,
+    status: options.status,
+    per_page: options.perPage ?? 10,
+  });
+
+  return requestBackend<PaginatedCollection<ContractRecord>>(`/api/v1/contracts${query}`);
+}
+
+export async function getContract(contractId: number): Promise<ContractRecord> {
+  const response = await requestBackend<DetailEnvelope<ContractRecord>>(`/api/v1/contracts/${contractId}`);
+
+  return response.data;
+}
+
+export async function createContract(input: ContractMutationInput): Promise<ContractRecord> {
+  const response = await requestBackend<DetailEnvelope<ContractRecord>>("/api/v1/contracts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function updateContract(contractId: number, input: ContractMutationInput): Promise<ContractRecord> {
+  const response = await requestBackend<DetailEnvelope<ContractRecord>>(`/api/v1/contracts/${contractId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function deleteContract(contractId: number): Promise<void> {
+  await requestBackend<void>(`/api/v1/contracts/${contractId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function exportAccessManagementDataset(

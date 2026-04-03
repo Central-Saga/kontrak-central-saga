@@ -3,10 +3,16 @@
 import { redirect } from "next/navigation";
 
 import {
+  createClient,
+  createContract,
   createRole,
   createUser,
+  deleteClient,
+  deleteContract,
   deleteRole,
   deleteUser,
+  updateClient,
+  updateContract,
   getAccessManagementErrorMessage,
   getFirstValidationError,
   isAccessManagementError,
@@ -138,4 +144,122 @@ export async function deleteRoleAction(roleId: number) {
   }
 
   redirect(appendMessage("/app/roles", "status", "deleted"));
+}
+
+function readOptionalCheckbox(formData: FormData, key: string) {
+  return formData.get(key) === "1";
+}
+
+export async function createClientAction(formData: FormData) {
+  try {
+    await createClient({
+      address: readOptionalString(formData, "address"),
+      client_code: readString(formData, "client_code"),
+      company_name: readString(formData, "company_name"),
+      contact_person: readOptionalString(formData, "contact_person"),
+      email: readOptionalString(formData, "email"),
+      phone: readOptionalString(formData, "phone"),
+      portal_access_enabled: readOptionalCheckbox(formData, "portal_access_enabled"),
+      status: readString(formData, "status"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error)
+    redirect(appendMessage("/app/clients/new", "error", getFallbackErrorMessage(error)))
+  }
+
+  redirect(appendMessage("/app/clients", "status", "created"))
+}
+
+export async function updateClientAction(clientId: number, formData: FormData) {
+  try {
+    await updateClient(clientId, {
+      address: readOptionalString(formData, "address"),
+      client_code: readString(formData, "client_code"),
+      company_name: readString(formData, "company_name"),
+      contact_person: readOptionalString(formData, "contact_person"),
+      email: readOptionalString(formData, "email"),
+      phone: readOptionalString(formData, "phone"),
+      portal_access_enabled: readOptionalCheckbox(formData, "portal_access_enabled"),
+      status: readString(formData, "status"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error)
+    redirect(appendMessage(`/app/clients/${clientId}/edit`, "error", getFallbackErrorMessage(error)))
+  }
+
+  redirect(appendMessage("/app/clients", "status", "updated"))
+}
+
+export async function deleteClientAction(clientId: number) {
+  try {
+    await deleteClient(clientId)
+  } catch (error) {
+    redirectForUnauthorized(error)
+    redirect(appendMessage("/app/clients", "error", getFallbackErrorMessage(error)))
+  }
+
+  redirect(appendMessage("/app/clients", "status", "deleted"))
+}
+
+export async function createContractAction(formData: FormData) {
+  let contractId: number | null = null
+
+  try {
+    const contract = await createContract({
+      client_id: Number(readString(formData, "client_id")),
+      contract_number: readString(formData, "contract_number"),
+      contract_title: readString(formData, "contract_title"),
+      project_name: readString(formData, "project_name"),
+      contract_date: readString(formData, "contract_date"),
+      start_date: readString(formData, "start_date"),
+      end_date: readString(formData, "end_date"),
+      contract_value: readString(formData, "contract_value"),
+      project_scope: readString(formData, "project_scope"),
+      payment_scheme_summary: readOptionalString(formData, "payment_scheme_summary"),
+      contract_status: readString(formData, "contract_status"),
+      notes: readOptionalString(formData, "notes"),
+    })
+
+    contractId = contract.id
+  } catch (error) {
+    redirectForUnauthorized(error)
+    redirect(appendMessage("/app/contracts/new", "error", getFallbackErrorMessage(error)))
+  }
+
+  redirect(`/app/contracts/${contractId}/edit?status=created`)
+}
+
+export async function updateContractAction(contractId: number, formData: FormData) {
+  try {
+    await updateContract(contractId, {
+      client_id: Number(readString(formData, "client_id")),
+      contract_number: readString(formData, "contract_number"),
+      contract_title: readString(formData, "contract_title"),
+      project_name: readString(formData, "project_name"),
+      contract_date: readString(formData, "contract_date"),
+      start_date: readString(formData, "start_date"),
+      end_date: readString(formData, "end_date"),
+      contract_value: readString(formData, "contract_value"),
+      project_scope: readString(formData, "project_scope"),
+      payment_scheme_summary: readOptionalString(formData, "payment_scheme_summary"),
+      contract_status: readString(formData, "contract_status"),
+      notes: readOptionalString(formData, "notes"),
+    })
+  } catch (error) {
+    redirectForUnauthorized(error)
+    redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)))
+  }
+
+  redirect(appendMessage("/app/contracts", "status", "updated"))
+}
+
+export async function deleteContractAction(contractId: number) {
+  try {
+    await deleteContract(contractId)
+  } catch (error) {
+    redirectForUnauthorized(error)
+    redirect(appendMessage("/app/contracts", "error", getFallbackErrorMessage(error)))
+  }
+
+  redirect(appendMessage("/app/contracts", "status", "deleted"))
 }
