@@ -239,6 +239,52 @@ it('uploads a payment proof using media library', function (): void {
         ->assertJsonPath('data.proof.notes', 'Bukti transfer dari client');
 });
 
+it('stores contract document versions and compares version metadata', function (): void {
+    Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
+
+    $firstUploadResponse = $this->post('/api/v1/contracts/1/document-versions', [
+        'file' => UploadedFile::fake()->createWithContent('contract-v1.pdf', "%PDF-1.4\ncontract-version-1"),
+        'document_type' => 'main_contract',
+        'version_status' => 'draft',
+        'change_summary' => 'Versi awal untuk ditinjau internal.',
+    ]);
+
+    $firstUploadResponse
+        ->assertCreated()
+        ->assertJsonPath('data.contract_id', 1)
+        ->assertJsonPath('data.version_number', 1)
+        ->assertJsonPath('data.version_status', 'draft');
+
+    $firstVersionId = (int) $firstUploadResponse->json('data.id');
+
+    $secondUploadResponse = $this->post('/api/v1/contracts/1/document-versions', [
+        'file' => UploadedFile::fake()->createWithContent('contract-v2.pdf', "%PDF-1.4\ncontract-version-2-updated"),
+        'document_type' => 'main_contract',
+        'version_status' => 'final',
+        'change_summary' => 'Versi final setelah revisi legal.',
+    ]);
+
+    $secondUploadResponse
+        ->assertCreated()
+        ->assertJsonPath('data.version_number', 2)
+        ->assertJsonPath('data.version_status', 'final');
+
+    $secondVersionId = (int) $secondUploadResponse->json('data.id');
+
+    $this->getJson('/api/v1/contracts/1/document-versions?document_type=main_contract')
+        ->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.version_number', 2)
+        ->assertJsonPath('data.1.version_number', 1);
+
+    $this->getJson("/api/v1/contracts/1/document-versions/compare?from_version_id={$firstVersionId}&to_version_id={$secondVersionId}")
+        ->assertOk()
+        ->assertJsonPath('data.contract_id', 1)
+        ->assertJsonPath('data.same_file', false)
+        ->assertJsonPath('data.from_version.id', $firstVersionId)
+        ->assertJsonPath('data.to_version.id', $secondVersionId);
+});
+
 it('exports contracts report as pdf for authorized user', function (): void {
     Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
 
