@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable([
     'client_id',
@@ -27,10 +30,10 @@ use Spatie\Activitylog\Support\LogOptions;
     'created_by',
     'updated_by',
 ])]
-class Contract extends Model
+class Contract extends Model implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\ContractFactory> */
-    use HasFactory, LogsActivity;
+    /** @use HasFactory<ContractFactory> */
+    use HasFactory, InteractsWithMedia, LogsActivity;
 
     public const array STATUSES = [
         'draft',
@@ -39,6 +42,19 @@ class Contract extends Model
         'terminated',
         'expired',
         'cancelled',
+    ];
+
+    public const array DOCUMENT_TYPES = [
+        'main_contract',
+        'amendment',
+        'appendix',
+        'supporting_document',
+    ];
+
+    public const array DOCUMENT_VERSION_STATUSES = [
+        'draft',
+        'review',
+        'final',
     ];
 
     protected function casts(): array
@@ -79,6 +95,26 @@ class Contract extends Model
     public function latestProgress(): HasOne
     {
         return $this->hasOne(ProjectProgress::class)->latestOfMany('progress_date');
+    }
+
+    public function documentVersions(): HasMany
+    {
+        return $this->hasMany(ContractDocumentVersion::class)
+            ->orderByDesc('version_number')
+            ->orderByDesc('id');
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('contract_documents')
+            ->acceptsMimeTypes([
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'image/jpeg',
+                'image/png',
+                'image/webp',
+            ]);
     }
 
     public function getActivitylogOptions(): LogOptions
