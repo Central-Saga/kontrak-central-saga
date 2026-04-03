@@ -96,6 +96,8 @@ export type ContractRecord = {
   notes?: string | null;
   payment_terms_count?: number;
   project_progress_updates_count?: number;
+  document_versions_count?: number;
+  latest_document_version?: ContractDocumentVersionRecord | null;
   document_versions?: ContractDocumentVersionRecord[];
   created_at?: string;
   updated_at?: string;
