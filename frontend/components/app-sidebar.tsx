@@ -3,7 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { KeyRound, ShieldCheck, UsersRound } from "lucide-react"
+import { Building2, FileText, KeyRound, ShieldCheck, UsersRound } from "lucide-react"
 
 import {
   Sidebar,
@@ -29,6 +29,18 @@ const navigation = [
     url: "/app/users",
     icon: UsersRound,
     testId: "sidebar-nav-users",
+  },
+  {
+    title: "Klien",
+    url: "/app/clients",
+    icon: Building2,
+    testId: "sidebar-nav-clients",
+  },
+  {
+    title: "Kontrak",
+    url: "/app/contracts",
+    icon: FileText,
+    testId: "sidebar-nav-contracts",
   },
   {
     title: "Peran",

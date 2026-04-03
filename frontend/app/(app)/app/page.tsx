@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { listPermissionOptions, listRoles, listUsers } from "@/lib/access-management/backend";
+import { listClients, listContracts, listPermissionOptions, listRoles, listUsers } from "@/lib/access-management/backend";
 import { handleModulePageError } from "@/lib/access-management/page";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,34 @@ const overviewModules = [
         items: response.data.map((item) => item.name),
         total: response.meta.total,
       };
+    },
+  },
+  {
+    title: "Klien",
+    href: "/app/clients",
+    actionLabel: "Buka modul klien",
+    description: "Data perusahaan, kontak utama, dan status portal yang menjadi akar relasi untuk kontrak proyek.",
+    fetcher: async () => {
+      const response = await listClients({ perPage: 3 });
+
+      return {
+        items: response.data.map((item) => item.company_name),
+        total: response.meta.total,
+      };
+    },
+  },
+  {
+    title: "Kontrak",
+    href: "/app/contracts",
+    actionLabel: "Buka modul kontrak",
+    description: "Ringkasan kontrak aktif, nilai proyek, dan hubungan operasional yang menjadi pusat modul pembayaran dan progres.",
+    fetcher: async () => {
+      const response = await listContracts({ perPage: 3 })
+
+      return {
+        items: response.data.map((item) => item.contract_number),
+        total: response.meta.total,
+      }
     },
   },
   {
@@ -57,12 +85,12 @@ export default async function AppHomePage() {
   return (
     <PageStack>
       <PageHeaderCard
-        description="Workspace `/app` menjadi pintu masuk ringkas untuk modul pengguna, peran, dan izin akses. Modul izin sekarang tampil kembali sebagai halaman baca-saja, sementara identitas akun aktif dipusatkan di navbar atas."
+        description="Workspace `/app` menjadi pintu masuk ringkas untuk modul pengguna, klien, kontrak, peran, dan izin akses. Modul izin sekarang tampil kembali sebagai halaman baca-saja, sementara identitas akun aktif dipusatkan di navbar atas."
         eyebrow="Manajemen akses"
         title="Ringkasan akses aplikasi"
       />
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-5">
         {overviewModules.map((module, index) => {
           const result = moduleResults[index];
 
