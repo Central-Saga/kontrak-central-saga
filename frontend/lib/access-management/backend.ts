@@ -96,8 +96,53 @@ export type ContractRecord = {
   notes?: string | null;
   payment_terms_count?: number;
   project_progress_updates_count?: number;
+  document_versions?: ContractDocumentVersionRecord[];
   created_at?: string;
   updated_at?: string;
+};
+
+export type ContractDocumentVersionRecord = {
+  id: number;
+  contract_id: number;
+  media_id: number;
+  document_type: string;
+  version_number: number;
+  version_status: string;
+  original_file_name: string;
+  stored_file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  checksum_sha256: string;
+  change_summary?: string | null;
+  uploaded_at?: string | null;
+  uploaded_by?: number | null;
+  uploader?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
+  media?: {
+    id: number;
+    name: string;
+    file_name: string;
+    mime_type?: string | null;
+    size: number;
+    url: string;
+  } | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ContractDocumentVersionCompareRecord = {
+  contract_id: number;
+  same_file: boolean;
+  from_version: ContractDocumentVersionRecord;
+  to_version: ContractDocumentVersionRecord;
+  differences: Array<{
+    field: string;
+    from: string | number | null;
+    to: string | number | null;
+  }>;
 };
 
 type PermissionRecord = {
@@ -212,7 +257,7 @@ async function requestBackend<T>(path: string, init: RequestInit = {}): Promise<
   headers.set("Accept", "application/json");
   headers.set("Authorization", `Bearer ${token}`);
 
-  if (!headers.has("Content-Type") && init.body) {
+  if (!headers.has("Content-Type") && init.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -258,7 +303,7 @@ async function requestBackendResponse(path: string, init: RequestInit = {}): Pro
   headers.set("Accept", headers.get("Accept") ?? "*/*");
   headers.set("Authorization", `Bearer ${token}`);
 
-  if (!headers.has("Content-Type") && init.body) {
+  if (!headers.has("Content-Type") && init.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -548,6 +593,59 @@ export async function deleteContract(contractId: number): Promise<void> {
   await requestBackend<void>(`/api/v1/contracts/${contractId}`, {
     method: "DELETE",
   });
+}
+
+export async function listContractDocumentVersions(
+  contractId: number,
+  options: { documentType?: string } = {},
+): Promise<ContractDocumentVersionRecord[]> {
+  const query = buildQueryString({
+    document_type: options.documentType,
+  });
+
+  const response = await requestBackend<{ data: ContractDocumentVersionRecord[] }>(
+    `/api/v1/contracts/${contractId}/document-versions${query}`,
+    {
+      method: "GET",
+    },
+  );
+
+  return response.data;
+}
+
+export async function uploadContractDocumentVersion(
+  contractId: number,
+  formData: FormData,
+): Promise<ContractDocumentVersionRecord> {
+  const response = await requestBackend<{ data: ContractDocumentVersionRecord }>(
+    `/api/v1/contracts/${contractId}/document-versions`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+
+  return response.data;
+}
+
+export async function compareContractDocumentVersions(
+  contractId: number,
+  fromVersionId: number,
+  toVersionId: number,
+): Promise<ContractDocumentVersionCompareRecord> {
+  const query = buildQueryString({
+    from_version_id: fromVersionId,
+    to_version_id: toVersionId,
+  });
+
+  const response = await requestBackend<{ data: ContractDocumentVersionCompareRecord }>(
+    `/api/v1/contracts/${contractId}/document-versions/compare${query}`,
+    {
+      method: "GET",
+    },
+  );
+
+  return response.data;
 }
 
 export async function exportAccessManagementDataset(

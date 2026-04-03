@@ -13,6 +13,7 @@ import {
   deleteUser,
   updateClient,
   updateContract,
+  uploadContractDocumentVersion,
   getAccessManagementErrorMessage,
   getFirstValidationError,
   isAccessManagementError,
@@ -262,4 +263,15 @@ export async function deleteContractAction(contractId: number) {
   }
 
   redirect(appendMessage("/app/contracts", "status", "deleted"))
+}
+
+export async function uploadContractDocumentVersionAction(contractId: number, formData: FormData) {
+  try {
+    await uploadContractDocumentVersion(contractId, formData)
+  } catch (error) {
+    redirectForUnauthorized(error)
+    redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)))
+  }
+
+  redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "document_uploaded"))
 }
