@@ -183,6 +183,7 @@ it('returns contract detail with related payment terms and latest progress', fun
         ->assertOk()
         ->assertJsonPath('data.contract_number', 'KCS-2026-001')
         ->assertJsonCount(3, 'data.payment_terms')
+        ->assertJsonPath('data.document_versions_count', 0)
         ->assertJsonPath('data.latest_progress.percentage', 78);
 });
 

@@ -104,6 +104,11 @@ class Contract extends Model implements HasMedia
             ->orderByDesc('id');
     }
 
+    public function latestDocumentVersion(): HasOne
+    {
+        return $this->hasOne(ContractDocumentVersion::class)->ofMany('version_number', 'max');
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('contract_documents')

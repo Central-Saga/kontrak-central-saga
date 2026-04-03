@@ -16,8 +16,8 @@ class ContractController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $contracts = Contract::query()
-            ->with(['client:id,client_code,company_name'])
-            ->withCount(['paymentTerms', 'projectProgressUpdates'])
+            ->with(['client:id,client_code,company_name', 'latestDocumentVersion'])
+            ->withCount(['paymentTerms', 'projectProgressUpdates', 'documentVersions'])
             ->when($request->integer('client_id'), fn ($query, $clientId) => $query->where('client_id', $clientId))
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('contract_status', $status))
             ->when(
@@ -40,7 +40,7 @@ class ContractController extends Controller
     {
         $contract = Contract::create($request->validated());
 
-        return (new ContractResource($contract->load(['client'])->loadCount(['paymentTerms', 'projectProgressUpdates'])))
+        return (new ContractResource($contract->load(['client', 'latestDocumentVersion'])->loadCount(['paymentTerms', 'projectProgressUpdates', 'documentVersions'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -50,10 +50,11 @@ class ContractController extends Controller
         $contract->load([
             'client:id,client_code,company_name',
             'documentVersions' => fn ($query) => $query->with(['media', 'uploader:id,name,email']),
+            'latestDocumentVersion',
             'paymentTerms' => fn ($query) => $query->with('payments')->orderBy('term_number'),
             'projectProgressUpdates' => fn ($query) => $query->latest('progress_date')->latest('id'),
             'latestProgress',
-        ])->loadCount(['paymentTerms', 'projectProgressUpdates']);
+        ])->loadCount(['paymentTerms', 'projectProgressUpdates', 'documentVersions']);
 
         return new ContractResource($contract);
     }
@@ -63,7 +64,7 @@ class ContractController extends Controller
         $contract->update($request->validated());
 
         return new ContractResource(
-            $contract->fresh()->load(['client:id,client_code,company_name'])->loadCount(['paymentTerms', 'projectProgressUpdates']),
+            $contract->fresh()->load(['client:id,client_code,company_name', 'latestDocumentVersion'])->loadCount(['paymentTerms', 'projectProgressUpdates', 'documentVersions']),
         );
     }
 

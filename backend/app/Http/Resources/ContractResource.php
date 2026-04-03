@@ -37,9 +37,14 @@ class ContractResource extends JsonResource
             'updated_by' => $this->updated_by,
             'payment_terms_count' => $this->whenCounted('paymentTerms'),
             'project_progress_updates_count' => $this->whenCounted('projectProgressUpdates'),
+            'document_versions_count' => $this->whenCounted('documentVersions'),
             'payment_terms' => PaymentTermResource::collection($this->whenLoaded('paymentTerms')),
             'project_progress' => ProjectProgressResource::collection($this->whenLoaded('projectProgressUpdates')),
             'document_versions' => ContractDocumentVersionResource::collection($this->whenLoaded('documentVersions')),
+            'latest_document_version' => $this->when(
+                $this->relationLoaded('latestDocumentVersion') && $this->latestDocumentVersion !== null,
+                fn () => new ContractDocumentVersionResource($this->latestDocumentVersion),
+            ),
             'latest_progress' => $this->when(
                 $this->relationLoaded('latestProgress') && $this->latestProgress !== null,
                 fn () => new ProjectProgressResource($this->latestProgress),
