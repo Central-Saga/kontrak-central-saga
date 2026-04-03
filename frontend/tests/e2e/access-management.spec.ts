@@ -368,3 +368,116 @@ test("access-management export actions show both formats and keep the active que
   const permissionsPdfUrl = await expectExportDownload(page, requests, "permissions", "pdf");
   expect(permissionsPdfUrl.searchParams.get("format")).toBe("pdf");
 });
+
+test("clients module supports search create edit and delete happy path", async ({ page }) => {
+  const seed = Date.now();
+  const clientCode = `CLI-${seed}`;
+  const updatedClientCode = `CLI-${seed}-UPD`;
+  const companyName = `PT Playwright Client ${seed}`;
+  const updatedCompanyName = `PT Playwright Client Updated ${seed}`;
+  const email = `client-${seed}@centralsaga.test`;
+
+  await login(page);
+  await page.goto("/app/clients");
+  await expect(page.getByTestId("clients-list-page")).toBeVisible();
+
+  await page.getByRole("link", { name: "Tambah klien" }).click();
+  await expect(page).toHaveURL(/\/app\/clients\/new$/);
+
+  await page.getByTestId("client-form-code").fill(clientCode);
+  await page.getByTestId("client-form-company").fill(companyName);
+  await page.getByTestId("client-form-contact").fill("Budi Hartono");
+  await page.getByTestId("client-form-email").fill(email);
+  await page.getByTestId("client-form-phone").fill("081234567890");
+  await page.getByTestId("client-form-address").fill("Jl. Klien No. 1");
+  await page.getByTestId("client-form-portal-access").check();
+  await page.getByTestId("client-form-submit").click();
+
+  await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
+  await expect(page.getByText("Klien baru berhasil ditambahkan.")).toBeVisible();
+
+  await page.getByTestId("clients-search-input").fill(clientCode);
+  await page.getByRole("button", { name: "Cari" }).click();
+  await expect(page.getByText(companyName)).toBeVisible();
+
+  await page.getByRole("link", { name: `Ubah ${companyName}` }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/clients/\\d+/edit$`));
+  await page.getByTestId("client-form-code").fill(updatedClientCode);
+  await page.getByTestId("client-form-company").fill(updatedCompanyName);
+  await page.getByTestId("client-form-submit").click();
+
+  await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
+  await expect(page.getByText("Data klien berhasil diperbarui.")).toBeVisible();
+
+  await page.getByTestId("clients-search-input").fill(updatedClientCode);
+  await page.getByRole("button", { name: "Cari" }).click();
+  await expect(page.getByText(updatedCompanyName)).toBeVisible();
+  await page.getByRole("button", { name: `Hapus ${updatedCompanyName}` }).click();
+
+  await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
+  await expect(page.getByText("Klien berhasil dihapus.")).toBeVisible();
+});
+
+test("contracts module supports search create edit and delete happy path", async ({ page }) => {
+  const seed = Date.now();
+  const clientCode = `CTR-CLI-${seed}`;
+  const clientName = `PT Kontrak Client ${seed}`;
+  const contractNumber = `KTR-${seed}`;
+  const updatedContractNumber = `KTR-${seed}-UPD`;
+  const contractTitle = `Kontrak Playwright ${seed}`;
+  const updatedContractTitle = `Kontrak Playwright Updated ${seed}`;
+
+  await login(page);
+
+  await page.goto("/app/clients/new");
+  await expect(page).toHaveURL(/\/app\/clients\/new$/);
+  await page.getByTestId("client-form-code").fill(clientCode);
+  await page.getByTestId("client-form-company").fill(clientName);
+  await page.getByTestId("client-form-status").selectOption("active");
+  await page.getByTestId("client-form-submit").click();
+  await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
+  await expect(page.getByText("Klien baru berhasil ditambahkan.")).toBeVisible();
+
+  await page.goto("/app/contracts");
+  await expect(page.getByTestId("contracts-list-page")).toBeVisible();
+
+  await page.getByRole("link", { name: "Tambah kontrak" }).click();
+  await expect(page).toHaveURL(/\/app\/contracts\/new$/);
+
+  await page.getByTestId("contract-form-client").selectOption({ label: `${clientCode} — ${clientName}` });
+  await page.getByTestId("contract-form-number").fill(contractNumber);
+  await page.getByTestId("contract-form-title").fill(contractTitle);
+  await page.getByTestId("contract-form-project").fill("Proyek Playwright");
+  await page.getByTestId("contract-form-date").fill("2026-04-03");
+  await page.getByTestId("contract-form-start-date").fill("2026-04-03");
+  await page.getByTestId("contract-form-end-date").fill("2026-12-31");
+  await page.getByTestId("contract-form-value").fill("150000000");
+  await page.getByTestId("contract-form-scope").fill("Implementasi sistem kontrak perusahaan");
+  await page.getByTestId("contract-form-payment-scheme").fill("Termin 30/70");
+  await page.getByTestId("contract-form-notes").fill("Catatan pengujian Playwright");
+  await page.getByTestId("contract-form-submit").click();
+
+  await expect(page).toHaveURL(/\/app\/contracts\/\d+\/edit(\?|$)/);
+  await expect(page.getByText(contractNumber)).toBeVisible();
+
+  await page.getByTestId("contract-form-number").fill(updatedContractNumber);
+  await page.getByTestId("contract-form-title").fill(updatedContractTitle);
+  await page.getByTestId("contract-form-submit").click();
+
+  await expect(page).toHaveURL(/\/app\/contracts(\?|$)/);
+  await expect(page.getByText("Data kontrak berhasil diperbarui.")).toBeVisible();
+
+  await page.getByTestId("contracts-search-input").fill(updatedContractNumber);
+  await page.getByRole("button", { name: "Cari" }).click();
+  await expect(page.getByText(updatedContractTitle)).toBeVisible();
+  await page.getByRole("button", { name: `Hapus ${updatedContractNumber}` }).click();
+
+  await expect(page).toHaveURL(/\/app\/contracts(\?|$)/);
+  await expect(page.getByText("Kontrak berhasil dihapus.")).toBeVisible();
+
+  await page.goto(`/app/clients?search=${encodeURIComponent(clientCode)}`);
+  await expect(page.getByText(clientName)).toBeVisible();
+  await page.getByRole("button", { name: `Hapus ${clientName}` }).click();
+  await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
+  await expect(page.getByText("Klien berhasil dihapus.")).toBeVisible();
+});
