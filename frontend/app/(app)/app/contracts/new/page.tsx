@@ -1,4 +1,5 @@
 import { createContractAction } from "@/app/(app)/app/access-management/actions"
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { ContractForm } from "@/components/contract-management/contract-form"
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
 import { listClients } from "@/lib/access-management/backend"
@@ -21,7 +22,8 @@ export default async function NewContractPage({ searchParams }: { searchParams: 
   return (
     <PageStack>
       <PageHeaderCard description="Susun kontrak baru dengan klien, proyek, periode, dan nilai kerja yang jelas sejak awal." title="Tambah kontrak" />
-      <StatusBanner error={error ?? message ?? undefined} />
+      <StatusToastBridge error={error ?? undefined} />
+      <StatusBanner error={message ?? undefined} />
       <ContractForm action={createContractAction} clients={clients} mode="create" />
     </PageStack>
   )

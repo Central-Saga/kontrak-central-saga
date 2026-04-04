@@ -1,4 +1,5 @@
 import { updateClientAction } from "@/app/(app)/app/access-management/actions"
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { ClientForm } from "@/components/client-management/client-form"
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
 import { getClient } from "@/lib/access-management/backend"
@@ -31,7 +32,8 @@ export default async function EditClientPage({
           description="Detail klien tidak bisa dimuat. Periksa akses Anda atau kembali ke daftar klien."
           title="Ubah klien"
         />
-        <StatusBanner error={error ?? message ?? undefined} />
+        <StatusToastBridge error={error ?? undefined} />
+        <StatusBanner error={message ?? undefined} />
       </PageStack>
     )
   }
@@ -44,7 +46,7 @@ export default async function EditClientPage({
         description="Perbarui identitas perusahaan, kontak utama, dan status operasional klien dari satu halaman edit yang ringkas."
         title={`Ubah klien: ${client.company_name}`}
       />
-      <StatusBanner error={error ?? undefined} />
+      <StatusToastBridge error={error ?? undefined} />
       <ClientForm
         action={action}
         mode="edit"

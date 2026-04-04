@@ -1,14 +1,20 @@
 import Link from "next/link"
-import { ArrowUpRightIcon, GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
+import { ChevronDownIcon, GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
 
 import { deleteContractAction } from "@/app/(app)/app/access-management/actions"
 import { RowActionButtons } from "@/components/access-management/row-action-buttons"
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
+import { buttonVariants } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { listClients, listContracts, type ContractRecord } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
+
+const toolbarSelectClassName =
+  "h-11 w-full appearance-none rounded-2xl border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
 const statusMessages = {
   created: "Kontrak baru berhasil ditambahkan.",
@@ -56,7 +62,7 @@ function getLatestDocumentVersionSummary(contract: ContractRecord) {
 export default async function ContractsPage({ searchParams }: { searchParams: PageSearchParams }) {
   const resolvedSearchParams = await searchParams
   const search = readSearchParam(resolvedSearchParams, "search") ?? ""
-  const statusFilter = readSearchParam(resolvedSearchParams, "status") ?? ""
+  const statusFilter = readSearchParam(resolvedSearchParams, "contract_status") ?? ""
   const clientId = Number(readSearchParam(resolvedSearchParams, "client_id") ?? "") || undefined
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
@@ -85,7 +91,8 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
         title="Kelola kontrak"
       />
 
-      <StatusBanner error={error ?? message ?? undefined} messages={statusMessages} status={status} />
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
+      <StatusBanner error={message ?? undefined} />
 
       <Card>
         <CardHeader className="gap-4">
@@ -98,28 +105,34 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
 
           <form className="flex w-full flex-col gap-3 xl:flex-row" method="GET">
             <Input data-testid="contracts-search-input" defaultValue={search} name="search" placeholder="Cari nomor, judul, atau nama proyek" />
-            <select className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground xl:max-w-56" defaultValue={clientId ? String(clientId) : ""} name="client_id">
-              <option value="">Semua klien</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>{client.company_name}</option>
-              ))}
-            </select>
-            <select className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground xl:max-w-48" defaultValue={statusFilter} name="status">
-              <option value="">Semua status</option>
-              <option value="draft">Draft</option>
-              <option value="active">Aktif</option>
-              <option value="completed">Selesai</option>
-              <option value="terminated">Dihentikan</option>
-              <option value="expired">Kedaluwarsa</option>
-              <option value="cancelled">Dibatalkan</option>
-            </select>
+            <div className="relative w-full xl:max-w-56">
+              <select className={toolbarSelectClassName} defaultValue={clientId ? String(clientId) : ""} name="client_id">
+                <option value="">Semua klien</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>{client.company_name}</option>
+                ))}
+              </select>
+              <ChevronDownIcon aria-hidden className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted" />
+            </div>
+            <div className="relative w-full xl:max-w-48">
+              <select className={toolbarSelectClassName} defaultValue={statusFilter} name="contract_status">
+                <option value="">Semua status</option>
+                <option value="draft">Draft</option>
+                <option value="active">Aktif</option>
+                <option value="completed">Selesai</option>
+                <option value="terminated">Dihentikan</option>
+                <option value="expired">Kedaluwarsa</option>
+                <option value="cancelled">Dibatalkan</option>
+              </select>
+              <ChevronDownIcon aria-hidden className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted" />
+            </div>
             <button className="h-11 rounded-2xl border border-line px-4 text-sm font-medium text-foreground" type="submit">Cari</button>
           </form>
 
           <Alert>
             <AlertTitle>Riwayat versi dokumen tersedia di setiap kontrak</AlertTitle>
             <AlertDescription>
-              Gunakan shortcut <span className="font-medium text-foreground">Buka riwayat dokumen</span> pada tabel untuk langsung menuju arsip versi, unggah revisi baru, atau compare metadata antarversi di halaman ubah kontrak.
+              Gunakan ikon riwayat dokumen pada tabel untuk langsung menuju arsip versi, unggah revisi baru, atau compare metadata antarversi di halaman ubah kontrak.
             </AlertDescription>
           </Alert>
         </CardHeader>
@@ -131,12 +144,12 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                   <thead>
                     <tr>
                       <th className="w-[14%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nomor</th>
-                      <th className="w-[18%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Klien</th>
-                      <th className="w-[26%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Judul & dokumen</th>
-                      <th className="w-[13%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Proyek</th>
+                      <th className="w-[17%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Klien</th>
+                      <th className="w-[29%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Judul & dokumen</th>
+                      <th className="w-[11%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Proyek</th>
                       <th className="w-[11%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nilai</th>
                       <th className="w-[8%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
-                      <th className="w-[10%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
+                      <th className="w-[10rem] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -149,58 +162,66 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
 
                       return (
                         <tr key={contract.id}>
-                          <td className="border border-line px-4 py-4 align-top font-medium text-foreground">{contract.contract_number}</td>
-                          <td className="border border-line px-4 py-4 align-top text-muted">{contract.client?.company_name ?? "-"}</td>
-                          <td className="border border-line px-4 py-4 align-top">
-                            <div className="flex flex-col gap-3">
+                          <td className="border border-line px-4 py-3.5 align-top font-medium text-foreground">{contract.contract_number}</td>
+                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.client?.company_name ?? "-"}</td>
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <div className="flex flex-col gap-2.5">
                               <div className="flex flex-col gap-1">
                                 <p className="font-medium text-foreground">{contract.contract_title}</p>
-                                <p className="text-xs text-muted">{contract.payment_terms_count ?? 0} termin • {contract.project_progress_updates_count ?? 0} progres</p>
                               </div>
 
-                              <div className="flex flex-col gap-2 rounded-2xl border border-line bg-background px-3 py-3">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="inline-flex items-center rounded-full border border-line bg-card-strong px-2.5 py-1 text-xs font-medium text-foreground">
-                                    <HistoryIcon aria-hidden className="mr-1 size-3.5" />
-                                    {documentVersionsCount} versi dokumen
-                                  </span>
-                                  <span className={[
-                                    "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
-                                    compareReady ? "border-primary/20 bg-primary/10 text-primary" : "border-line bg-card-strong text-muted",
-                                  ].join(" ")}>
-                                    <GitCompareArrowsIcon aria-hidden className="mr-1 size-3.5" />
-                                    {compareReady ? "Compare tersedia" : "Compare aktif setelah 2 versi"}
-                                  </span>
+                              <div className="flex flex-col gap-2 rounded-2xl border border-line bg-background px-3 py-2.5">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex items-center rounded-full border border-line bg-card-strong px-2.5 py-1 text-xs font-medium text-foreground">
+                                      <HistoryIcon aria-hidden className="mr-1 size-3.5" />
+                                      {documentVersionsCount} versi
+                                    </span>
+                                    <span className={[
+                                      "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+                                      compareReady ? "border-primary/20 bg-primary/10 text-primary" : "border-line bg-card-strong text-muted",
+                                    ].join(" ")}>
+                                      <GitCompareArrowsIcon aria-hidden className="mr-1 size-3.5" />
+                                      {compareReady ? "Compare siap" : "Compare nanti"}
+                                    </span>
+                                  </div>
+
+                                  <TooltipProvider delayDuration={0}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Link
+                                          aria-label={`Buka riwayat dokumen ${contract.contract_number}`}
+                                          className={buttonVariants({ size: "icon-xs", variant: "outline" })}
+                                          href={documentHistoryHref}
+                                        >
+                                          <HistoryIcon aria-hidden data-icon="inline-start" />
+                                        </Link>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top">Riwayat dokumen</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
-                                <p className="text-xs leading-6 text-muted">
-                                  {latestDocumentVersionSummary
-                                    ? `Versi terbaru ${latestDocumentVersionSummary}.`
-                                    : "Belum ada arsip dokumen. Unggah revisi pertama dari halaman ubah kontrak."}
+                                <p className="text-xs leading-5 text-muted">
+                                  {latestDocumentVersionSummary ? latestDocumentVersionSummary : "Belum ada arsip dokumen."}
                                 </p>
-                                <Link className="inline-flex items-center text-xs font-medium text-primary underline-offset-4 hover:underline" href={documentHistoryHref}>
-                                  Buka riwayat dokumen
-                                  <ArrowUpRightIcon aria-hidden className="ml-1 size-3.5" />
-                                </Link>
                               </div>
                             </div>
                           </td>
-                          <td className="border border-line px-4 py-4 align-top text-muted">{contract.project_name}</td>
-                          <td className="border border-line px-4 py-4 align-top text-muted">{contract.contract_value}</td>
-                          <td className="border border-line px-4 py-4 align-top text-muted">{contract.contract_status}</td>
-                          <td className="border border-line px-4 py-4 align-top">
-                            <div className="flex flex-col gap-2">
-                              <RowActionButtons
-                                deleteAction={deleteAction}
-                                deleteLabel={`Hapus ${contract.contract_number}`}
-                                deleteTestId={`contract-delete-${contract.id}`}
-                                editHref={`/app/contracts/${contract.id}/edit`}
-                                editLabel={`Ubah ${contract.contract_number}`}
-                                editTestId={`contract-edit-${contract.id}`}
-                              />
-                              <Link className="text-xs font-medium text-primary underline-offset-4 hover:underline" href={documentHistoryHref}>
-                                Riwayat dokumen
-                              </Link>
-                            </div>
+                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.project_name}</td>
+                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.contract_value}</td>
+                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.contract_status}</td>
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <RowActionButtons
+                              deleteAction={deleteAction}
+                              deleteLabel={`Hapus ${contract.contract_number}`}
+                              deleteTestId={`contract-delete-${contract.id}`}
+                              editHref={`/app/contracts/${contract.id}/edit`}
+                              editLabel={`Ubah ${contract.contract_number}`}
+                              editTestId={`contract-edit-${contract.id}`}
+                              historyHref={documentHistoryHref}
+                              historyLabel={`Buka riwayat dokumen ${contract.contract_number}`}
+                              historyTestId={`contract-history-${contract.id}`}
+                            />
                           </td>
                         </tr>
                       )

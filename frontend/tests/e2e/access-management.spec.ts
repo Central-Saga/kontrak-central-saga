@@ -229,7 +229,12 @@ test("roles module supports search create edit and delete happy path", async ({ 
   await page.getByRole("button", { name: "Tutup" }).click();
   await expect(page.getByRole("heading", { name: "Detail izin akses" })).toHaveCount(0);
 
-  await page.getByRole("button", { name: `Hapus ${updatedName}` }).click();
+  await editRoleLink.click();
+  await expect(page).toHaveURL(new RegExp(`/app/roles/${roleId}/edit$`));
+
+  await page.getByRole("button", { name: "Hapus peran" }).click();
+  await expect(page.getByRole("heading", { name: "Hapus peran ini?" })).toBeVisible();
+  await page.getByRole("button", { name: "Ya, hapus" }).click();
 
   await expect(page).toHaveURL(/\/app\/roles(\?|$)/);
   await expect(page.getByText("Peran berhasil dihapus.")).toBeVisible();
@@ -287,12 +292,16 @@ test("users module supports single-role assignment and icon-only row actions", a
   await page.getByRole("button", { name: "Cari" }).click();
   await expect(page.getByText(userEmail)).toBeVisible();
   await page.getByRole("button", { name: `Hapus ${userName}` }).click();
+  await expect(page.getByRole("heading", { name: "Hapus data ini?" })).toBeVisible();
+  await page.getByRole("button", { name: "Ya, hapus" }).click();
   await expect(page).toHaveURL(/\/app\/users(\?|$)/);
   await expect(page.getByText("Pengguna berhasil dihapus.")).toBeVisible();
 
   await page.goto(`/app/roles?search=${encodeURIComponent(roleName)}`);
   await expect(page.getByText(roleName)).toBeVisible();
   await page.getByRole("button", { name: `Hapus ${roleName}` }).click();
+  await expect(page.getByRole("heading", { name: "Hapus data ini?" })).toBeVisible();
+  await page.getByRole("button", { name: "Ya, hapus" }).click();
   await expect(page).toHaveURL(/\/app\/roles(\?|$)/);
   await expect(page.getByText("Peran berhasil dihapus.")).toBeVisible();
 });

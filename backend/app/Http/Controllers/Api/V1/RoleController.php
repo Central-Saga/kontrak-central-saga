@@ -7,6 +7,7 @@ use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Http\Resources\RoleResource;
 use App\Models\User;
+use Database\Seeders\ModuleStarterSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -124,6 +125,12 @@ class RoleController extends Controller
     public function destroy(Role $role): JsonResponse
     {
         $this->ensureWebRole($role);
+
+        if ($role->name === ModuleStarterSeeder::PRIMARY_ROLE_NAME) {
+            return response()->json([
+                'message' => 'Role utama tidak dapat dihapus.',
+            ], 409);
+        }
 
         $hasUsers = DB::table('model_has_roles')
             ->where('role_id', $role->id)

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DeleteConfirmationDialog } from "@/components/access-management/delete-confirmation-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,9 +85,15 @@ export function RoleForm({ action, deleteAction, mode, permissions, values }: Ro
             Batal
           </Link>
           {!isCreate && deleteAction ? (
-            <Button formAction={deleteAction} size="lg" type="submit" variant="destructive">
-              Hapus peran
-            </Button>
+            <DeleteConfirmationDialog
+              action={deleteAction}
+              description="Peran ini akan dihapus permanen dari access management. Pastikan tidak ada tim yang masih bergantung pada peran ini sebelum melanjutkan."
+              title="Hapus peran ini?"
+            >
+              <Button aria-label="Hapus peran" size="lg" type="button" variant="destructive">
+                Hapus peran
+              </Button>
+            </DeleteConfirmationDialog>
           ) : null}
         </CardFooter>
       </Card>

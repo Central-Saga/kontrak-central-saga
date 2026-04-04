@@ -3,6 +3,7 @@
 use App\Models\Payment;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\ModuleStarterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -366,6 +367,18 @@ it('supports users crud with role syncing and optional password update', functio
         ->assertNoContent();
 });
 
+it('prevents deleting the primary seeded user account', function (): void {
+    Sanctum::actingAs(User::query()->where('email', ModuleStarterSeeder::PRIMARY_USER_EMAIL)->firstOrFail());
+
+    $primaryUser = User::query()->where('email', ModuleStarterSeeder::PRIMARY_USER_EMAIL)->firstOrFail();
+
+    $this->deleteJson("/api/v1/users/{$primaryUser->id}")
+        ->assertStatus(409)
+        ->assertJsonPath('message', 'Akun utama tidak dapat dihapus.');
+
+    expect(User::query()->whereKey($primaryUser->id)->exists())->toBeTrue();
+});
+
 it('supports roles crud with permission syncing and conflict on delete', function (): void {
     Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
 
@@ -401,6 +414,21 @@ it('supports roles crud with permission syncing and conflict on delete', functio
 
     $this->deleteJson("/api/v1/roles/{$roleId}")
         ->assertNoContent();
+});
+
+it('prevents deleting the primary seeded role even without assigned users', function (): void {
+    Sanctum::actingAs(User::query()->where('email', ModuleStarterSeeder::PRIMARY_USER_EMAIL)->firstOrFail());
+
+    $primaryRole = Role::query()->where('name', ModuleStarterSeeder::PRIMARY_ROLE_NAME)->firstOrFail();
+    $primaryUser = User::query()->where('email', ModuleStarterSeeder::PRIMARY_USER_EMAIL)->firstOrFail();
+
+    $primaryUser->removeRole($primaryRole);
+
+    $this->deleteJson("/api/v1/roles/{$primaryRole->id}")
+        ->assertStatus(409)
+        ->assertJsonPath('message', 'Role utama tidak dapat dihapus.');
+
+    expect(Role::query()->whereKey($primaryRole->id)->exists())->toBeTrue();
 });
 
 it('supports permissions crud and prevents delete when related', function (): void {

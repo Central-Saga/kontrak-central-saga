@@ -20,26 +20,34 @@ function StatusToastBridgeInner({ error, messages, status }: StatusToastBridgePr
       return;
     }
 
-    if (error) {
-      toast.error("Perlu perhatian", {
-        description: error,
-      });
-    } else if (statusMessage) {
-      toast.success("Perubahan tersimpan", {
-        description: statusMessage,
-      });
-    } else {
+    if (!error && !statusMessage) {
       return;
     }
 
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("error");
     nextSearchParams.delete("status");
+    nextSearchParams.delete("_r");
 
     const nextQuery = nextSearchParams.toString();
     const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    const timeoutId = window.setTimeout(() => {
+      if (error) {
+        toast.error("Perlu perhatian", {
+          description: error,
+        });
+      } else if (statusMessage) {
+        toast.success("Perubahan tersimpan", {
+          description: statusMessage,
+        });
+      }
+    }, 80);
 
     window.history.replaceState(window.history.state, "", nextUrl);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [error, pathname, searchParams, statusMessage]);
 
   return null;
