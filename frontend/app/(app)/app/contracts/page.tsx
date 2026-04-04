@@ -1,20 +1,19 @@
-import Link from "next/link"
 import { ChevronDownIcon, GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
 
 import { deleteContractAction } from "@/app/(app)/app/access-management/actions"
 import { RowActionButtons } from "@/components/access-management/row-action-buttons"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
-import { buttonVariants } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { listClients, listContracts, type ContractRecord } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 
 const toolbarSelectClassName =
   "h-11 w-full appearance-none rounded-2xl border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+
+const statusPillClassName = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
 
 const statusMessages = {
   created: "Kontrak baru berhasil ditambahkan.",
@@ -22,10 +21,32 @@ const statusMessages = {
   deleted: "Kontrak berhasil dihapus.",
 }
 
+const contractStatusLabels: Record<string, string> = {
+  draft: "Draft",
+  active: "Aktif",
+  completed: "Selesai",
+  terminated: "Dihentikan",
+  expired: "Kedaluwarsa",
+  cancelled: "Dibatalkan",
+}
+
 const versionStatusLabels: Record<string, string> = {
   draft: "Draft",
   final: "Final",
   review: "Review",
+}
+
+function ContractStatusPill({ status }: { status: string }) {
+  const palette =
+    status === "active"
+      ? "border-primary/20 bg-primary/10 text-primary"
+      : status === "completed"
+        ? "border-highlight/20 bg-accent-soft text-secondary-foreground"
+        : status === "terminated" || status === "cancelled"
+          ? "border-destructive/20 bg-destructive/10 text-destructive"
+          : "border-line bg-card-strong text-muted"
+
+  return <span className={`${statusPillClassName} ${palette}`}>{contractStatusLabels[status] ?? status}</span>
 }
 
 function formatDateTime(value?: string | null) {
@@ -143,12 +164,10 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                 <table className="min-w-full table-fixed border-separate border-spacing-0 text-left text-sm">
                   <thead>
                     <tr>
-                      <th className="w-[14%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nomor</th>
-                      <th className="w-[17%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Klien</th>
-                      <th className="w-[29%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Judul & dokumen</th>
-                      <th className="w-[11%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Proyek</th>
-                      <th className="w-[11%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Nilai</th>
-                      <th className="w-[8%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
+                      <th className="w-[20%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kontrak</th>
+                      <th className="w-[28%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Judul, proyek & nilai</th>
+                      <th className="w-[30%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Dokumen</th>
+                      <th className="w-[12%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
                       <th className="w-[10rem] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
                   </thead>
@@ -160,59 +179,53 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                       const compareReady = documentVersionsCount >= 2
                       const documentHistoryHref = `/app/contracts/${contract.id}/edit#contract-document-history`
 
-                      return (
-                        <tr key={contract.id}>
-                          <td className="border border-line px-4 py-3.5 align-top font-medium text-foreground">{contract.contract_number}</td>
-                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.client?.company_name ?? "-"}</td>
-                          <td className="border border-line px-4 py-3.5 align-top">
-                            <div className="flex flex-col gap-2.5">
-                              <div className="flex flex-col gap-1">
-                                <p className="font-medium text-foreground">{contract.contract_title}</p>
+                        return (
+                          <tr key={contract.id}>
+                            <td className="border border-line px-4 py-3.5 align-top">
+                              <div className="flex flex-col gap-1.5">
+                                <div className="flex flex-col gap-1">
+                                  <p className="font-medium text-foreground">{contract.contract_number}</p>
+                                  <p className="text-xs text-muted">{contract.client?.company_name ?? "-"}</p>
+                                </div>
                               </div>
+                            </td>
 
+                            <td className="border border-line px-4 py-3.5 align-top">
+                              <div className="flex flex-col gap-1.5">
+                                <p className="font-medium text-foreground">{contract.contract_title}</p>
+                                <p className="text-sm text-muted">{contract.project_name}</p>
+                                <p className="text-xs text-muted">Nilai kontrak: {contract.contract_value}</p>
+                              </div>
+                            </td>
+
+                            <td className="border border-line px-4 py-3.5 align-top">
                               <div className="flex flex-col gap-2 rounded-2xl border border-line bg-background px-3 py-2.5">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="inline-flex items-center rounded-full border border-line bg-card-strong px-2.5 py-1 text-xs font-medium text-foreground">
-                                      <HistoryIcon aria-hidden className="mr-1 size-3.5" />
-                                      {documentVersionsCount} versi
-                                    </span>
-                                    <span className={[
-                                      "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
-                                      compareReady ? "border-primary/20 bg-primary/10 text-primary" : "border-line bg-card-strong text-muted",
-                                    ].join(" ")}>
-                                      <GitCompareArrowsIcon aria-hidden className="mr-1 size-3.5" />
-                                      {compareReady ? "Compare siap" : "Compare nanti"}
-                                    </span>
-                                  </div>
-
-                                  <TooltipProvider delayDuration={0}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Link
-                                          aria-label={`Buka riwayat dokumen ${contract.contract_number}`}
-                                          className={buttonVariants({ size: "icon-xs", variant: "outline" })}
-                                          href={documentHistoryHref}
-                                        >
-                                          <HistoryIcon aria-hidden data-icon="inline-start" />
-                                        </Link>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top">Riwayat dokumen</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="inline-flex items-center rounded-full border border-line bg-card-strong px-2.5 py-1 text-xs font-medium text-foreground">
+                                    <HistoryIcon aria-hidden className="mr-1 size-3.5" />
+                                    {documentVersionsCount} versi
+                                  </span>
+                                  <span className={[
+                                    "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+                                    compareReady ? "border-primary/20 bg-primary/10 text-primary" : "border-line bg-card-strong text-muted",
+                                  ].join(" ")}>
+                                    <GitCompareArrowsIcon aria-hidden className="mr-1 size-3.5" />
+                                    {compareReady ? "Compare siap" : "Compare nanti"}
+                                  </span>
                                 </div>
                                 <p className="text-xs leading-5 text-muted">
                                   {latestDocumentVersionSummary ? latestDocumentVersionSummary : "Belum ada arsip dokumen."}
                                 </p>
+                                <p className="text-xs text-muted">Buka riwayat penuh dari kolom aksi untuk unggah revisi atau compare metadata.</p>
                               </div>
-                            </div>
-                          </td>
-                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.project_name}</td>
-                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.contract_value}</td>
-                          <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.contract_status}</td>
-                          <td className="border border-line px-4 py-3.5 align-top">
-                            <RowActionButtons
-                              deleteAction={deleteAction}
+                            </td>
+
+                            <td className="border border-line px-4 py-3.5 align-top">
+                              <ContractStatusPill status={contract.contract_status} />
+                            </td>
+                            <td className="border border-line px-4 py-3.5 align-top">
+                              <RowActionButtons
+                                deleteAction={deleteAction}
                               deleteLabel={`Hapus ${contract.contract_number}`}
                               deleteTestId={`contract-delete-${contract.id}`}
                               editHref={`/app/contracts/${contract.id}/edit`}
