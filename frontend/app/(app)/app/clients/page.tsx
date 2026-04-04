@@ -12,10 +12,22 @@ import { handleModulePageError, readSearchParam, type PageSearchParams } from "@
 const toolbarSelectClassName =
   "h-11 w-full appearance-none rounded-2xl border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
+const statusPillClassName = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+
 const statusMessages = {
   created: "Klien baru berhasil ditambahkan.",
   updated: "Data klien berhasil diperbarui.",
   deleted: "Klien berhasil dihapus.",
+}
+
+function ClientStatusPill({ status }: { status: string }) {
+  const isActive = status === "active"
+
+  return (
+    <span className={`${statusPillClassName} ${isActive ? "border-primary/20 bg-primary/10 text-primary" : "border-line bg-card-strong text-muted"}`}>
+      {isActive ? "Aktif" : "Tidak aktif"}
+    </span>
+  )
 }
 
 export default async function ClientsPage({ searchParams }: { searchParams: PageSearchParams }) {
@@ -50,7 +62,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
         <CardHeader className="gap-4">
           <div className="flex flex-col gap-2">
             <CardTitle className="text-2xl">Daftar klien</CardTitle>
-            <CardDescription>Cari berdasarkan kode atau nama perusahaan, lalu buka halaman ubah untuk memperbarui detailnya.</CardDescription>
+            <CardDescription>Cari berdasarkan kode atau nama perusahaan, lalu buka halaman detail atau ubah untuk meninjau informasi klien dengan cepat.</CardDescription>
           </div>
 
           <form className="flex w-full flex-col gap-3 sm:flex-row" method="GET">
@@ -99,7 +111,9 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                               <p className="text-xs break-all">{client.email || "-"}</p>
                             </div>
                           </td>
-                          <td className="border border-line px-4 py-3.5 align-top text-muted">{client.status === "active" ? "Aktif" : "Tidak aktif"}</td>
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <ClientStatusPill status={client.status} />
+                          </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <RowActionButtons
                               deleteAction={deleteAction}
@@ -108,6 +122,9 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                               editHref={`/app/clients/${client.id}/edit`}
                               editLabel={`Ubah ${client.company_name}`}
                               editTestId={`client-edit-${client.id}`}
+                              viewHref={`/app/clients/${client.id}`}
+                              viewLabel={`Lihat detail ${client.company_name}`}
+                              viewTestId={`client-view-${client.id}`}
                             />
                           </td>
                         </tr>

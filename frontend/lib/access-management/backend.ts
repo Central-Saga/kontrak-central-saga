@@ -69,6 +69,7 @@ export type ClientRecord = {
   address?: string | null;
   status: string;
   portal_access_enabled: boolean;
+  contracts?: ContractRecord[];
   contracts_count?: number;
   active_contracts_count?: number;
   created_at?: string;
