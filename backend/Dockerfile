@@ -8,7 +8,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --opt
 FROM node:22-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 COPY . .
 RUN npm run build
 

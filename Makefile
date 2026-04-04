@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: up down rebuild ps fresh health test-local boost-mcp boost-stdio boost-inspector e2e-up e2e-seed e2e-bootstrap e2e-down tls-dev-cert
+.PHONY: up down rebuild ps fresh health test-local boost-mcp boost-stdio boost-inspector e2e-up e2e-seed e2e-bootstrap e2e-down tls-dev-cert dev-up dev-down dev-rebuild dev-logs
 
 E2E_FRONTEND_APP_DOMAIN := app.127.0.0.1.nip.io
 E2E_BACKEND_APP_DOMAIN := api.127.0.0.1.nip.io
@@ -15,15 +15,29 @@ up:
 	$(MAKE) tls-dev-cert
 	docker compose up -d --build
 
+dev-up:
+	$(MAKE) tls-dev-cert
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+
 down:
 	docker compose down
+
+dev-down:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 rebuild:
 	$(MAKE) tls-dev-cert
 	docker compose up -d --build --force-recreate
 
+dev-rebuild:
+	$(MAKE) tls-dev-cert
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build --force-recreate
+
 ps:
 	docker compose ps
+
+dev-logs:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f frontend backend proxy
 
 fresh:
 	docker compose exec -T backend php artisan migrate:fresh --seed --force
