@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { HistoryIcon, PencilLineIcon, Trash2Icon } from "lucide-react"
+import { EyeIcon, HistoryIcon, PencilLineIcon, Trash2Icon } from "lucide-react"
 
 import { DeleteConfirmationDialog } from "@/components/access-management/delete-confirmation-dialog"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -17,6 +17,9 @@ type RowActionButtonsProps = {
   historyHref?: string
   historyLabel?: string
   historyTestId?: string
+  viewHref?: string
+  viewLabel?: string
+  viewTestId?: string
 }
 
 export function RowActionButtons({
@@ -29,10 +32,29 @@ export function RowActionButtons({
   historyHref,
   historyLabel,
   historyTestId,
+  viewHref,
+  viewLabel,
+  viewTestId,
 }: RowActionButtonsProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex flex-nowrap items-center gap-2">
+        {viewHref && viewLabel ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                aria-label={viewLabel}
+                className={buttonVariants({ size: "icon-sm", variant: "outline" })}
+                data-testid={viewTestId}
+                href={viewHref}
+              >
+                <EyeIcon aria-hidden data-icon="inline-start" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top">Lihat detail</TooltipContent>
+          </Tooltip>
+        ) : null}
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
@@ -50,7 +72,7 @@ export function RowActionButtons({
         <DeleteConfirmationDialog
           action={deleteAction}
           confirmTestId={`${deleteTestId}-confirm`}
-          description="Peran atau pengguna yang dipilih akan dihapus dari access management. Tindakan ini tidak bisa dibatalkan."
+          description="Data yang dipilih akan dihapus permanen. Tindakan ini tidak bisa dibatalkan."
           title="Hapus data ini?"
           tooltipLabel="Hapus"
         >
