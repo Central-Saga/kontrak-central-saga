@@ -7,6 +7,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Database\Seeders\ModuleStarterSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -75,6 +76,12 @@ class UserController extends Controller
 
     public function destroy(User $user): JsonResponse
     {
+        if ($user->email === ModuleStarterSeeder::PRIMARY_USER_EMAIL) {
+            return response()->json([
+                'message' => 'Akun utama tidak dapat dihapus.',
+            ], 409);
+        }
+
         $user->delete();
 
         return response()->json([], 204);

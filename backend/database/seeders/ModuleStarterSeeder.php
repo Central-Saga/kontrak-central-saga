@@ -16,6 +16,10 @@ use Spatie\Permission\PermissionRegistrar;
 
 class ModuleStarterSeeder extends Seeder
 {
+    public const PRIMARY_ROLE_NAME = 'admin';
+
+    public const PRIMARY_USER_EMAIL = 'admin@centralsaga.test';
+
     public function run(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -57,7 +61,7 @@ class ModuleStarterSeeder extends Seeder
             $name => Permission::findOrCreate($name, 'web'),
         ]);
 
-        $adminRole = Role::findOrCreate('admin', 'web');
+        $adminRole = Role::findOrCreate(self::PRIMARY_ROLE_NAME, 'web');
         $financeRole = Role::findOrCreate('finance', 'web');
         $projectManagerRole = Role::findOrCreate('project-manager', 'web');
         $clientRole = Role::findOrCreate('client', 'web');
@@ -116,7 +120,7 @@ class ModuleStarterSeeder extends Seeder
         ]);
 
         $admin = User::query()->updateOrCreate(
-            ['email' => 'admin@centralsaga.test'],
+            ['email' => self::PRIMARY_USER_EMAIL],
             ['name' => 'Central Saga Admin', 'password' => 'password'],
         );
         $finance = User::query()->updateOrCreate(
