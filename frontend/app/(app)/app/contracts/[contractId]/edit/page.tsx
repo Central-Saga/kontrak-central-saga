@@ -6,6 +6,7 @@ import {
   updateContractAction,
   uploadContractDocumentVersionAction,
 } from "@/app/(app)/app/access-management/actions"
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { ContractForm } from "@/components/contract-management/contract-form"
 import { ContractDocumentVersionsSection } from "@/components/contract-management/contract-document-versions-section"
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
@@ -123,7 +124,8 @@ export default async function EditContractPage({
     return (
       <PageStack>
         <PageHeaderCard description="Detail kontrak tidak bisa dimuat. Periksa akses Anda atau kembali ke daftar kontrak." title="Ubah kontrak" />
-        <StatusBanner error={error ?? message ?? undefined} />
+        <StatusToastBridge error={error ?? undefined} />
+        <StatusBanner error={message ?? undefined} />
       </PageStack>
     )
   }
@@ -144,7 +146,7 @@ export default async function EditContractPage({
   return (
     <PageStack>
       <PageHeaderCard description="Perbarui identitas kontrak, proyek, status, serta akses ke riwayat versi dokumen dan compare metadata dari satu halaman edit yang tetap ringkas." title={`Ubah kontrak: ${contract.contract_number}`} />
-      <StatusBanner error={error ?? undefined} messages={statusMessages} status={status} />
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
 
       <Alert>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

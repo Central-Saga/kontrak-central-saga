@@ -1,10 +1,16 @@
+import { ChevronDownIcon } from "lucide-react"
+
 import { deleteClientAction } from "@/app/(app)/app/access-management/actions"
 import { RowActionButtons } from "@/components/access-management/row-action-buttons"
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { listClients } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
+
+const toolbarSelectClassName =
+  "h-11 w-full appearance-none rounded-2xl border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
 const statusMessages = {
   created: "Klien baru berhasil ditambahkan.",
@@ -15,7 +21,7 @@ const statusMessages = {
 export default async function ClientsPage({ searchParams }: { searchParams: PageSearchParams }) {
   const resolvedSearchParams = await searchParams
   const search = readSearchParam(resolvedSearchParams, "search") ?? ""
-  const statusFilter = readSearchParam(resolvedSearchParams, "status") ?? ""
+  const statusFilter = readSearchParam(resolvedSearchParams, "client_status") ?? ""
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
 
@@ -37,7 +43,8 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
         title="Kelola klien"
       />
 
-      <StatusBanner error={error ?? message ?? undefined} messages={statusMessages} status={status} />
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
+      <StatusBanner error={message ?? undefined} />
 
       <Card>
         <CardHeader className="gap-4">
@@ -48,15 +55,14 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
 
           <form className="flex w-full flex-col gap-3 sm:flex-row" method="GET">
             <Input data-testid="clients-search-input" defaultValue={search} name="search" placeholder="Cari kode atau nama klien" />
-            <select
-              className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:max-w-48"
-              defaultValue={statusFilter}
-              name="status"
-            >
-              <option value="">Semua status</option>
-              <option value="active">Aktif</option>
-              <option value="inactive">Tidak aktif</option>
-            </select>
+            <div className="relative w-full sm:max-w-48">
+              <select className={toolbarSelectClassName} defaultValue={statusFilter} name="client_status">
+                <option value="">Semua status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Tidak aktif</option>
+              </select>
+              <ChevronDownIcon aria-hidden className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted" />
+            </div>
             <button className="h-11 rounded-2xl border border-line px-4 text-sm font-medium text-foreground" type="submit">Cari</button>
           </form>
         </CardHeader>
@@ -68,12 +74,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                 <table className="min-w-full table-fixed border-separate border-spacing-0 text-left text-sm">
                   <thead>
                     <tr>
-                      <th className="w-[14%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kode</th>
-                      <th className="w-[24%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Perusahaan</th>
-                      <th className="w-[18%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kontak</th>
-                      <th className="w-[20%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Email</th>
-                      <th className="w-[10%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
-                      <th className="w-[14%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
+                      <th className="w-[15%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kode</th>
+                      <th className="w-[31%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Perusahaan</th>
+                      <th className="w-[30%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kontak</th>
+                      <th className="w-[12%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
+                      <th className="w-[8rem] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -81,17 +86,21 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                       const deleteAction = deleteClientAction.bind(null, client.id)
                       return (
                         <tr key={client.id}>
-                          <td className="border border-line px-4 py-4 align-top font-medium text-foreground">{client.client_code}</td>
-                          <td className="border border-line px-4 py-4 align-top">
+                          <td className="border border-line px-4 py-3.5 align-top font-medium text-foreground">{client.client_code}</td>
+                          <td className="border border-line px-4 py-3.5 align-top">
                             <div className="flex flex-col gap-1">
                               <p className="font-medium text-foreground">{client.company_name}</p>
                               <p className="text-xs text-muted">{client.contracts_count ?? 0} kontrak • {client.active_contracts_count ?? 0} aktif</p>
                             </div>
                           </td>
-                          <td className="border border-line px-4 py-4 align-top text-muted">{client.contact_person || "-"}</td>
-                          <td className="border border-line px-4 py-4 align-top text-muted break-all">{client.email || "-"}</td>
-                          <td className="border border-line px-4 py-4 align-top text-muted">{client.status === "active" ? "Aktif" : "Tidak aktif"}</td>
-                          <td className="border border-line px-4 py-4 align-top">
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <div className="flex flex-col gap-1 text-muted">
+                              <p>{client.contact_person || "-"}</p>
+                              <p className="text-xs break-all">{client.email || "-"}</p>
+                            </div>
+                          </td>
+                          <td className="border border-line px-4 py-3.5 align-top text-muted">{client.status === "active" ? "Aktif" : "Tidak aktif"}</td>
+                          <td className="border border-line px-4 py-3.5 align-top">
                             <RowActionButtons
                               deleteAction={deleteAction}
                               deleteLabel={`Hapus ${client.company_name}`}
