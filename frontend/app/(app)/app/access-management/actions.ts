@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
@@ -40,6 +41,7 @@ function readNumberList(formData: FormData, key: string) {
 function appendMessage(path: string, type: "error" | "status", value: string) {
   const searchParams = new URLSearchParams();
   searchParams.set(type, value);
+  searchParams.set("_r", Date.now().toString());
   return `${path}?${searchParams.toString()}`;
 }
 
@@ -57,19 +59,30 @@ function redirectForUnauthorized(error: unknown) {
   }
 }
 
+function revalidateAccessManagementPaths(paths: string[]) {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
+
 export async function createUserAction(formData: FormData) {
+  let userId: number | null = null;
+
   try {
-    await createUser({
+    const user = await createUser({
       name: readString(formData, "name"),
       email: readString(formData, "email"),
       password: readString(formData, "password"),
       role_ids: formData.has("role_ids_present") ? readNumberList(formData, "role_ids") : undefined,
     });
+
+    userId = user.id;
   } catch (error) {
     redirectForUnauthorized(error);
     redirect(appendMessage("/app/users/new", "error", getFallbackErrorMessage(error)));
   }
 
+  revalidateAccessManagementPaths(["/app/users", `/app/users/${userId}/edit`]);
   redirect(appendMessage("/app/users", "status", "created"));
 }
 
@@ -86,6 +99,7 @@ export async function updateUserAction(userId: number, formData: FormData) {
     redirect(appendMessage(`/app/users/${userId}/edit`, "error", getFallbackErrorMessage(error)));
   }
 
+  revalidateAccessManagementPaths(["/app/users", `/app/users/${userId}/edit`]);
   redirect(appendMessage("/app/users", "status", "updated"));
 }
 
@@ -97,6 +111,7 @@ export async function deleteUserAction(userId: number) {
     redirect(appendMessage("/app/users", "error", getFallbackErrorMessage(error)));
   }
 
+  revalidateAccessManagementPaths(["/app/users", `/app/users/${userId}/edit`]);
   redirect(appendMessage("/app/users", "status", "deleted"));
 }
 
@@ -117,7 +132,8 @@ export async function createRoleAction(formData: FormData) {
     redirect(appendMessage("/app/roles/new", "error", getFallbackErrorMessage(error)));
   }
 
-  redirect(`/app/roles/${roleId}/edit?status=created`);
+  revalidateAccessManagementPaths(["/app/roles", `/app/roles/${roleId}/edit`]);
+  redirect(appendMessage(`/app/roles/${roleId}/edit`, "status", "created"));
 }
 
 export async function updateRoleAction(roleId: number, formData: FormData) {
@@ -133,7 +149,8 @@ export async function updateRoleAction(roleId: number, formData: FormData) {
     redirect(appendMessage(`/app/roles/${roleId}/edit`, "error", getFallbackErrorMessage(error)));
   }
 
-  redirect(`/app/roles/${roleId}/edit?status=updated`);
+  revalidateAccessManagementPaths(["/app/roles", `/app/roles/${roleId}/edit`]);
+  redirect(appendMessage(`/app/roles/${roleId}/edit`, "status", "updated"));
 }
 
 export async function deleteRoleAction(roleId: number) {
@@ -144,6 +161,7 @@ export async function deleteRoleAction(roleId: number) {
     redirect(appendMessage("/app/roles", "error", getFallbackErrorMessage(error)));
   }
 
+  revalidateAccessManagementPaths(["/app/roles", `/app/roles/${roleId}/edit`]);
   redirect(appendMessage("/app/roles", "status", "deleted"));
 }
 
@@ -152,8 +170,10 @@ function readOptionalCheckbox(formData: FormData, key: string) {
 }
 
 export async function createClientAction(formData: FormData) {
+  let clientId: number | null = null;
+
   try {
-    await createClient({
+    const client = await createClient({
       address: readOptionalString(formData, "address"),
       client_code: readString(formData, "client_code"),
       company_name: readString(formData, "company_name"),
@@ -163,11 +183,14 @@ export async function createClientAction(formData: FormData) {
       portal_access_enabled: readOptionalCheckbox(formData, "portal_access_enabled"),
       status: readString(formData, "status"),
     });
+
+    clientId = client.id;
   } catch (error) {
     redirectForUnauthorized(error)
     redirect(appendMessage("/app/clients/new", "error", getFallbackErrorMessage(error)))
   }
 
+  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`])
   redirect(appendMessage("/app/clients", "status", "created"))
 }
 
@@ -188,6 +211,7 @@ export async function updateClientAction(clientId: number, formData: FormData) {
     redirect(appendMessage(`/app/clients/${clientId}/edit`, "error", getFallbackErrorMessage(error)))
   }
 
+  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`])
   redirect(appendMessage("/app/clients", "status", "updated"))
 }
 
@@ -199,6 +223,7 @@ export async function deleteClientAction(clientId: number) {
     redirect(appendMessage("/app/clients", "error", getFallbackErrorMessage(error)))
   }
 
+  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`])
   redirect(appendMessage("/app/clients", "status", "deleted"))
 }
 
@@ -227,7 +252,8 @@ export async function createContractAction(formData: FormData) {
     redirect(appendMessage("/app/contracts/new", "error", getFallbackErrorMessage(error)))
   }
 
-  redirect(`/app/contracts/${contractId}/edit?status=created`)
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
+  redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "created"))
 }
 
 export async function updateContractAction(contractId: number, formData: FormData) {
@@ -251,6 +277,7 @@ export async function updateContractAction(contractId: number, formData: FormDat
     redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)))
   }
 
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
   redirect(appendMessage("/app/contracts", "status", "updated"))
 }
 
@@ -262,6 +289,7 @@ export async function deleteContractAction(contractId: number) {
     redirect(appendMessage("/app/contracts", "error", getFallbackErrorMessage(error)))
   }
 
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
   redirect(appendMessage("/app/contracts", "status", "deleted"))
 }
 
@@ -273,5 +301,6 @@ export async function uploadContractDocumentVersionAction(contractId: number, fo
     redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)))
   }
 
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
   redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "document_uploaded"))
 }
