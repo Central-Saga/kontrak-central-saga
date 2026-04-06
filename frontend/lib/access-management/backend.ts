@@ -69,6 +69,12 @@ export type ClientRecord = {
   address?: string | null;
   status: string;
   portal_access_enabled: boolean;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    username: string;
+  } | null;
   contracts?: ContractRecord[];
   contracts_count?: number;
   active_contracts_count?: number;
@@ -552,6 +558,14 @@ export async function deleteClient(clientId: number): Promise<void> {
   });
 }
 
+export async function generateClientCode(): Promise<string> {
+  const response = await requestBackend<{ client_code: string }>("/api/v1/clients/generate-code", {
+    method: "GET",
+  });
+
+  return response.client_code;
+}
+
 export async function listContracts(options: {
   search?: string;
   status?: string;
@@ -596,6 +610,14 @@ export async function deleteContract(contractId: number): Promise<void> {
   await requestBackend<void>(`/api/v1/contracts/${contractId}`, {
     method: "DELETE",
   });
+}
+
+export async function generateContractCode(): Promise<string> {
+  const response = await requestBackend<{ contract_number: string }>("/api/v1/contracts/generate-code", {
+    method: "GET",
+  });
+
+  return response.contract_number;
 }
 
 export async function listContractDocumentVersions(

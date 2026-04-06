@@ -24,6 +24,15 @@ class ClientResource extends JsonResource
             'address' => $this->address,
             'status' => $this->status,
             'portal_access_enabled' => $this->portal_access_enabled,
+            'user_id' => $this->user_id,
+            'user' => $this->whenLoaded('user', function () {
+                return [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'email' => $this->user->email,
+                    'username' => $this->user->username,
+                ];
+            }),
             'contracts_count' => $this->whenCounted('contracts'),
             'active_contracts_count' => $this->when(isset($this->active_contracts_count), $this->active_contracts_count),
             'contracts' => ContractResource::collection($this->whenLoaded('contracts')),

@@ -63,6 +63,13 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('permission:export permissions');
         });
 
+        // Generate code routes MUST be before apiResource to avoid {id} conflict
+        Route::get('clients/generate-code', [ClientController::class, 'generateCode'])
+            ->middleware('permission:manage clients');
+
+        Route::get('contracts/generate-code', [ContractController::class, 'generateCode'])
+            ->middleware('permission:manage contracts');
+
         Route::apiResource('clients', ClientController::class)
             ->middleware('permission:manage clients');
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ContractCodeGenerator;
 use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -107,6 +108,16 @@ class Contract extends Model implements HasMedia
     public function latestDocumentVersion(): HasOne
     {
         return $this->hasOne(ContractDocumentVersion::class)->ofMany('version_number', 'max');
+    }
+
+    /**
+     * Generate a unique contract number
+     */
+    public static function generateCode(): string
+    {
+        $generator = new ContractCodeGenerator;
+
+        return $generator->generateUnique();
     }
 
     public function registerMediaCollections(): void
