@@ -421,7 +421,16 @@ test("clients module supports search create edit and delete happy path", async (
   await page.getByTestId("clients-search-input").fill(updatedClientCode);
   await page.getByRole("button", { name: "Cari" }).click();
   await expect(page.getByText(updatedCompanyName)).toBeVisible();
+  await page.getByRole("link", { name: `Lihat detail ${updatedCompanyName}` }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/clients/\\d+$`));
+  await expect(page.getByTestId("client-detail-page")).toBeVisible();
+  await expect(page.getByText(updatedCompanyName)).toBeVisible();
+  await page.getByRole("link", { name: "Kembali ke daftar" }).click();
+  await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
+
   await page.getByRole("button", { name: `Hapus ${updatedCompanyName}` }).click();
+  await expect(page.getByRole("heading", { name: "Hapus data ini?" })).toBeVisible();
+  await page.getByRole("button", { name: "Ya, hapus" }).click();
 
   await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
   await expect(page.getByText("Klien berhasil dihapus.")).toBeVisible();
@@ -479,7 +488,16 @@ test("contracts module supports search create edit and delete happy path", async
   await page.getByTestId("contracts-search-input").fill(updatedContractNumber);
   await page.getByRole("button", { name: "Cari" }).click();
   await expect(page.getByText(updatedContractTitle)).toBeVisible();
+  await page.getByRole("link", { name: `Lihat detail ${updatedContractNumber}` }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/contracts/\\d+$`));
+  await expect(page.getByTestId("contract-detail-page")).toBeVisible();
+  await expect(page.getByText(updatedContractTitle)).toBeVisible();
+  await page.getByRole("link", { name: "Kembali ke daftar" }).click();
+  await expect(page).toHaveURL(/\/app\/contracts(\?|$)/);
+
   await page.getByRole("button", { name: `Hapus ${updatedContractNumber}` }).click();
+  await expect(page.getByRole("heading", { name: "Hapus data ini?" })).toBeVisible();
+  await page.getByRole("button", { name: "Ya, hapus" }).click();
 
   await expect(page).toHaveURL(/\/app\/contracts(\?|$)/);
   await expect(page.getByText("Kontrak berhasil dihapus.")).toBeVisible();
@@ -487,6 +505,8 @@ test("contracts module supports search create edit and delete happy path", async
   await page.goto(`/app/clients?search=${encodeURIComponent(clientCode)}`);
   await expect(page.getByText(clientName)).toBeVisible();
   await page.getByRole("button", { name: `Hapus ${clientName}` }).click();
+  await expect(page.getByRole("heading", { name: "Hapus data ini?" })).toBeVisible();
+  await page.getByRole("button", { name: "Ya, hapus" }).click();
   await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
   await expect(page.getByText("Klien berhasil dihapus.")).toBeVisible();
 });
