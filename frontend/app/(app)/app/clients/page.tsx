@@ -1,5 +1,3 @@
-import { ChevronDownIcon } from "lucide-react"
-
 import { deleteClientAction } from "@/app/(app)/app/access-management/actions"
 import { RowActionButtons } from "@/components/access-management/row-action-buttons"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
@@ -8,9 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { listClients } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
-
-const toolbarSelectClassName =
-  "h-11 w-full appearance-none rounded-2xl border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+import { ClientFilters } from "@/components/client-management/client-filters"
 
 const statusPillClassName = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
 
@@ -65,18 +61,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
             <CardDescription>Cari berdasarkan kode atau nama perusahaan, lalu buka halaman detail atau ubah untuk meninjau informasi klien dengan cepat.</CardDescription>
           </div>
 
-          <form className="flex w-full flex-col gap-3 sm:flex-row" method="GET">
-            <Input data-testid="clients-search-input" defaultValue={search} name="search" placeholder="Cari kode atau nama klien" />
-            <div className="relative w-full sm:max-w-48">
-              <select className={toolbarSelectClassName} defaultValue={statusFilter} name="client_status">
-                <option value="">Semua status</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Tidak aktif</option>
-              </select>
-              <ChevronDownIcon aria-hidden className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted" />
-            </div>
-            <button className="h-11 rounded-2xl border border-line px-4 text-sm font-medium text-foreground" type="submit">Cari</button>
-          </form>
+          <ClientFilters search={search} statusFilter={statusFilter} />
         </CardHeader>
 
         <CardContent>

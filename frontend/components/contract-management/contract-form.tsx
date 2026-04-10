@@ -11,6 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { generateContractCode } from "@/app/(app)/app/access-management/contract-actions";
@@ -51,12 +59,16 @@ function DatePicker({
   value,
   required,
   disabledBefore,
+  disabledAfter,
+  onChange,
 }: {
   id: string;
   label: string;
   value?: string;
   required?: boolean;
   disabledBefore?: Date;
+  disabledAfter?: Date;
+  onChange?: (date: Date | undefined) => void;
 }) {
   const [open, setOpen] = useState(false);
   const date = useMemo(() => (value ? new Date(value) : undefined), [value]);
@@ -66,11 +78,11 @@ function DatePicker({
     setSelectedDate(newDate);
     if (newDate) {
       setOpen(false);
-      // Update the hidden input
       const input = document.getElementById(id) as HTMLInputElement;
       if (input) {
         input.value = format(newDate, "yyyy-MM-dd");
       }
+      onChange?.(newDate);
     }
   };
 
@@ -102,7 +114,11 @@ function DatePicker({
             mode="single"
             selected={selectedDate}
             onSelect={handleSelect}
-            disabled={(d) => (disabledBefore ? d < disabledBefore : false)}
+            disabled={(d) => {
+              if (disabledBefore && d < disabledBefore) return true;
+              if (disabledAfter && d <= disabledAfter) return true;
+              return false;
+            }}
             initialFocus
           />
         </PopoverContent>
@@ -122,12 +138,19 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
   const isCreate = mode === "create";
   const [contractNumber, setContractNumber] = useState(values?.contract_number ?? "");
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    values?.start_date ? new Date(values.start_date) : undefined
+  );
 
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
+
+  const availableStatusOptions = isCreate
+    ? statusOptions.filter(([value]) => value === "draft" || value === "active")
+    : statusOptions;
 
   const handleGenerateNumber = useCallback(async () => {
     setIsGeneratingNumber(true);
@@ -161,21 +184,28 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="client_id">Klien</FieldLabel>
-              <select
-                className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                data-testid="contract-form-client"
-                defaultValue={values?.client_id ? String(values.client_id) : ""}
-                id="client_id"
+              <Select
                 name="client_id"
+                defaultValue={values?.client_id ? String(values.client_id) : ""}
                 required
               >
-                <option value="">Pilih klien</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.client_code} — {client.company_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  data-testid="contract-form-client"
+                  id="client_id"
+                  className="w-full"
+                >
+                  <SelectValue placeholder="Pilih klien" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={String(client.id)}>
+                        {client.client_code} — {client.company_name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field>
@@ -231,6 +261,7 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
               value={values?.start_date}
               required
               disabledBefore={today}
+              onChange={setStartDate}
             />
 
             <DatePicker
@@ -239,6 +270,7 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
               value={values?.end_date}
               required
               disabledBefore={today}
+              disabledAfter={startDate}
             />
 
             <Field>
@@ -248,17 +280,27 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
 
             <Field>
               <FieldLabel htmlFor="contract_status">Status kontrak</FieldLabel>
-              <select
-                className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                data-testid="contract-form-status"
-                defaultValue={values?.contract_status ?? "draft"}
-                id="contract_status"
+              <Select
                 name="contract_status"
+                defaultValue={values?.contract_status ?? "draft"}
               >
-                {statusOptions.map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+                <SelectTrigger
+                  data-testid="contract-form-status"
+                  id="contract_status"
+                  className="w-full"
+                >
+                  <SelectValue placeholder="Pilih status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {availableStatusOptions.map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field>

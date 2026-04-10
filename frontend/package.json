@@ -10,7 +10,11 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@tiptap/extension-heading": "^3.22.3",
+    "@tiptap/extension-link": "^3.22.3",
     "@tiptap/extension-placeholder": "^3.22.2",
+    "@tiptap/extension-text-align": "^3.22.3",
+    "@tiptap/extension-underline": "^3.22.3",
     "@tiptap/pm": "^3.22.2",
     "@tiptap/react": "^3.22.2",
     "@tiptap/starter-kit": "^3.22.2",

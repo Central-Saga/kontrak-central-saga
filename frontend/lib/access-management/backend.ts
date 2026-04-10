@@ -123,6 +123,8 @@ export type ContractDocumentVersionRecord = {
   size_bytes: number;
   checksum_sha256: string;
   change_summary?: string | null;
+  extracted_text?: string | null;
+  text_extracted_at?: string | null;
   uploaded_at?: string | null;
   uploaded_by?: number | null;
   uploader?: {
@@ -138,6 +140,7 @@ export type ContractDocumentVersionRecord = {
     size: number;
     url: string;
   } | null;
+  audit_logs?: DocumentVersionAuditLogRecord[];
   created_at?: string;
   updated_at?: string;
 };
@@ -152,6 +155,58 @@ export type ContractDocumentVersionCompareRecord = {
     from: string | number | null;
     to: string | number | null;
   }>;
+};
+
+export type DocumentVersionContentDiffRecord = {
+  contract_id: number;
+  from_version: ContractDocumentVersionRecord;
+  to_version: ContractDocumentVersionRecord;
+  content_diff: {
+    can_diff_content: boolean;
+    from_content_preview: {
+      lines_count: number;
+      character_count: number;
+      first_10_lines: string[];
+      is_preview_only: boolean;
+    };
+    to_content_preview: {
+      lines_count: number;
+      character_count: number;
+      first_10_lines: string[];
+      is_preview_only: boolean;
+    };
+    diff_html: string | null;
+    line_changes: {
+      old_line_count: number;
+      new_line_count: number;
+      net_change: number;
+      stats: {
+        added: number;
+        deleted: number;
+        modified: number;
+        unchanged: number;
+      };
+    } | null;
+    message: string | null;
+  };
+};
+
+export type DocumentVersionAuditLogRecord = {
+  id: number;
+  document_version_id: number;
+  action: string;
+  field_name?: string | null;
+  old_value?: string | null;
+  new_value?: string | null;
+  change_summary?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  created_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
 };
 
 type PermissionRecord = {
@@ -665,6 +720,40 @@ export async function compareContractDocumentVersions(
 
   const response = await requestBackend<{ data: ContractDocumentVersionCompareRecord }>(
     `/api/v1/contracts/${contractId}/document-versions/compare${query}`,
+    {
+      method: "GET",
+    },
+  );
+
+  return response.data;
+}
+
+export async function compareContractDocumentContent(
+  contractId: number,
+  fromVersionId: number,
+  toVersionId: number,
+): Promise<DocumentVersionContentDiffRecord> {
+  const query = buildQueryString({
+    from_version_id: fromVersionId,
+    to_version_id: toVersionId,
+  });
+
+  const response = await requestBackend<{ data: DocumentVersionContentDiffRecord }>(
+    `/api/v1/contracts/${contractId}/document-versions/compare-content${query}`,
+    {
+      method: "GET",
+    },
+  );
+
+  return response.data;
+}
+
+export async function getDocumentVersionAuditLogs(
+  contractId: number,
+  versionId: number,
+): Promise<DocumentVersionAuditLogRecord[]> {
+  const response = await requestBackend<{ data: DocumentVersionAuditLogRecord[] }>(
+    `/api/v1/contracts/${contractId}/document-versions/${versionId}/audit-logs`,
     {
       method: "GET",
     },
