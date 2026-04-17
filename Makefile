@@ -70,6 +70,33 @@ e2e-bootstrap: e2e-up e2e-seed
 e2e-down:
 	$(E2E_COMPOSE_ENV) docker compose down
 
+# Auto-find available port and run
+dev-auto:
+	@HTTP_PORT=$$(python3 -c "import socket; s=socket.socket(); s.bind(('', 0)); print(s.getsockname()[1]); s.close()"); \
+	HTTPS_PORT=$$((HTTP_PORT + 1)); \
+	echo ""; \
+	echo "========================================"; \
+	echo "🚀 Menjalankan Kontrak Central Saga"; \
+	echo "========================================"; \
+	echo ""; \
+	echo "📡 HTTP Port:  $$HTTP_PORT"; \
+	echo "📡 HTTPS Port: $$HTTPS_PORT"; \
+	echo ""; \
+	$(MAKE) tls-dev-cert; \
+	PROXY_HTTP_PORT=$$HTTP_PORT PROXY_HTTPS_PORT=$$HTTPS_PORT docker compose up -d --build; \
+	echo ""; \
+	echo "✅ Server berjalan!"; \
+	echo ""; \
+	echo "🌐 URL Akses (gunakan HTTPS):"; \
+	echo "   Frontend: https://app.kontrak-centralsaga.site:$$HTTPS_PORT"; \
+	echo "   Backend:  https://api.kontrak-centralsaga.site:$$HTTPS_PORT"; \
+	echo ""; \
+	echo "⚠️  Pastikan domain di /etc/hosts:"; \
+	echo "   127.0.0.1 app.kontrak-centralsaga.site api.kontrak-centralsaga.site"; \
+	echo ""; \
+	echo "🛑 Untuk berhenti: make down"; \
+	echo ""
+
 tls-dev-cert:
 	@mkdir -p docker/proxy/certs
 	@rm -f docker/proxy/certs/local-dev.crt docker/proxy/certs/local-dev.key

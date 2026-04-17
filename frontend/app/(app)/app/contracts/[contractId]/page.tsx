@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
+import { FileTextIcon, GitCompareArrowsIcon, HistoryIcon, PencilIcon } from "lucide-react"
 
 import { ContractStatusBadge } from "@/components/access-management/entity-status-badge"
 import { BackLinkButton, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
@@ -106,7 +106,7 @@ export default async function ContractDetailPage({
     )
   }
 
-  const documentVersionsCount = contract.document_versions_count ?? contract.document_versions?.length ?? 0
+  const documentVersionsCount = contract.document_versions_count ?? 0
   const latestDocumentVersion = contract.latest_document_version
   const latestDocumentSummary = latestDocumentVersion
     ? [
@@ -121,7 +121,7 @@ export default async function ContractDetailPage({
       <PageHeaderCard
         actionHref={`/app/contracts/${contract.id}/edit`}
         actionLabel="Ubah kontrak"
-        description="Halaman detail ini memusatkan konteks kontrak, proyek, dan arsip dokumen tanpa membebani tabel daftar."
+        description="Halaman detail ini memusatkan konteks kontrak, proyek, dan arsip dokumen."
         eyebrow="Manajemen kontrak"
         title={contract.contract_number}
       />
@@ -135,6 +135,43 @@ export default async function ContractDetailPage({
       </div>
 
       <StatusBanner error={message ?? undefined} />
+
+      <div className="flex flex-wrap gap-2 rounded-lg border border-line bg-card-strong p-2">
+        <Link
+          href={`/app/contracts/${contract.id}`}
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            "ring-primary/20 ring-[3px] bg-primary text-primary-foreground"
+          }`}
+        >
+          Detail
+        </Link>
+        <Link
+          href={`/app/contracts/${contract.id}/documents`}
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground`}
+        >
+          <FileTextIcon className="h-4 w-4" />
+          Dokumen
+          {documentVersionsCount > 0 && (
+            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs">
+              {documentVersionsCount}
+            </span>
+          )}
+        </Link>
+        <Link
+          href={`/app/contracts/${contract.id}/compare`}
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground`}
+        >
+          <GitCompareArrowsIcon className="h-4 w-4" />
+          Komparasi
+        </Link>
+        <Link
+          href={`/app/contracts/${contract.id}/history`}
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground`}
+        >
+          <HistoryIcon className="h-4 w-4" />
+          Riwayat
+        </Link>
+      </div>
 
       <Card>
         <CardHeader>
@@ -185,13 +222,17 @@ export default async function ContractDetailPage({
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/edit#contract-document-history`}>
-              <HistoryIcon aria-hidden data-icon="inline-start" />
-              Buka riwayat dokumen
+            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/documents`}>
+              <FileTextIcon className="mr-2 h-4 w-4" />
+              Kelola Dokumen
             </Link>
-            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/edit#contract-document-compare`}>
-              <GitCompareArrowsIcon aria-hidden data-icon="inline-start" />
-              Buka compare metadata
+            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/compare`}>
+              <GitCompareArrowsIcon className="mr-2 h-4 w-4" />
+              Komparasi
+            </Link>
+            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/history`}>
+              <HistoryIcon className="mr-2 h-4 w-4" />
+              Riwayat
             </Link>
           </div>
         </div>
