@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: up down rebuild ps fresh health test-local boost-mcp boost-stdio boost-inspector e2e-up e2e-seed e2e-bootstrap e2e-down tls-dev-cert
+.PHONY: up down rebuild ps fresh health test-local boost-mcp boost-stdio boost-inspector e2e-up e2e-seed e2e-bootstrap e2e-down tls-dev-cert dev-up dev-down dev-rebuild dev-logs
 
 E2E_FRONTEND_APP_DOMAIN := app.127.0.0.1.nip.io
 E2E_BACKEND_APP_DOMAIN := api.127.0.0.1.nip.io
@@ -15,15 +15,29 @@ up:
 	$(MAKE) tls-dev-cert
 	docker compose up -d --build
 
+dev-up:
+	$(MAKE) tls-dev-cert
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+
 down:
 	docker compose down
+
+dev-down:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 rebuild:
 	$(MAKE) tls-dev-cert
 	docker compose up -d --build --force-recreate
 
+dev-rebuild:
+	$(MAKE) tls-dev-cert
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build --force-recreate
+
 ps:
 	docker compose ps
+
+dev-logs:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f frontend backend proxy
 
 fresh:
 	docker compose exec -T backend php artisan migrate:fresh --seed --force
@@ -55,6 +69,33 @@ e2e-bootstrap: e2e-up e2e-seed
 
 e2e-down:
 	$(E2E_COMPOSE_ENV) docker compose down
+
+# Auto-find available port and run
+dev-auto:
+	@HTTP_PORT=$$(python3 -c "import socket; s=socket.socket(); s.bind(('', 0)); print(s.getsockname()[1]); s.close()"); \
+	HTTPS_PORT=$$((HTTP_PORT + 1)); \
+	echo ""; \
+	echo "========================================"; \
+	echo "🚀 Menjalankan Kontrak Central Saga"; \
+	echo "========================================"; \
+	echo ""; \
+	echo "📡 HTTP Port:  $$HTTP_PORT"; \
+	echo "📡 HTTPS Port: $$HTTPS_PORT"; \
+	echo ""; \
+	$(MAKE) tls-dev-cert; \
+	PROXY_HTTP_PORT=$$HTTP_PORT PROXY_HTTPS_PORT=$$HTTPS_PORT docker compose up -d --build; \
+	echo ""; \
+	echo "✅ Server berjalan!"; \
+	echo ""; \
+	echo "🌐 URL Akses (gunakan HTTPS):"; \
+	echo "   Frontend: https://app.kontrak-centralsaga.site:$$HTTPS_PORT"; \
+	echo "   Backend:  https://api.kontrak-centralsaga.site:$$HTTPS_PORT"; \
+	echo ""; \
+	echo "⚠️  Pastikan domain di /etc/hosts:"; \
+	echo "   127.0.0.1 app.kontrak-centralsaga.site api.kontrak-centralsaga.site"; \
+	echo ""; \
+	echo "🛑 Untuk berhenti: make down"; \
+	echo ""
 
 tls-dev-cert:
 	@mkdir -p docker/proxy/certs
