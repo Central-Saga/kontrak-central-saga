@@ -9,6 +9,11 @@ import {
 } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page";
 
+async function handleCompare(contractId: string, fromId: number, toId: number) {
+  "use server";
+  redirect(`/app/contracts/${contractId}/compare?from_version_id=${fromId}&to_version_id=${toId}`);
+}
+
 export default async function ContractComparePage({
   params,
   searchParams,
@@ -78,11 +83,6 @@ export default async function ContractComparePage({
     }
   }
 
-  async function handleCompare(fromId: number, toId: number) {
-    "use server";
-    redirect(`/app/contracts/${contractId}/compare?from_version_id=${fromId}&to_version_id=${toId}`);
-  }
-
   return (
     <PageStack>
       <PageHeaderCard
@@ -96,7 +96,7 @@ export default async function ContractComparePage({
         versions={versions}
         compare={compare}
         compareError={compareError}
-        onCompare={handleCompare}
+        onCompare={handleCompare.bind(null, contractId)}
       />
     </PageStack>
   );

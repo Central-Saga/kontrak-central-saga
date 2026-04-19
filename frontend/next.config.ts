@@ -8,6 +8,10 @@ function getAllowedDevOrigins() {
     "https://app.127.0.0.1.nip.io",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "https://localhost:8443",
+    "https://127.0.0.1:8443",
   ];
 
   return Array.from(
@@ -29,6 +33,20 @@ function getAllowedDevOrigins() {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: getAllowedDevOrigins(),
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        "app.kontrak-centralsaga.site",
+        "app.127.0.0.1.nip.io",
+        "localhost:3000",
+        "127.0.0.1:3000",
+        "localhost:8080",
+        "127.0.0.1:8080",
+        "localhost:8443",
+        "127.0.0.1:8443",
+      ],
+    },
+  },
 };
 
 export default nextConfig;
