@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import Link from "next/link"
 import { EyeIcon, HistoryIcon, PencilLineIcon, Trash2Icon } from "lucide-react"
 
@@ -14,12 +15,34 @@ type RowActionButtonsProps = {
   editHref: string
   editLabel: string
   editTestId: string
+  leadingActions?: ReactNode
   historyHref?: string
   historyLabel?: string
   historyTestId?: string
   viewHref?: string
   viewLabel?: string
   viewTestId?: string
+}
+
+type ActionLinkButtonProps = {
+  href: string
+  icon: ReactNode
+  label: string
+  testId?: string
+  tooltipLabel: string
+}
+
+function ActionLinkButton({ href, icon, label, testId, tooltipLabel }: ActionLinkButtonProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link aria-label={label} className={buttonVariants({ size: "icon-sm", variant: "outline" })} data-testid={testId} href={href}>
+          {icon}
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent side="top">{tooltipLabel}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 export function RowActionButtons({
@@ -29,6 +52,7 @@ export function RowActionButtons({
   editHref,
   editLabel,
   editTestId,
+  leadingActions,
   historyHref,
   historyLabel,
   historyTestId,
@@ -39,35 +63,25 @@ export function RowActionButtons({
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex flex-nowrap items-center gap-2">
+        {leadingActions}
+
         {viewHref && viewLabel ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                aria-label={viewLabel}
-                className={buttonVariants({ size: "icon-sm", variant: "outline" })}
-                data-testid={viewTestId}
-                href={viewHref}
-              >
-                <EyeIcon aria-hidden data-icon="inline-start" />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top">Lihat detail</TooltipContent>
-          </Tooltip>
+          <ActionLinkButton
+            href={viewHref}
+            icon={<EyeIcon aria-hidden data-icon="inline-start" />}
+            label={viewLabel}
+            testId={viewTestId}
+            tooltipLabel="Lihat detail"
+          />
         ) : null}
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              aria-label={editLabel}
-              className={buttonVariants({ size: "icon-sm", variant: "outline" })}
-              data-testid={editTestId}
-              href={editHref}
-            >
-              <PencilLineIcon aria-hidden data-icon="inline-start" />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="top">Ubah</TooltipContent>
-        </Tooltip>
+        <ActionLinkButton
+          href={editHref}
+          icon={<PencilLineIcon aria-hidden data-icon="inline-start" />}
+          label={editLabel}
+          testId={editTestId}
+          tooltipLabel="Ubah"
+        />
 
         <DeleteConfirmationDialog
           action={deleteAction}
@@ -82,19 +96,13 @@ export function RowActionButtons({
         </DeleteConfirmationDialog>
 
         {historyHref && historyLabel ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                aria-label={historyLabel}
-                className={buttonVariants({ size: "icon-sm", variant: "outline" })}
-                data-testid={historyTestId}
-                href={historyHref}
-              >
-                <HistoryIcon aria-hidden data-icon="inline-start" />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top">Riwayat dokumen</TooltipContent>
-          </Tooltip>
+          <ActionLinkButton
+            href={historyHref}
+            icon={<HistoryIcon aria-hidden data-icon="inline-start" />}
+            label={historyLabel}
+            testId={historyTestId}
+            tooltipLabel="Riwayat dokumen"
+          />
         ) : null}
       </div>
     </TooltipProvider>

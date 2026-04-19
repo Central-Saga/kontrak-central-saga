@@ -94,7 +94,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
           <Alert>
             <AlertTitle>Riwayat versi dokumen tersedia di setiap kontrak</AlertTitle>
             <AlertDescription>
-              Gunakan ikon riwayat dokumen pada tabel untuk langsung menuju arsip versi, unggah revisi baru, atau compare metadata antarversi di halaman ubah kontrak.
+              Gunakan ikon riwayat dokumen pada tabel untuk langsung menuju halaman dokumen kontrak, unggah revisi baru, atau compare metadata antarversi.
             </AlertDescription>
           </Alert>
         </CardHeader>
@@ -118,7 +118,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                       const deleteAction = deleteContractAction.bind(null, contract.id)
                       const documentVersionsCount = contract.document_versions_count ?? contract.document_versions?.length ?? 0
                       const compareReady = documentVersionsCount >= 2
-                      const documentHistoryHref = `/app/contracts/${contract.id}/edit#contract-document-history`
+                      const documentHistoryHref = `/app/contracts/${contract.id}/documents`
 
                       return (
                         <tr key={contract.id}>

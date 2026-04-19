@@ -1,32 +1,58 @@
-import Link from "next/link"
+"use client";
 
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
+import { RefreshCwIcon } from "lucide-react";
+
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { generateClientCode } from "@/app/(app)/app/access-management/client-actions";
 
 type ClientFormProps = {
-  action: (formData: FormData) => Promise<void>
-  mode: "create" | "edit"
+  action: (formData: FormData) => Promise<void>;
+  mode: "create" | "edit";
   values?: {
-    address?: string | null
-    client_code?: string
-    company_name?: string
-    contact_person?: string | null
-    email?: string | null
-    phone?: string | null
-    portal_access_enabled?: boolean
-    status?: string
-  }
-}
+    address?: string | null;
+    client_code?: string;
+    company_name?: string;
+    contact_person?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    portal_access_enabled?: boolean;
+    status?: string;
+  };
+};
 
 const statusOptions = [
   { label: "Aktif", value: "active" },
   { label: "Tidak aktif", value: "inactive" },
-]
+];
 
 export function ClientForm({ action, mode, values }: ClientFormProps) {
-  const isCreate = mode === "create"
+  const isCreate = mode === "create";
+  const [clientCode, setClientCode] = useState(values?.client_code ?? "");
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateCode = useCallback(async () => {
+    setIsGenerating(true);
+    try {
+      const code = await generateClientCode();
+      setClientCode(code);
+    } catch (error) {
+      console.error("Failed to generate client code:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, []);
+
+  // Auto-generate client code on mount for create mode
+  useEffect(() => {
+    if (isCreate && !clientCode) {
+      handleGenerateCode();
+    }
+  }, [isCreate, clientCode, handleGenerateCode]);
 
   return (
     <Card>
@@ -41,7 +67,31 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="client-code">Kode klien</FieldLabel>
-              <Input data-testid="client-form-code" defaultValue={values?.client_code ?? ""} id="client-code" name="client_code" required />
+              <div className="flex gap-2">
+                <Input
+                  data-testid="client-form-code"
+                  id="client-code"
+                  name="client_code"
+                  value={clientCode}
+                  onChange={(e) => setClientCode(e.target.value)}
+                  placeholder="CLI-2025-0001"
+                  required
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateCode}
+                  disabled={isGenerating}
+                  data-testid="client-form-generate-code"
+                >
+                  <RefreshCwIcon className={`h-4 w-4 mr-2 ${isGenerating ? "animate-spin" : ""}`} />
+                  Generate
+                </Button>
+              </div>
+              <FieldDescription>
+                Kode klien akan otomatis digenerate dengan format CLI-YYYY-NNNN. Anda juga bisa memasukkan kode manual.
+              </FieldDescription>
             </Field>
 
             <Field>
@@ -99,7 +149,10 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
                 />
                 <span className="flex flex-col gap-1">
                   <span className="font-medium">Aktifkan akses portal</span>
-                  <span className="text-muted">Gunakan opsi ini bila klien perlu disiapkan untuk akses portal di modul berikutnya.</span>
+                  <span className="text-muted">
+                    Centang untuk membuat akun portal klien secara otomatis. Klien akan menerima email dengan kredensial login. 
+                    Username akan menggunakan format dari kode klien.
+                  </span>
                 </span>
               </label>
             </Field>
@@ -116,5 +169,5 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

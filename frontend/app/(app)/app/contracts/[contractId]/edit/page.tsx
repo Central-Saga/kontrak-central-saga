@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { FileTextIcon, GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
+import { FileTextIcon, GitCompareArrowsIcon, HistoryIcon, ArrowRightIcon } from "lucide-react"
 
 import { updateContractAction } from "@/app/(app)/app/access-management/actions"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
@@ -8,9 +8,7 @@ import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-man
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import {
-  getAccessManagementErrorMessage,
   getContract,
-  isAccessManagementError,
   listClients,
 } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
