@@ -8,7 +8,7 @@
       "type": "local",
       "enabled": true,
       "command": [
-        "/opt/homebrew/bin/php",
+        "/usr/bin/php",
         "backend/artisan",
         "boost:mcp"
       ]

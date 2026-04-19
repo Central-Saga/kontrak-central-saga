@@ -3,7 +3,6 @@ import { IBM_Plex_Mono, Outfit, Sora } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import { ThemeScript } from "@/components/theme/theme-script";
 import { Toaster } from "@/components/ui/sonner";
 
 const outfit = Outfit({
@@ -39,9 +38,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${outfit.variable} ${sora.variable} ${plexMono.variable} h-full antialiased font-sans`}
     >
-      <head>
-        <ThemeScript />
-      </head>
+      <head />
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           {children}
