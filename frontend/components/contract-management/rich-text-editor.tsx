@@ -18,7 +18,7 @@ import {
   AlignCenterIcon,
   AlignRightIcon,
   LinkIcon,
-  LinkBreakIcon,
+  Link2OffIcon,
   QuoteIcon,
   CodeIcon,
   MinusIcon,
@@ -30,16 +30,6 @@ import {
   Heading3Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 type RichTextEditorProps = {
@@ -57,8 +47,8 @@ export function RichTextEditor({
   className,
   name,
 }: RichTextEditorProps) {
+  const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
-  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -112,7 +102,7 @@ export function RichTextEditor({
     if (linkUrl) {
       editor.chain().focus().extendMarkRange("link").setLink({ href: linkUrl }).run();
       setLinkUrl("");
-      setIsLinkDialogOpen(false);
+      setShowLinkInput(false);
     }
   };
 
@@ -260,54 +250,54 @@ export function RichTextEditor({
         <ToolbarDivider />
 
         {/* Link */}
-        <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
-          <DialogTrigger asChild>
+        {!showLinkInput ? (
+          <>
+            <ToolbarButton
+              onClick={() => setShowLinkInput(true)}
+              isActive={editor.isActive("link")}
+              title="Add Link"
+            >
+              <LinkIcon className="h-4 w-4" />
+            </ToolbarButton>
+            {editor.isActive("link") && (
+              <ToolbarButton
+                onClick={() => editor.chain().focus().unsetLink().run()}
+                title="Remove Link"
+              >
+                <Link2OffIcon className="h-4 w-4" />
+              </ToolbarButton>
+            )}
+          </>
+        ) : (
+          <div className="flex items-center gap-1 px-2">
+            <input
+              type="text"
+              placeholder="https://..."
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addLink()}
+              className="h-7 w-40 rounded border border-input px-2 text-sm"
+              autoFocus
+            />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              title="Add Link"
-              className={cn(
-                "h-8 w-8 p-0 shrink-0",
-                editor.isActive("link") && "bg-muted"
-              )}
+              onClick={addLink}
+              className="h-7 px-2 text-xs"
             >
-              <LinkIcon className="h-4 w-4" />
+              Add
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Tambah Link</DialogTitle>
-              <DialogDescription>
-                Masukkan URL untuk link ini.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center space-x-2">
-              <Input
-                placeholder="https://example.com"
-                value={linkUrl}
-                onChange={(e) => setLinkUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addLink()}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsLinkDialogOpen(false)}>
-                Batal
-              </Button>
-              <Button type="button" onClick={addLink}>
-                Tambah Link
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {editor.isActive("link") && (
-          <ToolbarButton
-            onClick={() => editor.chain().focus().unsetLink().run()}
-            title="Remove Link"
-          >
-            <LinkBreakIcon className="h-4 w-4" />
-          </ToolbarButton>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => { setShowLinkInput(false); setLinkUrl(""); }}
+              className="h-7 px-2 text-xs"
+            >
+              Cancel
+            </Button>
+          </div>
         )}
 
         <ToolbarDivider />
@@ -365,7 +355,6 @@ export function RichTextEditor({
         </ToolbarButton>
       </div>
       <EditorContent editor={editor} />
-      {/* Hidden input for form submission */}
       {name && (
         <input
           type="hidden"
