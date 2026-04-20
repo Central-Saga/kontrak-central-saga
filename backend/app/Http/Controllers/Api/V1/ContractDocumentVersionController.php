@@ -7,12 +7,17 @@ use App\Http\Requests\StoreContractDocumentVersionRequest;
 use App\Http\Resources\ContractDocumentVersionResource;
 use App\Models\Contract;
 use App\Models\ContractDocumentVersion;
+use App\Services\DocumentVersionDiffService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ContractDocumentVersionController extends Controller
 {
+    public function __construct(
+        private readonly DocumentVersionDiffService $diffService,
+    ) {
+    }
     public function index(Request $request, Contract $contract): JsonResponse
     {
         $versions = $contract->documentVersions()
@@ -140,10 +145,62 @@ class ContractDocumentVersionController extends Controller
     {
         abort_unless($version->contract_id === $contract->id, 404, 'Versi dokumen kontrak tidak ditemukan.');
 
-        $version->load(['media', 'uploader:id,name,email']);
+        $version->load(['media', 'uploader:id,name,email', 'auditLogs.user:id,name,email']);
 
         return response()->json([
             'data' => new ContractDocumentVersionResource($version),
+        ]);
+    }
+
+    public function compareContent(Request $request, Contract $contract): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_version_id' => ['required', 'integer', 'exists:contract_document_versions,id'],
+            'to_version_id' => ['required', 'integer', 'exists:contract_document_versions,id', 'different:from_version_id'],
+        ]);
+
+        $versions = ContractDocumentVersion::query()
+            ->with(['media', 'uploader:id,name,email'])
+            ->where('contract_id', $contract->id)
+            ->whereIn('id', [$validated['from_version_id'], $validated['to_version_id']])
+            ->get()
+            ->keyBy('id');
+
+        $fromVersion = $versions->get($validated['from_version_id']);
+        $toVersion = $versions->get($validated['to_version_id']);
+
+        abort_unless($fromVersion && $toVersion, 404, 'Versi dokumen kontrak tidak ditemukan.');
+
+        $contentDiff = $this->diffService->compareVersions($fromVersion, $toVersion);
+
+        return response()->json([
+            'data' => [
+                'contract_id' => $contract->id,
+                'from_version' => new ContractDocumentVersionResource($fromVersion),
+                'to_version' => new ContractDocumentVersionResource($toVersion),
+                'content_diff' => $contentDiff,
+            ],
+        ]);
+    }
+
+    public function getAuditLogs(Contract $contract, ContractDocumentVersion $version): JsonResponse
+    {
+        abort_unless($version->contract_id === $contract->id, 404, 'Versi dokumen kontrak tidak ditemukan.');
+
+        $logs = $this->diffService->getVersionAuditLogs($version);
+
+        return response()->json([
+            'data' => \App\Http\Resources\DocumentVersionAuditLogResource::collection($logs),
+        ]);
+    }
+
+    public function getHistory(Request $request, Contract $contract): JsonResponse
+    {
+        $documentType = $request->string('document_type', 'main_contract')->toString();
+        $history = $this->diffService->getContractDocumentHistory($contract->id, $documentType);
+
+        return response()->json([
+            'data' => $history,
         ]);
     }
 }

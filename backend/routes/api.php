@@ -63,6 +63,13 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('permission:export permissions');
         });
 
+        // Generate code routes MUST be before apiResource to avoid {id} conflict
+        Route::get('clients/generate-code', [ClientController::class, 'generateCode'])
+            ->middleware('permission:manage clients');
+
+        Route::get('contracts/generate-code', [ContractController::class, 'generateCode'])
+            ->middleware('permission:manage contracts');
+
         Route::apiResource('clients', ClientController::class)
             ->middleware('permission:manage clients');
 
@@ -73,7 +80,10 @@ Route::prefix('v1')->group(function (): void {
             Route::get('document-versions', [ContractDocumentVersionController::class, 'index']);
             Route::post('document-versions', [ContractDocumentVersionController::class, 'store']);
             Route::get('document-versions/compare', [ContractDocumentVersionController::class, 'compare']);
+            Route::get('document-versions/compare-content', [ContractDocumentVersionController::class, 'compareContent']);
+            Route::get('document-versions/history', [ContractDocumentVersionController::class, 'getHistory']);
             Route::get('document-versions/{version}', [ContractDocumentVersionController::class, 'show']);
+            Route::get('document-versions/{version}/audit-logs', [ContractDocumentVersionController::class, 'getAuditLogs']);
         });
 
         Route::apiResource('payment-terms', PaymentTermController::class)

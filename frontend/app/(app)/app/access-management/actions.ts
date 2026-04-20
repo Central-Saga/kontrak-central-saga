@@ -253,7 +253,7 @@ export async function createContractAction(formData: FormData) {
   }
 
   revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
-  redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "created"))
+  redirect(appendMessage("/app/contracts", "status", "created"))
 }
 
 export async function updateContractAction(contractId: number, formData: FormData) {
@@ -294,13 +294,14 @@ export async function deleteContractAction(contractId: number) {
 }
 
 export async function uploadContractDocumentVersionAction(contractId: number, formData: FormData) {
+  "use server"
   try {
     await uploadContractDocumentVersion(contractId, formData)
   } catch (error) {
     redirectForUnauthorized(error)
-    redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)))
+    redirect(appendMessage(`/app/contracts/${contractId}/versions`, "error", getFallbackErrorMessage(error)))
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
-  redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "document_uploaded"))
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/versions`])
+  redirect(appendMessage(`/app/contracts/${contractId}/versions`, "status", "document_uploaded"))
 }

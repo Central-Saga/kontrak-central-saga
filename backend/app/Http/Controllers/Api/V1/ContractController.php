@@ -38,7 +38,14 @@ class ContractController extends Controller
 
     public function store(StoreContractRequest $request): ContractResource|JsonResponse
     {
-        $contract = Contract::create($request->validated());
+        $data = $request->validated();
+
+        // If contract_number is not provided, generate one
+        if (empty($data['contract_number'])) {
+            $data['contract_number'] = Contract::generateCode();
+        }
+
+        $contract = Contract::create($data);
 
         return (new ContractResource($contract->load(['client', 'latestDocumentVersion'])->loadCount(['paymentTerms', 'projectProgressUpdates', 'documentVersions'])))
             ->response()
@@ -79,5 +86,17 @@ class ContractController extends Controller
         $contract->delete();
 
         return response()->json([], 204);
+    }
+
+    /**
+     * Generate a new unique contract number
+     */
+    public function generateCode(): JsonResponse
+    {
+        $code = Contract::generateCode();
+
+        return response()->json([
+            'contract_number' => $code,
+        ]);
     }
 }
