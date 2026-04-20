@@ -146,4 +146,24 @@ class ContractDocumentVersionController extends Controller
             'data' => new ContractDocumentVersionResource($version),
         ]);
     }
+
+    public function download(Contract $contract, ContractDocumentVersion $version): JsonResponse
+    {
+        abort_unless($version->contract_id === $contract->id, 404, 'Versi dokumen kontrak tidak ditemukan.');
+
+        $version->load('media');
+
+        if (!$version->media) {
+            return response()->json(['message' => 'File tidak ditemukan.'], 404);
+        }
+
+        $url = $version->media->getUrl();
+
+        return response()->json([
+            'data' => [
+                'url' => $url,
+                'file_name' => $version->original_file_name,
+            ],
+        ]);
+    }
 }

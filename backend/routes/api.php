@@ -81,6 +81,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('document-versions', [ContractDocumentVersionController::class, 'store']);
             Route::get('document-versions/compare', [ContractDocumentVersionController::class, 'compare']);
             Route::get('document-versions/{version}', [ContractDocumentVersionController::class, 'show']);
+            Route::get('document-versions/{version}/download', [ContractDocumentVersionController::class, 'download']);
         });
 
         Route::apiResource('payment-terms', PaymentTermController::class)
