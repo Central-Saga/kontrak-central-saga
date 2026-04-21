@@ -87,7 +87,7 @@ export default async function ContractComparePage({
     <PageStack>
       <PageHeaderCard
         title={`Komparasi Dokumen: ${contract.contract_number}`}
-        description="Bandingkan dua versi dokumen dengan preview langsung dan mode overlay."
+        description="Bandingkan dua versi dokumen dengan preview langsung secara side-by-side."
       />
 
       {versionsError && <StatusBanner error={versionsError} />}

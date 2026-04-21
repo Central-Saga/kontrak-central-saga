@@ -1,16 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowRightLeftIcon, ColumnsIcon, EyeIcon, GitCompareArrowsIcon } from 'lucide-react'
+import { ArrowRightLeftIcon, ColumnsIcon, GitCompareArrowsIcon } from 'lucide-react'
 import { DocumentPreview } from './document-preview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 
-type CompareMode = 'side-by-side' | 'overlay'
-
 interface DocumentVersion {
   id: number
+  contract_id: number
   version_number: number
   version_status: string
   original_file_name: string
@@ -20,7 +19,6 @@ interface DocumentVersion {
   uploaded_at?: string | null
   change_summary?: string | null
   uploader?: { name: string } | null
-  media?: { url: string } | null
 }
 
 interface CompareDifference {
@@ -75,10 +73,17 @@ function formatDateTime(value?: string | null) {
   if (!value) return 'Belum tercatat'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
+
+  // Use UTC to ensure deterministic output between server and client,
+  // avoiding hydration mismatches caused by different local timezones.
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const month = months[date.getUTCMonth()]
+  const year = date.getUTCFullYear()
+  const hours = String(date.getUTCHours()).padStart(2, '0')
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+
+  return `${day} ${month} ${year}, ${hours}.${minutes}`
 }
 
 function formatBytes(value: number) {
@@ -100,6 +105,10 @@ function formatDiffValue(field: string, value: string | number | null) {
   return String(value)
 }
 
+function getProxyUrl(version: DocumentVersion): string {
+  return `/api/files/contracts/${version.contract_id}/document-versions/${version.id}`
+}
+
 function getFieldLabel(field: string) {
   return fieldLabels[field] ?? field.replaceAll('_', ' ')
 }
@@ -110,8 +119,6 @@ export function DocumentCompare({
   compareError,
   onCompare,
 }: DocumentCompareProps) {
-  const [mode, setMode] = useState<CompareMode>('side-by-side')
-  const [overlayOpacity, setOverlayOpacity] = useState(50)
   const [fromVersionId, setFromVersionId] = useState<number | ''>('')
   const [toVersionId, setToVersionId] = useState<number | ''>('')
 
@@ -226,34 +233,13 @@ export function DocumentCompare({
             <h3 className="text-lg font-semibold">
               Hasil Komparasi: V{fromVersion.version_number} → V{toVersion.version_number}
             </h3>
-            <div className="flex items-center gap-2 rounded-lg border p-1">
-              <button
-                onClick={() => setMode('side-by-side')}
-                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                  mode === 'side-by-side'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <ColumnsIcon className="h-4 w-4" />
-                Side-by-Side
-              </button>
-              <button
-                onClick={() => setMode('overlay')}
-                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                  mode === 'overlay'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <EyeIcon className="h-4 w-4" />
-                Overlay
-              </button>
+            <div className="flex items-center gap-2 rounded-md border border-line bg-card px-3 py-2 text-sm text-muted-foreground">
+              <ColumnsIcon className="h-4 w-4" />
+              Side-by-Side
             </div>
           </div>
 
-          {mode === 'side-by-side' ? (
-            <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
@@ -269,9 +255,9 @@ export function DocumentCompare({
                   </p>
                 </CardHeader>
                 <CardContent>
-                  {fromVersion.media?.url ? (
+                  {fromVersion.contract_id && fromVersion.id ? (
                     <DocumentPreview
-                      url={fromVersion.media.url}
+                      url={getProxyUrl(fromVersion)}
                       fileName={fromVersion.original_file_name}
                       mimeType={fromVersion.mime_type}
                       className="max-h-[600px] overflow-auto"
@@ -299,9 +285,9 @@ export function DocumentCompare({
                   </p>
                 </CardHeader>
                 <CardContent>
-                  {toVersion.media?.url ? (
+                  {toVersion.contract_id && toVersion.id ? (
                     <DocumentPreview
-                      url={toVersion.media.url}
+                      url={getProxyUrl(toVersion)}
                       fileName={toVersion.original_file_name}
                       mimeType={toVersion.mime_type}
                       className="max-h-[600px] overflow-auto"
@@ -314,55 +300,6 @@ export function DocumentCompare({
                 </CardContent>
               </Card>
             </div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Mode Overlay</CardTitle>
-                <CardDescription>
-                  Geser slider untuk mengatur transparansi antara kedua versi dokumen.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4 flex items-center gap-4">
-                  <span className="text-sm">V{fromVersion.version_number}</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={overlayOpacity}
-                    onChange={(e) => setOverlayOpacity(Number(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="text-sm">V{toVersion.version_number}</span>
-                </div>
-
-                <div className="relative max-h-[600px] overflow-hidden">
-                  {fromVersion.media?.url && (
-                    <div className="absolute inset-0">
-                      <DocumentPreview
-                        url={fromVersion.media.url}
-                        fileName={fromVersion.original_file_name}
-                        mimeType={fromVersion.mime_type}
-                      />
-                    </div>
-                  )}
-
-                  {toVersion.media?.url && (
-                    <div
-                      className="relative"
-                      style={{ opacity: overlayOpacity / 100 }}
-                    >
-                      <DocumentPreview
-                        url={toVersion.media.url}
-                        fileName={toVersion.original_file_name}
-                        mimeType={toVersion.mime_type}
-                      />
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           <Card>
             <CardHeader>
