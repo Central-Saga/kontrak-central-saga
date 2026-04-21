@@ -13,37 +13,37 @@ E2E_COMPOSE_ENV := FRONTEND_APP_DOMAIN=$(E2E_FRONTEND_APP_DOMAIN) BACKEND_APP_DO
 
 up:
 	$(MAKE) tls-dev-cert
-	podman-compose up -d --build
+	docker compose up -d --build
 
 dev-up:
 	$(MAKE) tls-dev-cert
-	podman-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 down:
-	podman-compose down
+	docker compose down
 
 dev-down:
-	podman-compose -f docker-compose.yml -f docker-compose.dev.yml down
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 rebuild:
 	$(MAKE) tls-dev-cert
-	podman-compose up -d --build --force-recreate
+	docker compose up -d --build --force-recreate
 
 dev-rebuild:
 	$(MAKE) tls-dev-cert
-	podman-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build --force-recreate
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build --force-recreate
 
 ps:
-	podman-compose ps
+	docker compose ps
 
 dev-logs:
-	podman-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f frontend backend proxy
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f frontend backend proxy
 
 fresh:
-	podman-compose exec -T backend php artisan migrate:fresh --seed --force
+	docker compose exec -T backend php artisan migrate:fresh --seed --force
 
 health:
-	podman-compose exec -T backend php -r "echo file_get_contents('http://127.0.0.1/api/health');"
+	docker compose exec -T backend php -r "echo file_get_contents('http://127.0.0.1/api/health');"
 
 test-local:
 	cd backend && php artisan test --compact
@@ -58,17 +58,17 @@ boost-inspector:
 
 e2e-up:
 	$(MAKE) tls-dev-cert
-	$(E2E_COMPOSE_ENV) podman-compose up -d --build
-	$(E2E_COMPOSE_ENV) podman-compose exec -T backend php -r "for (\$$i = 0; \$$i < 30; \$$i++) { if (@file_get_contents('http://127.0.0.1/api/health') !== false) { exit(0); } sleep(1); } fwrite(STDERR, 'Backend health check failed'.PHP_EOL); exit(1);"
+	$(E2E_COMPOSE_ENV) docker compose up -d --build
+	$(E2E_COMPOSE_ENV) docker compose exec -T backend php -r "for (\$$i = 0; \$$i < 30; \$$i++) { if (@file_get_contents('http://127.0.0.1/api/health') !== false) { exit(0); } sleep(1); } fwrite(STDERR, 'Backend health check failed'.PHP_EOL); exit(1);"
 
 e2e-seed:
-	$(E2E_COMPOSE_ENV) podman-compose exec -T backend php artisan migrate --force
-	$(E2E_COMPOSE_ENV) podman-compose exec -T backend php artisan db:seed --class=Database\\Seeders\\E2eAuthUserSeeder --force
+	$(E2E_COMPOSE_ENV) docker compose exec -T backend php artisan migrate --force
+	$(E2E_COMPOSE_ENV) docker compose exec -T backend php artisan db:seed --class=Database\\Seeders\\E2eAuthUserSeeder --force
 
 e2e-bootstrap: e2e-up e2e-seed
 
 e2e-down:
-	$(E2E_COMPOSE_ENV) podman-compose down
+	$(E2E_COMPOSE_ENV) docker compose down
 
 # Auto-find available port and run
 dev-auto:
@@ -83,7 +83,7 @@ dev-auto:
 	echo "📡 HTTPS Port: $$HTTPS_PORT"; \
 	echo ""; \
 	$(MAKE) tls-dev-cert; \
-	PROXY_HTTP_PORT=$$HTTP_PORT PROXY_HTTPS_PORT=$$HTTPS_PORT podman-compose up -d --build; \
+	PROXY_HTTP_PORT=$$HTTP_PORT PROXY_HTTPS_PORT=$$HTTPS_PORT docker compose up -d --build; \
 	echo ""; \
 	echo "✅ Server berjalan!"; \
 	echo ""; \

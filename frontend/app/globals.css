@@ -1,6 +1,77 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
+
+.tiptap-editor-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-editor-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-editor-content h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.tiptap-editor-content h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tiptap-editor-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tiptap-editor-content blockquote {
+  border-left: 3px solid var(--line);
+  padding-left: 1rem;
+  margin-left: 0;
+  font-style: italic;
+}
+
+.tiptap-editor-content pre {
+  background: var(--card-strong);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.tiptap-editor-content code {
+  background: var(--card-strong);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875em;
+}
+
+.tiptap-editor-content hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 1rem 0;
+}
+
+.tiptap-editor-content p {
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-editor-content a {
+  color: var(--accent);
+  text-decoration: underline;
+}
 
 @custom-variant dark (&:is(.dark *));
 

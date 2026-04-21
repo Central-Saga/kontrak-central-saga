@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\DocumentVersionAuditLogFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class DocumentVersionAuditLog extends Model
 {
-    /** @use HasFactory<\Database\Factories\DocumentVersionAuditLogFactory> */
+    /** @use HasFactory<DocumentVersionAuditLogFactory> */
     use HasFactory;
 
     protected $fillable = [

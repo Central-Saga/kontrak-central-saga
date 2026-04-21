@@ -1,5 +1,4 @@
 import { deleteClientAction } from "@/app/(app)/app/access-management/actions"
-import { ClientStatusBadge } from "@/components/access-management/entity-status-badge"
 import { RowActionButtons } from "@/components/access-management/row-action-buttons"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
@@ -48,9 +47,8 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
       <PageHeaderCard
         actionHref="/app/clients/new"
         actionLabel="Tambah klien"
-        description="Kelola klien dari daftar yang lebih ringkas, lalu buka halaman detail untuk melihat konteks lengkapnya."
+        description="Kelola identitas perusahaan, kontak utama, dan kesiapan akses portal dari satu halaman terpisah yang rapi."
         title="Kelola klien"
-        eyebrow="Manajemen klien"
       />
 
       <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
@@ -73,11 +71,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                 <table className="min-w-full table-fixed border-separate border-spacing-0 text-left text-sm">
                   <thead>
                     <tr>
-                      <th className="w-[18%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kode</th>
-                      <th className="w-[42%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Perusahaan</th>
-                      <th className="w-[18%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
-                      <th className="w-[14%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Portal</th>
-                      <th className="w-[11rem] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
+                      <th className="w-[15%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kode</th>
+                      <th className="w-[31%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Perusahaan</th>
+                      <th className="w-[30%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kontak</th>
+                      <th className="w-[12%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
+                      <th className="w-[8rem] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -89,13 +87,14 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                           <td className="border border-line px-4 py-3.5 align-top">
                             <div className="flex flex-col gap-1">
                               <p className="font-medium text-foreground">{client.company_name}</p>
-                              <p className="text-xs text-muted">
-                                {client.contracts_count ?? 0} kontrak • {client.active_contracts_count ?? 0} aktif
-                              </p>
+                              <p className="text-xs text-muted">{client.contracts_count ?? 0} kontrak • {client.active_contracts_count ?? 0} aktif</p>
                             </div>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
-                            <ClientStatusBadge status={client.status} />
+                            <div className="flex flex-col gap-1 text-muted">
+                              <p>{client.contact_person || "-"}</p>
+                              <p className="text-xs break-all">{client.email || "-"}</p>
+                            </div>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top text-muted">
                             {client.portal_access_enabled ? "Aktif" : "Nonaktif"}

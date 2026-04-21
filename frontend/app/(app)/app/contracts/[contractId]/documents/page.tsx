@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { FileStackIcon, GitCompareArrowsIcon, HistoryIcon } from "lucide-react";
 
 import { uploadContractDocumentVersionAction } from "@/app/(app)/app/access-management/actions";
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge";
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,11 @@ import {
   getContract,
   listContractDocumentVersions,
 } from "@/lib/access-management/backend";
-import { handleModulePageError, type PageRouteParams } from "@/lib/access-management/page";
+import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page";
+
+const statusMessages = {
+  document_uploaded: "Versi dokumen kontrak berhasil diunggah dan masuk ke arsip versi.",
+};
 
 const statusLabels: Record<string, string> = {
   draft: "Draft",
@@ -52,16 +57,21 @@ function formatBytes(value: number) {
 
 interface ContractDocumentsPageProps {
   params: PageRouteParams<{ contractId: string }>;
+  searchParams: PageSearchParams;
 }
 
 export default async function ContractDocumentsPage({
   params,
+  searchParams,
 }: ContractDocumentsPageProps) {
   const { contractId } = await params;
+  const resolvedSearchParams = await searchParams;
+  const error = readSearchParam(resolvedSearchParams, "error");
+  const status = readSearchParam(resolvedSearchParams, "status");
 
   let contract = null;
   let versions: Awaited<ReturnType<typeof listContractDocumentVersions>> = [];
-  let error: string | null = null;
+  let fetchError: string | null = null;
 
   try {
     const [contractResponse, versionsResponse] = await Promise.all([
@@ -70,8 +80,8 @@ export default async function ContractDocumentsPage({
     ]);
     contract = contractResponse;
     versions = versionsResponse;
-  } catch (fetchError) {
-    error = handleModulePageError(fetchError);
+  } catch (err) {
+    fetchError = handleModulePageError(err);
   }
 
   if (!contract) {
@@ -81,7 +91,8 @@ export default async function ContractDocumentsPage({
           title="Dokumen Kontrak"
           description="Gagal memuat data kontrak."
         />
-        <StatusBanner error={error ?? "Kontrak tidak ditemukan."} />
+        <StatusToastBridge error={error ?? undefined} />
+        <StatusBanner error={fetchError ?? "Kontrak tidak ditemukan."} />
       </PageStack>
     );
   }
@@ -90,7 +101,7 @@ export default async function ContractDocumentsPage({
   const latestVersion = sortedVersions[0];
   const nextVersionNumber = (latestVersion?.version_number ?? 0) + 1;
 
-  const uploadAction = uploadContractDocumentVersionAction.bind(null, contract.id);
+  const uploadAction = uploadContractDocumentVersionAction.bind(null, contract.id, `/app/contracts/${contractId}/documents`);
 
   return (
     <PageStack>
@@ -98,6 +109,8 @@ export default async function ContractDocumentsPage({
         title={`Dokumen: ${contract.contract_number}`}
         description="Kelola versi dokumen kontrak, unggah revisi baru, dan lihat riwayat."
       />
+
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
 
       <div className="flex flex-wrap gap-3">
         <Link
@@ -227,9 +240,9 @@ export default async function ContractDocumentsPage({
                         )}
                       </div>
 
-                      {version.media?.url && (
+                      {version.id && (
                         <a
-                          href={version.media.url}
+                          href={`/files/contracts/${version.contract_id}/document-versions/${version.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={buttonVariants({ size: "sm", variant: "outline" })}

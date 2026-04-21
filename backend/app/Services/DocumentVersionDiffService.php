@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\ContractDocumentVersion;
 use App\Models\DocumentVersionAuditLog;
 use Illuminate\Support\Facades\Log;
+use Jfcherng\Diff\Differ;
+use Jfcherng\Diff\DiffHelper;
 
 class DocumentVersionDiffService
 {
@@ -25,7 +27,7 @@ class DocumentVersionDiffService
 
     public function canDiffContent(ContractDocumentVersion $version): bool
     {
-        if (!in_array($version->mime_type, self::SUPPORTED_MIME_TYPES)) {
+        if (! in_array($version->mime_type, self::SUPPORTED_MIME_TYPES)) {
             return false;
         }
 
@@ -38,14 +40,14 @@ class DocumentVersionDiffService
 
     public function getContent(ContractDocumentVersion $version): ?string
     {
-        if (!$this->canDiffContent($version)) {
+        if (! $this->canDiffContent($version)) {
             return null;
         }
 
         try {
             $path = $version->media->getPath();
 
-            if (!file_exists($path)) {
+            if (! file_exists($path)) {
                 Log::warning('File tidak ditemukan untuk version', [
                     'version_id' => $version->id,
                     'path' => $path,
@@ -103,7 +105,7 @@ class DocumentVersionDiffService
             'separateBlock' => true,
         ];
 
-        $diffHtml = \Jfcherng\Diff\DiffHelper::calculate($fromContent, $toContent, $renderer, $differOptions, $rendererOptions);
+        $diffHtml = DiffHelper::calculate($fromContent, $toContent, $renderer, $differOptions, $rendererOptions);
         $lineChanges = $this->analyzeLineChanges($fromContent, $toContent);
 
         return [
@@ -124,7 +126,7 @@ class DocumentVersionDiffService
         $oldLineCount = count($oldLines);
         $newLineCount = count($newLines);
 
-        $differ = new \Jfcherng\Diff\Differ($oldLines, $newLines);
+        $differ = new Differ($oldLines, $newLines);
         $operations = $differ->getOpcodes();
 
         $stats = [
@@ -181,7 +183,7 @@ class DocumentVersionDiffService
     {
         $content = str_replace(["\r\n", "\r"], "\n", $content);
 
-        if (!mb_check_encoding($content, 'UTF-8')) {
+        if (! mb_check_encoding($content, 'UTF-8')) {
             $content = mb_convert_encoding($content, 'UTF-8', 'UTF-8');
         }
 

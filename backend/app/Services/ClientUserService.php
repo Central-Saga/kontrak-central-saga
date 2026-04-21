@@ -116,7 +116,7 @@ class ClientUserService
         $suffix = 1;
 
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . '_' . $suffix;
+            $username = $baseUsername.'_'.$suffix;
             $suffix++;
         }
 

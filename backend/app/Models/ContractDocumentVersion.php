@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 #[Fillable([
@@ -56,7 +57,7 @@ class ContractDocumentVersion extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
-    public function auditLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function auditLogs(): HasMany
     {
         return $this->hasMany(DocumentVersionAuditLog::class, 'document_version_id');
     }

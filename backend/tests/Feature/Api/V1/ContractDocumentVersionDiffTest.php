@@ -19,6 +19,7 @@ class ContractDocumentVersionDiffTest extends TestCase
     use RefreshDatabase;
 
     private Contract $contract;
+
     private User $admin;
 
     protected function setUp(): void
@@ -28,7 +29,7 @@ class ContractDocumentVersionDiffTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->admin = User::query()->where('email', 'admin@centralsaga.test')->firstOrFail();
-        
+
         $client = Client::factory()->create();
         $this->contract = Contract::factory()->create([
             'client_id' => $client->id,
@@ -77,7 +78,7 @@ class ContractDocumentVersionDiffTest extends TestCase
         $version2 = $this->createDocumentVersion($file2, 2);
 
         $response = $this->getJson(
-            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content" .
+            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content".
             "?from_version_id={$version1->id}&to_version_id={$version2->id}"
         );
 
@@ -145,7 +146,7 @@ class ContractDocumentVersionDiffTest extends TestCase
         $version2 = $this->createDocumentVersion($file, 2);
 
         $response = $this->getJson(
-            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content" .
+            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content".
             "?from_version_id={$version1->id}&to_version_id={$version2->id}"
         );
 
@@ -165,7 +166,7 @@ class ContractDocumentVersionDiffTest extends TestCase
         $version = $this->createDocumentVersion($file, 1);
 
         $response = $this->getJson(
-            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content" .
+            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content".
             "?from_version_id={$version->id}&to_version_id={$version->id}"
         );
 
@@ -177,8 +178,8 @@ class ContractDocumentVersionDiffTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         $response = $this->getJson(
-            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content" .
-            "?from_version_id=invalid&to_version_id=invalid"
+            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content".
+            '?from_version_id=invalid&to_version_id=invalid'
         );
 
         $response->assertUnprocessable();

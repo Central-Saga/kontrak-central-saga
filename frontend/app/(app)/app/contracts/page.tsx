@@ -1,24 +1,22 @@
 import { GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
 
 import { deleteContractAction } from "@/app/(app)/app/access-management/actions"
-import { ContractStatusBadge } from "@/components/access-management/entity-status-badge"
 import { RowActionButtons } from "@/components/access-management/row-action-buttons"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { listClients, listContracts, type ContractRecord } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 import { ContractFilters } from "@/components/contract-management/contract-filters"
-
-const statusPillClassName = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
 
 const statusMessages = {
   created: "Kontrak baru berhasil ditambahkan.",
   updated: "Data kontrak berhasil diperbarui.",
   deleted: "Kontrak berhasil dihapus.",
 }
+
+const statusPillClassName = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
 
 const contractStatusLabels: Record<string, string> = {
   draft: "Draft",
@@ -134,7 +132,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
           <Alert>
             <AlertTitle>Riwayat versi dokumen tersedia di setiap kontrak</AlertTitle>
             <AlertDescription>
-              Gunakan ikon riwayat dokumen pada tabel untuk langsung menuju arsip versi, unggah revisi baru, atau compare metadata antarversi di halaman ubah kontrak.
+              Gunakan ikon riwayat dokumen pada tabel untuk langsung menuju halaman dokumen kontrak, unggah revisi baru, atau compare metadata antarversi.
             </AlertDescription>
           </Alert>
         </CardHeader>
@@ -158,54 +156,57 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                       const documentVersionsCount = contract.document_versions_count ?? contract.document_versions?.length ?? 0
                       const compareReady = documentVersionsCount >= 2
                       const documentHistoryHref = `/app/contracts/${contract.id}/versions`
+                      const latestDocumentVersionSummary = getLatestDocumentVersionSummary(contract)
 
-                        return (
-                          <tr key={contract.id}>
-                            <td className="border border-line px-4 py-3.5 align-top">
-                              <div className="flex flex-col gap-1.5">
-                                <div className="flex flex-col gap-1">
-                                  <p className="font-medium text-foreground">{contract.contract_number}</p>
-                                  <p className="text-xs text-muted">{contract.client?.company_name ?? "-"}</p>
-                                </div>
+                      return (
+                        <tr key={contract.id}>
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex flex-col gap-1">
+                                <p className="font-medium text-foreground">{contract.contract_number}</p>
+                                <p className="text-xs text-muted">{contract.client?.company_name ?? "-"}</p>
                               </div>
-                            </td>
+                            </div>
+                          </td>
 
-                            <td className="border border-line px-4 py-3.5 align-top">
-                              <div className="flex flex-col gap-1.5">
-                                <p className="font-medium text-foreground">{contract.contract_title}</p>
-                                <p className="text-sm text-muted">{contract.project_name}</p>
-                                <p className="text-xs text-muted">Nilai kontrak: {contract.contract_value}</p>
-                              </div>
-                            </td>
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <div className="flex flex-col gap-1.5">
+                              <p className="font-medium text-foreground">{contract.contract_title}</p>
+                              <p className="text-sm text-muted">{contract.project_name}</p>
+                              <p className="text-xs text-muted">Nilai kontrak: {contract.contract_value}</p>
+                            </div>
+                          </td>
 
-                            <td className="border border-line px-4 py-3.5 align-top">
-                              <div className="flex flex-col gap-2 rounded-2xl border border-line bg-background px-3 py-2.5">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="inline-flex items-center rounded-full border border-line bg-card-strong px-2.5 py-1 text-xs font-medium text-foreground">
-                                    <HistoryIcon aria-hidden className="mr-1 size-3.5" />
-                                    {documentVersionsCount} versi
-                                  </span>
-                                  <span className={[
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <div className="flex flex-col gap-2 rounded-2xl border border-line bg-background px-3 py-2.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center rounded-full border border-line bg-card-strong px-2.5 py-1 text-xs font-medium text-foreground">
+                                  <HistoryIcon aria-hidden className="mr-1 size-3.5" />
+                                  {documentVersionsCount} versi
+                                </span>
+                                <span
+                                  className={[
                                     "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
                                     compareReady ? "border-primary/20 bg-primary/10 text-primary" : "border-line bg-card-strong text-muted",
-                                  ].join(" ")}>
-                                    <GitCompareArrowsIcon aria-hidden className="mr-1 size-3.5" />
-                                    {compareReady ? "Compare siap" : "Compare nanti"}
-                                  </span>
-                                </div>
-                                <p className="text-xs leading-5 text-muted">
-                                  {latestDocumentVersionSummary ? latestDocumentVersionSummary : "Belum ada arsip dokumen."}
-                                </p>
-                                <p className="text-xs text-muted">Buka riwayat penuh dari kolom aksi untuk unggah revisi atau compare metadata.</p>
+                                  ].join(" ")}
+                                >
+                                  <GitCompareArrowsIcon aria-hidden className="mr-1 size-3.5" />
+                                  {compareReady ? "Compare siap" : "Compare nanti"}
+                                </span>
                               </div>
-                            </td>
+                              <p className="text-xs leading-5 text-muted">
+                                {latestDocumentVersionSummary ? latestDocumentVersionSummary : "Belum ada arsip dokumen."}
+                              </p>
+                              <p className="text-xs text-muted">Buka riwayat penuh dari kolom aksi untuk unggah revisi atau compare metadata.</p>
+                            </div>
+                          </td>
 
-                            <td className="border border-line px-4 py-3.5 align-top">
-                              <ContractStatusPill status={contract.contract_status} />
-                            </td>
-                            <td className="border border-line px-4 py-3.5 align-top">
-                              <RowActionButtons
-                                deleteAction={deleteAction}
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <ContractStatusPill status={contract.contract_status} />
+                          </td>
+                          <td className="border border-line px-4 py-3.5 align-top">
+                            <RowActionButtons
+                              deleteAction={deleteAction}
                               deleteLabel={`Hapus ${contract.contract_number}`}
                               deleteTestId={`contract-delete-${contract.id}`}
                               editHref={`/app/contracts/${contract.id}/edit`}

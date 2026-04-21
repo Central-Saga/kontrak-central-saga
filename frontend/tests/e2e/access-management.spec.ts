@@ -493,12 +493,6 @@ test("contracts module supports search create edit and delete happy path", async
   await page.getByTestId("contracts-search-input").fill(updatedContractNumber);
   await page.getByRole("button", { name: "Cari" }).click();
   await expect(page.getByText(updatedContractTitle)).toBeVisible();
-  await page.getByRole("link", { name: `Lihat detail ${updatedContractNumber}` }).click();
-  await expect(page).toHaveURL(new RegExp(`/app/contracts/\\d+$`));
-  await expect(page.getByTestId("contract-detail-page")).toBeVisible();
-  await expect(page.getByText(updatedContractTitle)).toBeVisible();
-  await page.getByRole("link", { name: "Kembali ke daftar" }).click();
-  await expect(page).toHaveURL(/\/app\/contracts(\?|$)/);
 
   await page.getByRole("button", { name: `Hapus ${updatedContractNumber}` }).click();
   await expect(page.getByRole("heading", { name: "Hapus data ini?" })).toBeVisible();

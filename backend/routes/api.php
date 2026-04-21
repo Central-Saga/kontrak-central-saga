@@ -83,6 +83,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('document-versions/compare-content', [ContractDocumentVersionController::class, 'compareContent']);
             Route::get('document-versions/history', [ContractDocumentVersionController::class, 'getHistory']);
             Route::get('document-versions/{version}', [ContractDocumentVersionController::class, 'show']);
+            Route::get('document-versions/{version}/download', [ContractDocumentVersionController::class, 'download']);
             Route::get('document-versions/{version}/audit-logs', [ContractDocumentVersionController::class, 'getAuditLogs']);
         });
 

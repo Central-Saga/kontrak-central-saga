@@ -392,10 +392,10 @@ export function ContractDocumentVersionsSection({
                         </div>
                       </div>
 
-                      {version.media?.url ? (
+                      {version.id ? (
                         <a
                           className={buttonVariants({ size: "sm", variant: "outline" })}
-                          href={version.media.url}
+                          href={`/files/contracts/${version.contract_id}/document-versions/${version.id}`}
                           rel="noreferrer"
                           target="_blank"
                         >

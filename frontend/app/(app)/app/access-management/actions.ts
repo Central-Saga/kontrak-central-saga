@@ -186,12 +186,12 @@ export async function createClientAction(formData: FormData) {
 
     clientId = client.id;
   } catch (error) {
-    redirectForUnauthorized(error)
-    redirect(appendMessage("/app/clients/new", "error", getFallbackErrorMessage(error)))
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/clients/new", "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`])
-  redirect(appendMessage("/app/clients", "status", "created"))
+  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`]);
+  redirect(appendMessage("/app/clients", "status", "created"));
 }
 
 export async function updateClientAction(clientId: number, formData: FormData) {
@@ -207,24 +207,24 @@ export async function updateClientAction(clientId: number, formData: FormData) {
       status: readString(formData, "status"),
     });
   } catch (error) {
-    redirectForUnauthorized(error)
-    redirect(appendMessage(`/app/clients/${clientId}/edit`, "error", getFallbackErrorMessage(error)))
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/clients/${clientId}/edit`, "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`])
-  redirect(appendMessage("/app/clients", "status", "updated"))
+  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`]);
+  redirect(appendMessage("/app/clients", "status", "updated"));
 }
 
 export async function deleteClientAction(clientId: number) {
   try {
     await deleteClient(clientId)
   } catch (error) {
-    redirectForUnauthorized(error)
-    redirect(appendMessage("/app/clients", "error", getFallbackErrorMessage(error)))
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/clients", "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`])
-  redirect(appendMessage("/app/clients", "status", "deleted"))
+  revalidateAccessManagementPaths(["/app/clients", `/app/clients/${clientId}/edit`]);
+  redirect(appendMessage("/app/clients", "status", "deleted"));
 }
 
 export async function createContractAction(formData: FormData) {
@@ -248,12 +248,12 @@ export async function createContractAction(formData: FormData) {
 
     contractId = contract.id
   } catch (error) {
-    redirectForUnauthorized(error)
-    redirect(appendMessage("/app/contracts/new", "error", getFallbackErrorMessage(error)))
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/contracts/new", "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
-  redirect(appendMessage("/app/contracts", "status", "created"))
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "created"));
 }
 
 export async function updateContractAction(contractId: number, formData: FormData) {
@@ -273,35 +273,51 @@ export async function updateContractAction(contractId: number, formData: FormDat
       notes: readOptionalString(formData, "notes"),
     })
   } catch (error) {
-    redirectForUnauthorized(error)
-    redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)))
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
-  redirect(appendMessage("/app/contracts", "status", "updated"))
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage("/app/contracts", "status", "updated"));
 }
 
 export async function deleteContractAction(contractId: number) {
   try {
     await deleteContract(contractId)
   } catch (error) {
-    redirectForUnauthorized(error)
-    redirect(appendMessage("/app/contracts", "error", getFallbackErrorMessage(error)))
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/contracts", "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`])
-  redirect(appendMessage("/app/contracts", "status", "deleted"))
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage("/app/contracts", "status", "deleted"));
 }
 
-export async function uploadContractDocumentVersionAction(contractId: number, formData: FormData) {
+export async function uploadContractDocumentVersionAction(
+  contractId: number,
+  redirectPathOrFormData: string | FormData,
+  maybeFormData?: FormData
+) {
   "use server"
+
+  const redirectPath = typeof redirectPathOrFormData === "string"
+    ? redirectPathOrFormData
+    : `/app/contracts/${contractId}/versions`
+  const formData = typeof redirectPathOrFormData === "string"
+    ? maybeFormData
+    : redirectPathOrFormData
+
+  if (!formData) {
+    throw new Error("Form data is required.")
+  }
+
   try {
     await uploadContractDocumentVersion(contractId, formData)
   } catch (error) {
-    redirectForUnauthorized(error)
-    redirect(appendMessage(`/app/contracts/${contractId}/versions`, "error", getFallbackErrorMessage(error)))
+    redirectForUnauthorized(error);
+    redirect(appendMessage(redirectPath, "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/versions`])
-  redirect(appendMessage(`/app/contracts/${contractId}/versions`, "status", "document_uploaded"))
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`, `/app/contracts/${contractId}/versions`, `/app/contracts/${contractId}/documents`]);
+  redirect(appendMessage(redirectPath, "status", "document_uploaded"));
 }
