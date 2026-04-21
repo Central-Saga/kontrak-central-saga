@@ -37,7 +37,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: [
         "app.kontrak-centralsaga.site",
+        "app.kontrak-centralsaga.site:8080",
+        "app.kontrak-centralsaga.site:8443",
         "app.127.0.0.1.nip.io",
+        "app.127.0.0.1.nip.io:8080",
         "localhost:3000",
         "127.0.0.1:3000",
         "localhost:8080",
@@ -45,7 +48,7 @@ const nextConfig: NextConfig = {
         "localhost:8443",
         "127.0.0.1:8443",
       ],
-      bodySizeLimit: "10mb",
+      bodySizeLimit: "20mb",
     },
   },
 };
