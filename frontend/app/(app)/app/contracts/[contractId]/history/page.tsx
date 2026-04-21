@@ -184,7 +184,7 @@ export default async function ContractHistoryPage({
 
                       {version.id && (
                           <a
-                            href={`/files/contracts/${version.contract_id}/document-versions/${version.id}`}
+                            href={`/api/files/contracts/${version.contract_id}/document-versions/${version.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={buttonVariants({ size: "sm", variant: "outline" })}

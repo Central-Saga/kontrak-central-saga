@@ -305,9 +305,11 @@ function getDefaultApiErrorMessage(status: number) {
         ? "Data yang diminta tidak ditemukan."
         : status === 409
           ? "Data tidak dapat diproses karena masih dipakai oleh relasi lain."
-          : status === 422
-            ? "Data yang dikirim belum valid."
-            : "Terjadi kesalahan saat berkomunikasi dengan backend.";
+          : status === 413
+            ? "Ukuran file melebihi batas maksimum 20 MB."
+            : status === 422
+              ? "Data yang dikirim belum valid."
+              : "Terjadi kesalahan saat berkomunikasi dengan backend.";
 }
 
 async function requestBackend<T>(path: string, init: RequestInit = {}): Promise<T> {

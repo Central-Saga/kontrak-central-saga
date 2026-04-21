@@ -395,7 +395,7 @@ export function ContractDocumentVersionsSection({
                       {version.id ? (
                         <a
                           className={buttonVariants({ size: "sm", variant: "outline" })}
-                          href={`/files/contracts/${version.contract_id}/document-versions/${version.id}`}
+                          href={`/api/files/contracts/${version.contract_id}/document-versions/${version.id}`}
                           rel="noreferrer"
                           target="_blank"
                         >
