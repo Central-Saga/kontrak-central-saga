@@ -12,6 +12,8 @@ use App\Services\DocumentVersionDiffService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class ContractDocumentVersionController extends Controller
 {
@@ -153,23 +155,29 @@ class ContractDocumentVersionController extends Controller
         ]);
     }
 
-    public function download(Contract $contract, ContractDocumentVersion $version): JsonResponse
+    public function download(Contract $contract, ContractDocumentVersion $version): Response|BinaryFileResponse
     {
         abort_unless($version->contract_id === $contract->id, 404, 'Versi dokumen kontrak tidak ditemukan.');
 
         $version->load('media');
 
         if (! $version->media) {
-            return response()->json(['message' => 'File tidak ditemukan.'], 404);
+            abort(404, 'File tidak ditemukan.');
         }
 
-        $url = $version->media->getUrl();
+        $media = $version->media;
+        $filePath = $media->getPath();
 
-        return response()->json([
-            'data' => [
-                'url' => $url,
-                'file_name' => $version->original_file_name,
-            ],
+        if (! is_string($filePath) || ! file_exists($filePath)) {
+            abort(404, 'File dokumen yang diminta tidak tersedia atau sudah dipindahkan.');
+        }
+
+        $fileName = $version->original_file_name;
+        $mimeType = $media->mime_type ?? 'application/octet-stream';
+
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
         ]);
     }
 
