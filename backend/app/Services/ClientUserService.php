@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Client;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -16,51 +17,69 @@ class ClientUserService
      */
     public function createOrUpdateClientUser(Client $client): array
     {
-        $email = $client->email ?? $this->generateClientEmail($client);
-        $username = $this->generateUsername($client);
-        $password = $this->generatePassword();
+        return DB::transaction(function () use ($client) {
+            // Refresh client data within transaction to avoid race conditions
+            $client = Client::lockForUpdate()->find($client->id);
 
-        // Check if user already exists with this email
-        $existingUser = User::where('email', $email)->first();
+            if (! $client) {
+                throw new \Exception('Client not found');
+            }
 
-        if ($existingUser) {
-            // Update existing user
-            $existingUser->update([
+            // Check if client already has a user
+            if ($client->user_id && $client->user) {
+                return [
+                    'user' => $client->user,
+                    'password' => null,
+                    'is_new' => false,
+                ];
+            }
+
+            $email = $client->email ?? $this->generateClientEmail($client);
+            $username = $this->generateUniqueUsername($client);
+            $password = $this->generatePassword();
+
+            // Check if user already exists with this email
+            $existingUser = User::where('email', $email)->first();
+
+            if ($existingUser) {
+                // Update existing user with unique username
+                $existingUser->update([
+                    'name' => $client->company_name,
+                    'username' => $username,
+                ]);
+
+                // Update client relation
+                $client->update(['user_id' => $existingUser->id]);
+
+                return [
+                    'user' => $existingUser,
+                    'password' => null, // Don't return password for existing user
+                    'is_new' => false,
+                ];
+            }
+
+            // Create new user
+            $user = User::create([
                 'name' => $client->company_name,
                 'username' => $username,
+                'email' => $email,
+                'password' => Hash::make($password),
             ]);
 
+            // Assign client role if exists
+            if (method_exists($user, 'assignRole')) {
+                $user->assignRole('client');
+            }
+
             // Update client relation
-            $client->update(['user_id' => $existingUser->id]);
+            $client->update(['user_id' => $user->id]);
 
             return [
-                'user' => $existingUser,
-                'password' => null, // Don't return password for existing user
-                'is_new' => false,
+                'user' => $user,
+                'password' => $password,
+                'is_new' => true,
             ];
-        }
-
-        // Create new user
-        $user = User::create([
-            'name' => $client->company_name,
-            'username' => $username,
-            'email' => $email,
-            'password' => Hash::make($password),
-        ]);
-
-        // Assign client role if exists
-        if (method_exists($user, 'assignRole')) {
-            $user->assignRole('client');
-        }
-
-        // Update client relation
-        $client->update(['user_id' => $user->id]);
-
-        return [
-            'user' => $user,
-            'password' => $password,
-            'is_new' => true,
-        ];
+        });
     }
 
     /**
@@ -85,6 +104,23 @@ class ClientUserService
     private function generateUsername(Client $client): string
     {
         return strtolower(str_replace(['-', '_'], '', $client->client_code));
+    }
+
+    /**
+     * Generate unique username, append suffix if already exists
+     */
+    private function generateUniqueUsername(Client $client): string
+    {
+        $baseUsername = $this->generateUsername($client);
+        $username = $baseUsername;
+        $suffix = 1;
+
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername.'_'.$suffix;
+            $suffix++;
+        }
+
+        return $username;
     }
 
     /**

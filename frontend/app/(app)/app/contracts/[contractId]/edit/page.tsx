@@ -127,11 +127,12 @@ export default async function EditContractPage({
               Komparasi
             </Link>
             <Link 
-              className={buttonVariants({ variant: "outline" })} 
-              href={`/app/contracts/${contract.id}/history`}
+              className={buttonVariants({ variant: documentVersionsCount > 0 ? "secondary" : "outline" })} 
+              href={`/app/contracts/${contract.id}/versions`}
             >
               <HistoryIcon className="mr-2 h-4 w-4" />
-              Riwayat
+              Riwayat versi
+              <ArrowRightIcon aria-hidden className="ml-1 h-4 w-4" />
             </Link>
           </div>
         </div>

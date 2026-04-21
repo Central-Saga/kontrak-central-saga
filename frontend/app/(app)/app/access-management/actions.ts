@@ -293,14 +293,31 @@ export async function deleteContractAction(contractId: number) {
   redirect(appendMessage("/app/contracts", "status", "deleted"));
 }
 
-export async function uploadContractDocumentVersionAction(contractId: number, formData: FormData) {
+export async function uploadContractDocumentVersionAction(
+  contractId: number,
+  redirectPathOrFormData: string | FormData,
+  maybeFormData?: FormData
+) {
+  "use server"
+
+  const redirectPath = typeof redirectPathOrFormData === "string"
+    ? redirectPathOrFormData
+    : `/app/contracts/${contractId}/versions`
+  const formData = typeof redirectPathOrFormData === "string"
+    ? maybeFormData
+    : redirectPathOrFormData
+
+  if (!formData) {
+    throw new Error("Form data is required.")
+  }
+
   try {
     await uploadContractDocumentVersion(contractId, formData)
   } catch (error) {
     redirectForUnauthorized(error);
-    redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)));
+    redirect(appendMessage(redirectPath, "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`]);
-  redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "document_uploaded"));
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`, `/app/contracts/${contractId}/versions`, `/app/contracts/${contractId}/documents`]);
+  redirect(appendMessage(redirectPath, "status", "document_uploaded"));
 }

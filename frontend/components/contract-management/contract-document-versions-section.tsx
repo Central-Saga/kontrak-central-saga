@@ -12,12 +12,22 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { DocumentUploadForm } from "./document-upload-form"
+import { DocumentContentDiff } from "./document-content-diff"
 import type {
   ContractDocumentVersionCompareRecord,
   ContractDocumentVersionRecord,
+  DocumentVersionContentDiffRecord,
 } from "@/lib/access-management/backend"
 
 type ContractDocumentVersionsSectionProps = {
@@ -27,6 +37,8 @@ type ContractDocumentVersionsSectionProps = {
     fromVersionId?: number
     toVersionId?: number
   }
+  contentDiff?: DocumentVersionContentDiffRecord | null
+  contentDiffError?: string | null
   contractEditHref: string
   contractNumber: string
   error?: string | null
@@ -149,6 +161,8 @@ export function ContractDocumentVersionsSection({
   compare,
   compareError,
   compareSelection,
+  contentDiff,
+  contentDiffError,
   contractEditHref,
   contractNumber,
   error,
@@ -206,50 +220,7 @@ export function ContractDocumentVersionsSection({
               </p>
             </div>
 
-            <form action={uploadAction} className="mt-6 flex flex-col gap-6">
-              <input name="document_type" type="hidden" value="main_contract" />
-
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="contract-document-file">File dokumen</FieldLabel>
-                  <Input accept=".pdf,.doc,.docx" id="contract-document-file" name="file" required type="file" />
-                  <FieldDescription>Gunakan PDF atau dokumen kerja final agar arsip versi tetap mudah diverifikasi.</FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="contract-document-version-status">Status versi</FieldLabel>
-                  <select
-                    className={selectClassName}
-                    defaultValue="draft"
-                    id="contract-document-version-status"
-                    name="version_status"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="review">Review</option>
-                    <option value="final">Final</option>
-                  </select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="contract-document-change-summary">Ringkasan perubahan</FieldLabel>
-                  <textarea
-                    className="min-h-28 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    id="contract-document-change-summary"
-                    name="change_summary"
-                    placeholder="Contoh: Penyesuaian pasal pembayaran termin ketiga setelah review legal."
-                  />
-                  <FieldDescription>Catatan singkat ini akan tampil di timeline versi dan panel perbandingan metadata.</FieldDescription>
-                </Field>
-              </FieldGroup>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <Button size="lg" type="submit">
-                  <UploadIcon aria-hidden data-icon="inline-start" />
-                  Unggah versi baru
-                </Button>
-                <p className="text-sm text-muted">Jenis dokumen yang diarsipkan: kontrak utama.</p>
-              </div>
-            </form>
+            <DocumentUploadForm uploadAction={uploadAction} contractEditHref={contractEditHref} />
           </section>
 
           <section className="rounded-3xl border border-line bg-card-strong p-6" id="contract-document-compare">
@@ -265,36 +236,21 @@ export function ContractDocumentVersionsSection({
                 <FieldGroup>
                   <Field>
                     <FieldLabel htmlFor="contract-document-compare-from">Bandingkan dari</FieldLabel>
-                    <select
-                      className={selectClassName}
-                      defaultValue={suggestedFromVersionId ? String(suggestedFromVersionId) : ""}
-                      id="contract-document-compare-from"
-                      name="from_version_id"
-                    >
-                      <option value="">Pilih versi sumber</option>
-                      {sortedVersions.map((version) => (
-                        <option key={version.id} value={version.id}>
-                          V{version.version_number} • {statusLabels[version.version_status] ?? version.version_status}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="contract-document-compare-to">Bandingkan ke</FieldLabel>
-                    <select
-                      className={selectClassName}
-                      defaultValue={suggestedToVersionId ? String(suggestedToVersionId) : ""}
-                      id="contract-document-compare-to"
-                      name="to_version_id"
-                    >
-                      <option value="">Pilih versi tujuan</option>
-                      {sortedVersions.map((version) => (
-                        <option key={version.id} value={version.id}>
-                          V{version.version_number} • {statusLabels[version.version_status] ?? version.version_status}
-                        </option>
-                      ))}
-                    </select>
+                    <Select name="from_version_id" defaultValue={suggestedFromVersionId ? String(suggestedFromVersionId) : "none"}>
+                      <SelectTrigger id="contract-document-compare-from" className="w-full">
+                        <SelectValue placeholder="Pilih versi sumber" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="none">Pilih versi sumber</SelectItem>
+                          {sortedVersions.map((version) => (
+                            <SelectItem key={version.id} value={String(version.id)}>
+                              V{version.version_number} • {statusLabels[version.version_status] ?? version.version_status}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </Field>
                 </FieldGroup>
 
@@ -374,6 +330,14 @@ export function ContractDocumentVersionsSection({
             </div>
           </section>
         </div>
+
+        {(contentDiff || contentDiffError) && (
+          <DocumentContentDiff
+            contractId={0}
+            compare={contentDiff || null}
+            compareError={contentDiffError || null}
+          />
+        )}
 
         <Separator />
 

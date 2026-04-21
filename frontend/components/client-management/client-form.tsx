@@ -8,6 +8,14 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { generateClientCode } from "@/app/(app)/app/access-management/client-actions";
 
 type ClientFormProps = {
@@ -76,21 +84,27 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
                   onChange={(e) => setClientCode(e.target.value)}
                   placeholder="CLI-2025-0001"
                   required
+                  readOnly={!isCreate}
                   className="flex-1"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGenerateCode}
-                  disabled={isGenerating}
-                  data-testid="client-form-generate-code"
-                >
-                  <RefreshCwIcon className={`h-4 w-4 mr-2 ${isGenerating ? "animate-spin" : ""}`} />
-                  Generate
-                </Button>
+                {isCreate && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateCode}
+                    disabled={isGenerating}
+                    data-testid="client-form-generate-code"
+                  >
+                    <RefreshCwIcon className={`h-4 w-4 mr-2 ${isGenerating ? "animate-spin" : ""}`} />
+                    Generate
+                  </Button>
+                )}
               </div>
               <FieldDescription>
-                Kode klien akan otomatis digenerate dengan format CLI-YYYY-NNNN. Anda juga bisa memasukkan kode manual.
+                {isCreate 
+                  ? "Kode klien akan otomatis digenerate dengan format CLI-YYYY-NNNN. Anda juga bisa memasukkan kode manual."
+                  : "Kode klien tidak dapat diubah setelah dibuat."
+                }
               </FieldDescription>
             </Field>
 
@@ -121,19 +135,24 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
 
             <Field>
               <FieldLabel htmlFor="client-status">Status</FieldLabel>
-              <select
-                className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                data-testid="client-form-status"
-                defaultValue={values?.status ?? "active"}
-                id="client-status"
-                name="status"
-              >
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Select name="status" defaultValue={values?.status ?? "active"}>
+                <SelectTrigger
+                  data-testid="client-form-status"
+                  id="client-status"
+                  className="w-full"
+                >
+                  <SelectValue placeholder="Pilih status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <FieldDescription>Status ini dipakai untuk memisahkan klien aktif dan arsip pada daftar utama.</FieldDescription>
             </Field>
 

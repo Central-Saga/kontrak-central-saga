@@ -5,10 +5,12 @@ import { redirect } from "next/navigation"
 import { uploadContractDocumentVersionAction } from "@/app/(app)/app/access-management/actions"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { ContractDocumentVersionsSection } from "@/components/contract-management/contract-document-versions-section"
+import { DiffStyles } from "@/components/contract-management/diff-styles"
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import {
+  compareContractDocumentContent,
   compareContractDocumentVersions,
   getAccessManagementErrorMessage,
   getContract,
@@ -70,6 +72,8 @@ export default async function ContractVersionsPage({
   let documentVersionsError: string | null = null
   let documentCompare = null as Awaited<ReturnType<typeof compareContractDocumentVersions>> | null
   let documentCompareError: string | null = null
+  let contentDiff = null as Awaited<ReturnType<typeof compareContractDocumentContent>> | null
+  let contentDiffError: string | null = null
 
   try {
     contract = await getContract(Number(contractId))
@@ -96,6 +100,12 @@ export default async function ContractVersionsPage({
             compareFromVersionId,
             compareToVersionId,
           )
+          // Also fetch content diff for the same versions
+          contentDiff = await compareContractDocumentContent(
+            contract.id,
+            compareFromVersionId,
+            compareToVersionId,
+          )
         } catch (compareError) {
           if (isAccessManagementError(compareError) && compareError.status === 401) {
             redirect(getAccessManagementErrorMessage(compareError))
@@ -104,6 +114,7 @@ export default async function ContractVersionsPage({
           documentCompareError = isAccessManagementError(compareError)
             ? compareError.message
             : "Metadata versi dokumen belum bisa dibandingkan sekarang."
+          contentDiffError = "Gagal memuat perbandingan konten dokumen."
         }
       }
     }
@@ -136,6 +147,7 @@ export default async function ContractVersionsPage({
 
   return (
     <PageStack>
+      <DiffStyles />
       <PageHeaderCard 
         description={`Riwayat versi dokumen dan compare metadata untuk kontrak ${contract.contract_number}`} 
         title={`Riwayat Dokumen: ${contract.contract_title}`} 
@@ -184,6 +196,8 @@ export default async function ContractVersionsPage({
           fromVersionId: compareFromVersionId,
           toVersionId: compareToVersionId,
         }}
+        contentDiff={contentDiff}
+        contentDiffError={contentDiffError}
         contractEditHref={`/app/contracts/${contract.id}/versions`}
         contractNumber={contract.contract_number}
         error={documentVersionsError}

@@ -45,6 +45,7 @@ const nextConfig: NextConfig = {
         "localhost:8443",
         "127.0.0.1:8443",
       ],
+      bodySizeLimit: "10mb",
     },
   },
 };

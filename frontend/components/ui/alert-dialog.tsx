@@ -89,7 +89,7 @@ function AlertDialogAction({ className, ...props }: React.ComponentProps<typeof 
   return (
     <AlertDialogPrimitive.Action
       data-slot="alert-dialog-action"
-      className={cn(buttonVariants({ variant: "default" }), className)}
+      className={cn(buttonVariants({ variant: "destructive" }), className)}
       {...props}
     />
   )

@@ -1,36 +1,37 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Underline from "@tiptap/extension-underline";
+import { useState } from "react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
-import { cn } from "@/lib/utils";
+import Underline from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
 import {
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  StrikethroughIcon,
-  ListIcon,
-  ListOrderedIcon,
-  AlignLeftIcon,
   AlignCenterIcon,
+  AlignLeftIcon,
   AlignRightIcon,
-  LinkIcon,
-  Link2OffIcon,
-  QuoteIcon,
+  BoldIcon,
   CodeIcon,
-  MinusIcon,
-  RotateCcwIcon,
-  RotateCwIcon,
-  Trash2Icon,
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
+  ItalicIcon,
+  Link2OffIcon,
+  LinkIcon,
+  ListIcon,
+  ListOrderedIcon,
+  MinusIcon,
+  QuoteIcon,
+  RotateCcwIcon,
+  RotateCwIcon,
+  StrikethroughIcon,
+  Trash2Icon,
+  UnderlineIcon,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 type RichTextEditorProps = {
   content?: string;
@@ -80,7 +81,8 @@ export function RichTextEditor({
     content,
     editorProps: {
       attributes: {
-        class: "tiptap-editor-content min-h-[200px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        class:
+          "tiptap-editor-content min-h-[200px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm prose prose-sm max-w-none",
       },
     },
     onUpdate: ({ editor }) => {
@@ -89,22 +91,30 @@ export function RichTextEditor({
     immediatelyRender: false,
   });
 
-  if (!editor) {
-    return (
-      <div className={cn("flex flex-col gap-2", className)}>
-        <div className="h-10 rounded-md border border-input bg-muted/50 animate-pulse" />
-        <div className="min-h-[200px] rounded-md border border-input bg-muted/50 animate-pulse" />
-      </div>
-    );
-  }
-
   const addLink = () => {
-    if (linkUrl) {
+    if (editor && linkUrl) {
       editor.chain().focus().extendMarkRange("link").setLink({ href: linkUrl }).run();
       setLinkUrl("");
       setShowLinkInput(false);
     }
   };
+
+  const removeLink = () => {
+    if (editor) {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      setLinkUrl("");
+      setShowLinkInput(false);
+    }
+  };
+
+  if (!editor) {
+    return (
+      <div className={cn("flex flex-col gap-2", className)}>
+        <div className="h-10 animate-pulse rounded-md border border-input bg-muted/50" />
+        <div className="min-h-[200px] animate-pulse rounded-md border border-input bg-muted/50" />
+      </div>
+    );
+  }
 
   const ToolbarButton = ({
     onClick,
@@ -126,23 +136,17 @@ export function RichTextEditor({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={cn(
-        "h-8 w-8 p-0 shrink-0",
-        isActive && "bg-muted"
-      )}
+      className={cn("h-8 w-8 shrink-0 p-0", isActive && "bg-muted")}
     >
       {children}
     </Button>
   );
 
-  const ToolbarDivider = () => (
-    <div className="mx-1 h-6 w-px bg-border shrink-0" />
-  );
+  const ToolbarDivider = () => <div className="mx-1 h-6 w-px shrink-0 bg-border" />;
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <div className="flex flex-wrap gap-1 rounded-md border border-input bg-transparent p-1 overflow-x-auto">
-        {/* Text Formatting */}
+      <div className="flex flex-wrap gap-1 overflow-x-auto rounded-md border border-input bg-transparent p-1">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}
@@ -178,7 +182,6 @@ export function RichTextEditor({
 
         <ToolbarDivider />
 
-        {/* Headings */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           isActive={editor.isActive("heading", { level: 1 })}
@@ -206,7 +209,6 @@ export function RichTextEditor({
 
         <ToolbarDivider />
 
-        {/* Alignment */}
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
           isActive={editor.isActive({ textAlign: "left" })}
@@ -231,7 +233,6 @@ export function RichTextEditor({
 
         <ToolbarDivider />
 
-        {/* Lists */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           isActive={editor.isActive("bulletList")}
@@ -249,7 +250,6 @@ export function RichTextEditor({
 
         <ToolbarDivider />
 
-        {/* Link */}
         {!showLinkInput ? (
           <>
             <ToolbarButton
@@ -260,49 +260,15 @@ export function RichTextEditor({
               <LinkIcon className="h-4 w-4" />
             </ToolbarButton>
             {editor.isActive("link") && (
-              <ToolbarButton
-                onClick={() => editor.chain().focus().unsetLink().run()}
-                title="Remove Link"
-              >
+              <ToolbarButton onClick={removeLink} title="Remove Link">
                 <Link2OffIcon className="h-4 w-4" />
               </ToolbarButton>
             )}
           </>
-        ) : (
-          <div className="flex items-center gap-1 px-2">
-            <input
-              type="text"
-              placeholder="https://..."
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addLink()}
-              className="h-7 w-40 rounded border border-input px-2 text-sm"
-              autoFocus
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={addLink}
-              className="h-7 px-2 text-xs"
-            >
-              Add
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => { setShowLinkInput(false); setLinkUrl(""); }}
-              className="h-7 px-2 text-xs"
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
+        ) : null}
 
         <ToolbarDivider />
 
-        {/* Blockquote */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           isActive={editor.isActive("blockquote")}
@@ -310,8 +276,6 @@ export function RichTextEditor({
         >
           <QuoteIcon className="h-4 w-4" />
         </ToolbarButton>
-
-        {/* Code Block */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           isActive={editor.isActive("codeBlock")}
@@ -319,8 +283,6 @@ export function RichTextEditor({
         >
           <CodeIcon className="h-4 w-4" />
         </ToolbarButton>
-
-        {/* Horizontal Rule */}
         <ToolbarButton
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           title="Horizontal Rule"
@@ -330,7 +292,6 @@ export function RichTextEditor({
 
         <ToolbarDivider />
 
-        {/* Undo/Redo */}
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().chain().focus().undo().run()}
@@ -345,8 +306,6 @@ export function RichTextEditor({
         >
           <RotateCwIcon className="h-4 w-4" />
         </ToolbarButton>
-
-        {/* Clear Formatting */}
         <ToolbarButton
           onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
           title="Clear Formatting"
@@ -354,14 +313,43 @@ export function RichTextEditor({
           <Trash2Icon className="h-4 w-4" />
         </ToolbarButton>
       </div>
-      <EditorContent editor={editor} />
-      {name && (
-        <input
-          type="hidden"
-          name={name}
-          value={editor.getHTML()}
-        />
+
+      {showLinkInput && (
+        <div className="flex gap-2 rounded-md border border-input bg-transparent p-2">
+          <input
+            type="text"
+            placeholder="https://example.com"
+            value={linkUrl}
+            onChange={(event) => setLinkUrl(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                addLink();
+              }
+            }}
+            className="flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          />
+          <Button type="button" size="sm" onClick={addLink}>
+            Tambah
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={removeLink}>
+            Hapus Link
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setShowLinkInput(false);
+              setLinkUrl("");
+            }}
+          >
+            Batal
+          </Button>
+        </div>
       )}
+
+      <EditorContent editor={editor} />
+      {name && <input type="hidden" name={name} value={editor.getHTML()} />}
     </div>
   );
 }
