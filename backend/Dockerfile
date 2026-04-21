@@ -5,7 +5,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --opt
 COPY . .
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --ignore-platform-req=ext-gd --ignore-platform-req=ext-exif
 
-FROM docker.io/node:22-alpine AS assets
+FROM docker.io/node:20-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --include=dev
