@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -76,8 +77,9 @@ export function AppBreadcrumbs() {
               const isLast = index === crumbs.length - 1
 
               return (
-                <BreadcrumbItem key={crumb.href}>
+                <React.Fragment key={crumb.href}>
                   <BreadcrumbSeparator />
+                  <BreadcrumbItem>
                     {isLast ? (
                       <BreadcrumbPage data-testid="app-shell-heading">{crumb.label}</BreadcrumbPage>
                     ) : (
@@ -86,6 +88,7 @@ export function AppBreadcrumbs() {
                       </Link>
                     )}
                   </BreadcrumbItem>
+                </React.Fragment>
               )
             })}
           </>

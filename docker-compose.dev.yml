@@ -1,0 +1,39 @@
+services:
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -lc "npm ci && npm run dev -- --hostname 0.0.0.0 --port 3000"
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      NEXT_PUBLIC_APP_URL: ${FRONTEND_APP_URL:-https://app.kontrak-centralsaga.site}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.kontrak-centralsaga.site}
+      SERVER_API_BASE_URL: ${SERVER_API_BASE_URL:-http://backend}
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+      - frontend-next-cache:/app/.next
+
+  backend:
+    volumes:
+      - ./backend/app:/var/www/html/app
+      - ./backend/bootstrap/app.php:/var/www/html/bootstrap/app.php
+      - ./backend/config:/var/www/html/config
+      - ./backend/database:/var/www/html/database
+      - ./backend/public:/var/www/html/public
+      - ./backend/resources:/var/www/html/resources
+      - ./backend/routes:/var/www/html/routes
+      - ./backend/storage:/var/www/html/storage
+      - ./backend/artisan:/var/www/html/artisan
+      - ./backend/composer.json:/var/www/html/composer.json:ro
+      - ./backend/composer.lock:/var/www/html/composer.lock:ro
+      - backend-bootstrap-cache:/var/www/html/bootstrap/cache
+
+volumes:
+  backend-bootstrap-cache:
+  frontend-node-modules:
+  frontend-next-cache:

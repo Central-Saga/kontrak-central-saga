@@ -1,18 +1,18 @@
-FROM composer:2 AS vendor
+FROM docker.io/composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts --ignore-platform-req=ext-gd --ignore-platform-req=ext-exif
 COPY . .
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --ignore-platform-req=ext-gd --ignore-platform-req=ext-exif
 
-FROM node:22-alpine AS assets
+FROM docker.io/node:20-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 COPY . .
 RUN npm run build
 
-FROM php:8.4-apache-bookworm
+FROM docker.io/php:8.4-apache-bookworm
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libfreetype6-dev libicu-dev libjpeg62-turbo-dev libpng-dev libpq-dev libzip-dev unzip \

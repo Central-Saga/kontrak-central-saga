@@ -6,6 +6,7 @@ use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\ModuleStarterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
@@ -241,6 +242,21 @@ it('uploads a payment proof using media library', function (): void {
         ->assertJsonPath('data.proof.notes', 'Bukti transfer dari client');
 });
 
+it('rejects contract document uploads larger than 20 mb', function (): void {
+    Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
+
+    Config::set('media-library.max_file_size', 1024 * 1024 * 20);
+
+    $this->withHeader('Accept', 'application/json')->post('/api/v1/contracts/1/document-versions', [
+        'file' => UploadedFile::fake()->create('contract-too-large.pdf', 21 * 1024, 'application/pdf'),
+        'document_type' => 'main_contract',
+        'version_status' => 'draft',
+        'change_summary' => 'Melebihi batas ukuran dokumen kontrak.',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['file']);
+});
+
 it('stores contract document versions and compares version metadata', function (): void {
     Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
 
@@ -285,6 +301,11 @@ it('stores contract document versions and compares version metadata', function (
         ->assertJsonPath('data.same_file', false)
         ->assertJsonPath('data.from_version.id', $firstVersionId)
         ->assertJsonPath('data.to_version.id', $secondVersionId);
+
+    $this->get("/api/v1/contracts/1/document-versions/{$secondVersionId}/download")
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf')
+        ->assertHeader('content-disposition', 'inline; filename="contract-v2.pdf"');
 });
 
 it('exports contracts report as pdf for authorized user', function (): void {

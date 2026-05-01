@@ -1,25 +1,39 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Outfit, Sora } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import { ThemeScript } from "@/components/theme/theme-script";
 import { Toaster } from "@/components/ui/sonner";
 
-const outfit = Outfit({
+const outfit = localFont({
+  src: "./fonts/Outfit-Variable.ttf",
   variable: "--font-outfit",
-  subsets: ["latin"],
+  display: "swap",
+  weight: "100 900",
 });
 
-const sora = Sora({
+const sora = localFont({
+  src: "./fonts/Sora-Variable.ttf",
   variable: "--font-sora",
-  subsets: ["latin"],
+  display: "swap",
+  weight: "100 800",
 });
 
-const plexMono = IBM_Plex_Mono({
+const plexMono = localFont({
+  src: [
+    {
+      path: "./fonts/IBMPlexMono-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/IBMPlexMono-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+  ],
   variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -39,9 +53,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${outfit.variable} ${sora.variable} ${plexMono.variable} h-full antialiased font-sans`}
     >
-      <head>
-        <ThemeScript />
-      </head>
+      <head />
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           {children}

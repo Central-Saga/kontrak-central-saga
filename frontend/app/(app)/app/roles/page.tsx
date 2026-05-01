@@ -68,7 +68,6 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
                   <thead>
                     <tr>
                       <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Peran</th>
-                      <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Izin akses</th>
                       <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Ringkasan</th>
                       <th className="border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
@@ -85,13 +84,6 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
                               <span className="text-xs text-muted">Penjaga: {role.guard_name}</span>
                             </div>
                           </td>
-                          <td className="border border-line px-4 py-4 align-top">
-                            <RolePermissionsDetailSheet
-                              permissions={role.permissions ?? []}
-                              roleName={role.name}
-                              triggerTestId={`roles-row-permissions-${role.id}`}
-                            />
-                          </td>
                           <td className="border border-line px-4 py-4 align-top text-muted">
                             {role.users_count ?? 0} pengguna • {role.permissions_count ?? 0} izin akses
                           </td>
@@ -103,6 +95,14 @@ export default async function RolesPage({ searchParams }: { searchParams: PageSe
                               editHref={`/app/roles/${role.id}/edit`}
                               editLabel={`Ubah ${role.name}`}
                               editTestId={`roles-row-edit-${role.id}`}
+                              leadingActions={
+                                <RolePermissionsDetailSheet
+                                  permissions={role.permissions ?? []}
+                                  roleName={role.name}
+                                  triggerMode="icon"
+                                  triggerTestId={`roles-row-permissions-${role.id}`}
+                                />
+                              }
                             />
                           </td>
                         </tr>

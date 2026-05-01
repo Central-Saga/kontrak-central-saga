@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ClientResource;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
+use App\Http\Resources\ClientResource;
 use App\Models\Client;
+use App\Services\ClientUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ClientController extends Controller
 {
+    public function __construct(
+        private readonly ClientUserService $clientUserService
+    ) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $clients = Client::query()
@@ -38,9 +43,24 @@ class ClientController extends Controller
 
     public function store(StoreClientRequest $request): ClientResource|JsonResponse
     {
-        $client = Client::create($request->validated());
+        $data = $request->validated();
 
-        return (new ClientResource($client->loadCount('contracts')))
+        // If client_code is not provided, generate one
+        if (empty($data['client_code'])) {
+            $data['client_code'] = Client::generateCode();
+        }
+
+        $client = Client::create($data);
+
+        // If portal access is enabled, create user account
+        if (! empty($data['portal_access_enabled']) && $data['portal_access_enabled']) {
+            $userResult = $this->clientUserService->createOrUpdateClientUser($client);
+
+            // You might want to send an email here with credentials
+            // Mail::to($client->email)->send(new ClientPortalCredentials($userResult));
+        }
+
+        return (new ClientResource($client->loadCount('contracts')->load('user')))
             ->response()
             ->setStatusCode(201);
     }
@@ -54,6 +74,7 @@ class ClientController extends Controller
             'contracts' => fn ($query) => $query
                 ->withCount(['paymentTerms', 'projectProgressUpdates'])
                 ->latest('id'),
+            'user',
         ]);
 
         return new ClientResource($client);
@@ -61,9 +82,23 @@ class ClientController extends Controller
 
     public function update(UpdateClientRequest $request, Client $client): ClientResource
     {
-        $client->update($request->validated());
+        $data = $request->validated();
+        $oldPortalAccess = $client->portal_access_enabled;
 
-        return new ClientResource($client->fresh()->loadCount('contracts'));
+        $client->update($data);
+
+        $newPortalAccess = $client->fresh()->portal_access_enabled;
+
+        // Handle portal access changes
+        if (! $oldPortalAccess && $newPortalAccess) {
+            // Portal access was just enabled - create user
+            $this->clientUserService->createOrUpdateClientUser($client);
+        } elseif ($oldPortalAccess && ! $newPortalAccess) {
+            // Portal access was just disabled - disable user
+            $this->clientUserService->disableClientUser($client);
+        }
+
+        return new ClientResource($client->fresh()->loadCount('contracts')->load('user'));
     }
 
     public function destroy(Client $client): JsonResponse
@@ -77,5 +112,17 @@ class ClientController extends Controller
         $client->delete();
 
         return response()->json([], 204);
+    }
+
+    /**
+     * Generate a new unique client code
+     */
+    public function generateCode(): JsonResponse
+    {
+        $code = Client::generateCode();
+
+        return response()->json([
+            'client_code' => $code,
+        ]);
     }
 }

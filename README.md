@@ -24,6 +24,27 @@ Run `make tls-dev-cert` once if you need to regenerate the local certificate for
 - If `mkcert` is installed, the generated certificate will be locally trusted.
 - If `mkcert` is not installed, the fallback is a self-signed certificate and your browser may show a warning until you trust it manually.
 
+## Local Dev With Hot Reload
+
+Use the Docker-based dev stack when you want frontend hot reload without leaving the project architecture:
+
+```bash
+make dev-up
+```
+
+This keeps the reverse proxy and backend in Docker, but runs the frontend with `next dev` inside a container and bind-mounts the source tree so UI edits reload automatically.
+
+Useful commands:
+
+- `make dev-logs` to watch frontend/backend/proxy logs
+- `make dev-rebuild` to force a clean restart of the dev stack
+- `make dev-down` to stop the dev stack
+
+Access the app through:
+
+- `https://app.kontrak-centralsaga.site`
+- `https://api.kontrak-centralsaga.site`
+
 ## Dokploy / SSL
 
 - Frontend image: `ghcr.io/<owner>/kontrak-central-saga-frontend`

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 #[Fillable([
@@ -22,6 +23,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'size_bytes',
     'checksum_sha256',
     'change_summary',
+    'extracted_text',
+    'text_extracted_at',
     'uploaded_at',
 ])]
 class ContractDocumentVersion extends Model
@@ -35,6 +38,7 @@ class ContractDocumentVersion extends Model
             'uploaded_at' => 'datetime',
             'size_bytes' => 'integer',
             'version_number' => 'integer',
+            'text_extracted_at' => 'datetime',
         ];
     }
 
@@ -51,5 +55,10 @@ class ContractDocumentVersion extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(DocumentVersionAuditLog::class, 'document_version_id');
     }
 }

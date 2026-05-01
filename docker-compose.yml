@@ -1,6 +1,6 @@
 services:
   proxy:
-    image: nginx:1.27-alpine
+    image: docker.io/nginx:1.27-alpine
     restart: unless-stopped
     depends_on:
       frontend:
@@ -11,8 +11,8 @@ services:
       - "${PROXY_HTTP_PORT:-80}:80"
       - "${PROXY_HTTPS_PORT:-443}:443"
     environment:
-      FRONTEND_APP_DOMAIN: ${FRONTEND_APP_DOMAIN:-app.kontrak-centralsaga.site}
-      BACKEND_APP_DOMAIN: ${BACKEND_APP_DOMAIN:-api.kontrak-centralsaga.site}
+      FRONTEND_APP_DOMAIN: ${FRONTEND_APP_DOMAIN:-kontrak-centralsaga.test}
+      BACKEND_APP_DOMAIN: ${BACKEND_APP_DOMAIN:-kontrak-centralsaga.test}
       LOCAL_TLS_ENABLED: ${LOCAL_TLS_ENABLED:-true}
     volumes:
       - ./docker/proxy/default.conf.template:/etc/nginx/templates/default.conf.template:ro
@@ -29,19 +29,14 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3000
-      NEXT_PUBLIC_APP_URL: ${FRONTEND_APP_URL:-http://app.kontrak-centralsaga.site}
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://api.kontrak-centralsaga.site}
+      NEXT_PUBLIC_APP_URL: ${FRONTEND_APP_URL:-https://kontrak-centralsaga.test}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://kontrak-centralsaga.test/api}
       SERVER_API_BASE_URL: ${SERVER_API_BASE_URL:-http://backend}
     expose:
       - "3000"
     healthcheck:
       test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://127.0.0.1:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
-        ]
+        ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -62,7 +57,7 @@ services:
       APP_ENV: ${BACKEND_APP_ENV:-local}
       APP_DEBUG: ${BACKEND_APP_DEBUG:-true}
       APP_KEY: ${BACKEND_APP_KEY:-}
-      APP_URL: ${BACKEND_APP_URL:-http://api.kontrak-centralsaga.site}
+      APP_URL: ${BACKEND_APP_URL:-https://kontrak-centralsaga.test/api}
       LOG_CHANNEL: stack
       LOG_STACK: single
       LOG_LEVEL: ${BACKEND_LOG_LEVEL:-debug}
@@ -81,7 +76,7 @@ services:
       QUEUE_CONNECTION: sync
       FILESYSTEM_DISK: ${BACKEND_FILESYSTEM_DISK:-public}
       MEDIA_DISK: ${BACKEND_MEDIA_DISK:-public}
-      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1,app.kontrak-centralsaga.site}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1,kontrak-centralsaga.test}
       APP_LOCALE: en
       APP_FALLBACK_LOCALE: en
       APP_FAKER_LOCALE: en_US
@@ -108,7 +103,7 @@ services:
       - app
 
   database:
-    image: postgres:17-alpine
+    image: docker.io/postgres:17-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}

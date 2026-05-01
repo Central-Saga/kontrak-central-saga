@@ -1,29 +1,48 @@
-import Link from "next/link"
+"use client";
 
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import Link from "next/link";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { RefreshCwIcon, CalendarIcon } from "lucide-react";
+
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { generateContractCode } from "@/app/(app)/app/access-management/contract-actions";
+import { RichTextEditor } from "./rich-text-editor";
 
 type ContractFormProps = {
-  action: (formData: FormData) => Promise<void>
-  clients: Array<{ id: number; company_name: string; client_code: string }>
-  mode: "create" | "edit"
+  action: (formData: FormData) => Promise<void>;
+  clients: Array<{ id: number; company_name: string; client_code: string }>;
+  mode: "create" | "edit";
   values?: {
-    client_id?: number
-    contract_number?: string
-    contract_title?: string
-    project_name?: string
-    contract_date?: string
-    start_date?: string
-    end_date?: string
-    contract_value?: string | number
-    project_scope?: string
-    payment_scheme_summary?: string | null
-    contract_status?: string
-    notes?: string | null
-  }
-}
+    client_id?: number;
+    contract_number?: string;
+    contract_title?: string;
+    project_name?: string;
+    contract_date?: string;
+    start_date?: string;
+    end_date?: string;
+    contract_value?: string | number;
+    project_scope?: string;
+    payment_scheme_summary?: string | null;
+    contract_status?: string;
+    notes?: string | null;
+  };
+};
 
 const statusOptions = [
   ["draft", "Draft"],
@@ -32,10 +51,126 @@ const statusOptions = [
   ["terminated", "Dihentikan"],
   ["expired", "Kedaluwarsa"],
   ["cancelled", "Dibatalkan"],
-] as const
+] as const;
+
+function DatePicker({
+  id,
+  label,
+  value,
+  required,
+  disabledBefore,
+  disabledAfter,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value?: string;
+  required?: boolean;
+  disabledBefore?: Date;
+  disabledAfter?: Date;
+  onChange?: (date: Date | undefined) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const date = useMemo(() => (value ? new Date(value) : undefined), [value]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(date);
+
+  const handleSelect = (newDate: Date | undefined) => {
+    setSelectedDate(newDate);
+    if (newDate) {
+      setOpen(false);
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) {
+        input.value = format(newDate, "yyyy-MM-dd");
+      }
+      onChange?.(newDate);
+    }
+  };
+
+  // Sync selectedDate when date prop changes
+  useEffect(() => {
+    setSelectedDate(date);
+  }, [date]);
+
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="flex w-full items-center justify-between rounded-2xl border border-input bg-background px-3 py-2 text-sm hover:bg-muted/50"
+          >
+            <span className={cn(!selectedDate && "text-muted-foreground")}>
+              {selectedDate ? format(selectedDate, "PPP") : "Pilih tanggal"}
+            </span>
+            <CalendarIcon className="h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleSelect}
+            disabled={(d) => {
+              if (disabledBefore && d < disabledBefore) return true;
+              if (disabledAfter && d <= disabledAfter) return true;
+              return false;
+            }}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+      <input
+        type="hidden"
+        id={id}
+        name={id.replace(/-/g, "_")}
+        defaultValue={value}
+        required={required}
+      />
+    </Field>
+  );
+}
 
 export function ContractForm({ action, clients, mode, values }: ContractFormProps) {
-  const isCreate = mode === "create"
+  const isCreate = mode === "create";
+  const [contractNumber, setContractNumber] = useState(values?.contract_number ?? "");
+  const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    values?.start_date ? new Date(values.start_date) : undefined
+  );
+  const hasAutoGenerated = useRef(false);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const availableStatusOptions = isCreate
+    ? statusOptions.filter(([value]) => value === "draft" || value === "active")
+    : statusOptions;
+
+  const handleGenerateNumber = useCallback(async () => {
+    setIsGeneratingNumber(true);
+    try {
+      const code = await generateContractCode();
+      setContractNumber((prev) => prev || code);
+    } catch (error) {
+      console.error("Failed to generate contract number:", error);
+    } finally {
+      setIsGeneratingNumber(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isCreate && !contractNumber && !hasAutoGenerated.current) {
+      hasAutoGenerated.current = true;
+      handleGenerateNumber();
+    }
+  }, [isCreate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card>
@@ -49,87 +184,143 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
         <form action={action} className="flex flex-col gap-7">
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="contract-client">Klien</FieldLabel>
-              <select
-                className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                data-testid="contract-form-client"
-                defaultValue={values?.client_id ? String(values.client_id) : ""}
-                id="contract-client"
+              <FieldLabel htmlFor="client_id">Klien</FieldLabel>
+              <Select
                 name="client_id"
+                defaultValue={values?.client_id ? String(values.client_id) : ""}
                 required
               >
-                <option value="">Pilih klien</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.client_code} — {client.company_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  data-testid="contract-form-client"
+                  id="client_id"
+                  className="w-full"
+                >
+                  <SelectValue placeholder="Pilih klien" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={String(client.id)}>
+                        {client.client_code} — {client.company_name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="contract-number">Nomor kontrak</FieldLabel>
-              <Input data-testid="contract-form-number" defaultValue={values?.contract_number ?? ""} id="contract-number" name="contract_number" required />
+              <FieldLabel htmlFor="contract_number">Nomor kontrak</FieldLabel>
+              <div className="flex gap-2">
+                <Input
+                  data-testid="contract-form-number"
+                  id="contract_number"
+                  name="contract_number"
+                  value={contractNumber}
+                  onChange={(e) => setContractNumber(e.target.value)}
+                  placeholder="CSM-V-2025-0001"
+                  required
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateNumber}
+                  disabled={isGeneratingNumber}
+                  data-testid="contract-form-generate-number"
+                >
+                  <RefreshCwIcon className={cn("h-4 w-4 mr-2", isGeneratingNumber && "animate-spin")} />
+                  Generate
+                </Button>
+              </div>
+              <FieldDescription>
+                Nomor kontrak akan otomatis digenerate dengan format CSM-BLN-TAHUN-NOMOR (bulan dalam Romawi).
+              </FieldDescription>
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="contract-title">Judul kontrak</FieldLabel>
-              <Input data-testid="contract-form-title" defaultValue={values?.contract_title ?? ""} id="contract-title" name="contract_title" required />
+              <FieldLabel htmlFor="contract_title">Judul kontrak</FieldLabel>
+              <Input data-testid="contract-form-title" defaultValue={values?.contract_title ?? ""} id="contract_title" name="contract_title" required />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="contract-project">Nama proyek</FieldLabel>
-              <Input data-testid="contract-form-project" defaultValue={values?.project_name ?? ""} id="contract-project" name="project_name" required />
+              <FieldLabel htmlFor="project_name">Nama proyek</FieldLabel>
+              <Input data-testid="contract-form-project" defaultValue={values?.project_name ?? ""} id="project_name" name="project_name" required />
+            </Field>
+
+            <DatePicker
+              id="contract_date"
+              label="Tanggal kontrak"
+              value={values?.contract_date}
+              required
+              disabledBefore={today}
+            />
+
+            <DatePicker
+              id="start_date"
+              label="Tanggal mulai"
+              value={values?.start_date}
+              required
+              disabledBefore={today}
+              onChange={setStartDate}
+            />
+
+            <DatePicker
+              id="end_date"
+              label="Tanggal selesai"
+              value={values?.end_date}
+              required
+              disabledBefore={today}
+              disabledAfter={startDate}
+            />
+
+            <Field>
+              <FieldLabel htmlFor="contract_value">Nilai kontrak</FieldLabel>
+              <Input data-testid="contract-form-value" defaultValue={String(values?.contract_value ?? "")} id="contract_value" name="contract_value" required type="number" />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="contract-date">Tanggal kontrak</FieldLabel>
-              <Input data-testid="contract-form-date" defaultValue={values?.contract_date ?? ""} id="contract-date" name="contract_date" required type="date" />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="contract-start-date">Tanggal mulai</FieldLabel>
-              <Input data-testid="contract-form-start-date" defaultValue={values?.start_date ?? ""} id="contract-start-date" name="start_date" required type="date" />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="contract-end-date">Tanggal selesai</FieldLabel>
-              <Input data-testid="contract-form-end-date" defaultValue={values?.end_date ?? ""} id="contract-end-date" name="end_date" required type="date" />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="contract-value">Nilai kontrak</FieldLabel>
-              <Input data-testid="contract-form-value" defaultValue={String(values?.contract_value ?? "")} id="contract-value" name="contract_value" required type="number" />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="contract-status">Status kontrak</FieldLabel>
-              <select
-                className="flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                data-testid="contract-form-status"
-                defaultValue={values?.contract_status ?? "draft"}
-                id="contract-status"
+              <FieldLabel htmlFor="contract_status">Status kontrak</FieldLabel>
+              <Select
                 name="contract_status"
+                defaultValue={values?.contract_status ?? "draft"}
               >
-                {statusOptions.map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+                <SelectTrigger
+                  data-testid="contract-form-status"
+                  id="contract_status"
+                  className="w-full"
+                >
+                  <SelectValue placeholder="Pilih status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {availableStatusOptions.map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="contract-payment-scheme">Ringkasan skema pembayaran</FieldLabel>
-              <Input data-testid="contract-form-payment-scheme" defaultValue={values?.payment_scheme_summary ?? ""} id="contract-payment-scheme" name="payment_scheme_summary" />
+              <FieldLabel htmlFor="payment_scheme_summary">Ringkasan skema pembayaran</FieldLabel>
+              <Textarea data-testid="contract-form-payment-scheme" defaultValue={values?.payment_scheme_summary ?? ""} id="payment_scheme_summary" name="payment_scheme_summary" />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="contract-scope">Ruang lingkup proyek</FieldLabel>
-              <Input data-testid="contract-form-scope" defaultValue={values?.project_scope ?? ""} id="contract-scope" name="project_scope" required />
+              <FieldLabel>Ruang lingkup proyek</FieldLabel>
+              <RichTextEditor
+                content={values?.project_scope ?? ""}
+                placeholder="Jelaskan ruang lingkup dan detail proyek..."
+                name="project_scope"
+              />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="contract-notes">Catatan</FieldLabel>
-              <Input data-testid="contract-form-notes" defaultValue={values?.notes ?? ""} id="contract-notes" name="notes" />
+              <FieldLabel htmlFor="notes">Catatan</FieldLabel>
+              <Textarea data-testid="contract-form-notes" defaultValue={values?.notes ?? ""} id="notes" name="notes" />
               <FieldDescription>Gunakan catatan untuk konteks operasional penting yang perlu terbaca cepat oleh tim.</FieldDescription>
             </Field>
           </FieldGroup>
@@ -141,5 +332,5 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
