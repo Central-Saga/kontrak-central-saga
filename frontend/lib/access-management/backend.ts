@@ -104,6 +104,9 @@ export type ContractRecord = {
   payment_terms_count?: number;
   project_progress_updates_count?: number;
   document_versions_count?: number;
+  payment_terms?: PaymentTermRecord[];
+  project_progress?: ProjectProgressRecord[];
+  latest_progress?: ProjectProgressRecord | null;
   latest_document_version?: ContractDocumentVersionRecord | null;
   document_versions?: ContractDocumentVersionRecord[];
   created_at?: string;
@@ -256,6 +259,120 @@ export type ContractMutationInput = {
   project_scope: string;
   payment_scheme_summary?: string;
   contract_status: string;
+  notes?: string;
+};
+
+export type PaymentTermRecord = {
+  id: number;
+  contract_id: number;
+  contract?: {
+    id: number;
+    contract_number: string;
+    contract_title: string;
+    client_id: number;
+  } | null;
+  term_number: number;
+  term_title: string;
+  due_date: string;
+  amount: string | number;
+  description?: string | null;
+  status: string;
+  payable_after_condition?: string | null;
+  payments?: PaymentRecord[];
+  created_by?: number | null;
+  updated_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type PaymentTermMutationInput = {
+  contract_id: number;
+  term_number: number;
+  term_title: string;
+  due_date: string;
+  amount: string;
+  description?: string;
+  status: string;
+  payable_after_condition?: string;
+};
+
+export type PaymentMutationInput = {
+  payment_term_id: number;
+  payment_date: string;
+  amount: string;
+  method: string;
+  status: string;
+};
+
+export type PaymentProofUploadResult = {
+  payment: PaymentRecord;
+  proof: {
+    id: number;
+    name: string;
+    file_name: string;
+    mime_type: string | null;
+    size: number;
+    url: string;
+    notes?: string | null;
+  };
+};
+
+export type PaymentRecord = {
+  id: number;
+  payment_term_id: number;
+  payment_term?: {
+    id: number;
+    contract_id: number;
+    term_number: number;
+    term_title: string;
+    status: string;
+  } | null;
+  payment_date: string;
+  amount: string | number;
+  method: string;
+  status: string;
+  proof_files?: Array<{
+    id: number;
+    name: string;
+    file_name: string;
+    mime_type: string | null;
+    size: number;
+    url: string;
+    notes?: string | null;
+  }>;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ProjectProgressRecord = {
+  id: number;
+  contract_id: number;
+  contract?: {
+    id: number;
+    contract_number: string;
+    contract_title: string;
+    client_id: number;
+  } | null;
+  progress_date: string;
+  progress_title: string;
+  progress_description: string;
+  percentage: number;
+  status: string;
+  milestone_reference?: string | null;
+  notes?: string | null;
+  updated_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ProjectProgressMutationInput = {
+  contract_id: number;
+  progress_date: string;
+  progress_title: string;
+  progress_description: string;
+  percentage: number;
+  status: string;
+  milestone_reference?: string;
   notes?: string;
 };
 
@@ -675,6 +792,105 @@ export async function generateContractCode(): Promise<string> {
   });
 
   return response.contract_number;
+}
+
+export async function createPaymentTerm(input: PaymentTermMutationInput): Promise<PaymentTermRecord> {
+  const response = await requestBackend<DetailEnvelope<PaymentTermRecord>>("/api/v1/payment-terms", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function updatePaymentTerm(paymentTermId: number, input: Partial<PaymentTermMutationInput>): Promise<PaymentTermRecord> {
+  const response = await requestBackend<DetailEnvelope<PaymentTermRecord>>(`/api/v1/payment-terms/${paymentTermId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function deletePaymentTerm(paymentTermId: number): Promise<void> {
+  await requestBackend<void>(`/api/v1/payment-terms/${paymentTermId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listPayments(options: {
+  paymentTermId?: number;
+  status?: string;
+  perPage?: number;
+  page?: number;
+} = {}): Promise<PaginatedCollection<PaymentRecord>> {
+  const query = buildQueryString({
+    payment_term_id: options.paymentTermId,
+    status: options.status,
+    per_page: options.perPage ?? 10,
+    page: options.page,
+  });
+
+  return requestBackend<PaginatedCollection<PaymentRecord>>(`/api/v1/payments${query}`, {
+    method: "GET",
+  });
+}
+
+export async function createPayment(input: PaymentMutationInput): Promise<PaymentRecord> {
+  const response = await requestBackend<DetailEnvelope<PaymentRecord>>("/api/v1/payments", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function updatePayment(paymentId: number, input: Partial<PaymentMutationInput>): Promise<PaymentRecord> {
+  const response = await requestBackend<DetailEnvelope<PaymentRecord>>(`/api/v1/payments/${paymentId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function deletePayment(paymentId: number): Promise<void> {
+  await requestBackend<void>(`/api/v1/payments/${paymentId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function uploadPaymentProof(paymentId: number, formData: FormData): Promise<PaymentProofUploadResult> {
+  const response = await requestBackend<{ data: PaymentProofUploadResult }>(`/api/v1/payments/${paymentId}/proof`, {
+    method: "POST",
+    body: formData,
+  });
+
+  return response.data;
+}
+
+export async function createProjectProgress(input: ProjectProgressMutationInput): Promise<ProjectProgressRecord> {
+  const response = await requestBackend<DetailEnvelope<ProjectProgressRecord>>("/api/v1/project-progress", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function updateProjectProgress(progressId: number, input: Partial<ProjectProgressMutationInput>): Promise<ProjectProgressRecord> {
+  const response = await requestBackend<DetailEnvelope<ProjectProgressRecord>>(`/api/v1/project-progress/${progressId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return response.data;
+}
+
+export async function deleteProjectProgress(progressId: number): Promise<void> {
+  await requestBackend<void>(`/api/v1/project-progress/${progressId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function listContractDocumentVersions(
