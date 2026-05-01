@@ -456,7 +456,6 @@ test("contracts module supports search create edit and delete happy path", async
   await expect(page).toHaveURL(/\/app\/clients\/new$/);
   await page.getByTestId("client-form-code").fill(clientCode);
   await page.getByTestId("client-form-company").fill(clientName);
-  await page.getByTestId("client-form-status").selectOption("active");
   await page.getByTestId("client-form-submit").click();
   await expect(page).toHaveURL(/\/app\/clients(\?|$)/);
   await expect(page.getByText("Klien baru berhasil ditambahkan.")).toBeVisible();
@@ -467,7 +466,8 @@ test("contracts module supports search create edit and delete happy path", async
   await page.getByRole("link", { name: "Tambah kontrak" }).click();
   await expect(page).toHaveURL(/\/app\/contracts\/new$/);
 
-  await page.getByTestId("contract-form-client").selectOption({ label: `${clientCode} — ${clientName}` });
+  await page.getByTestId("contract-form-client").click();
+  await page.getByText(`${clientCode} — ${clientName}`).click();
   await page.getByTestId("contract-form-number").fill(contractNumber);
   await page.getByTestId("contract-form-title").fill(contractTitle);
   await page.getByTestId("contract-form-project").fill("Proyek Playwright");

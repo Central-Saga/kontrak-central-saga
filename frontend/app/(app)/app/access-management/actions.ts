@@ -6,20 +6,30 @@ import { redirect } from "next/navigation";
 import {
   createClient,
   createContract,
+  createPayment,
+  createPaymentTerm,
+  createProjectProgress,
   createRole,
   createUser,
   deleteClient,
   deleteContract,
+  deletePayment,
+  deletePaymentTerm,
+  deleteProjectProgress,
   deleteRole,
   deleteUser,
-  updateClient,
-  updateContract,
-  uploadContractDocumentVersion,
   getAccessManagementErrorMessage,
   getFirstValidationError,
   isAccessManagementError,
+  updateClient,
+  updateContract,
+  updatePayment,
+  updatePaymentTerm,
+  updateProjectProgress,
   updateRole,
   updateUser,
+  uploadContractDocumentVersion,
+  uploadPaymentProof,
 } from "@/lib/access-management/backend";
 
 function readString(formData: FormData, key: string) {
@@ -29,6 +39,10 @@ function readString(formData: FormData, key: string) {
 function readOptionalString(formData: FormData, key: string) {
   const value = readString(formData, key);
   return value ? value : undefined;
+}
+
+function readOptionalCheckbox(formData: FormData, key: string) {
+  return formData.get(key) === "1";
 }
 
 function readNumberList(formData: FormData, key: string) {
@@ -121,9 +135,7 @@ export async function createRoleAction(formData: FormData) {
   try {
     const role = await createRole({
       name: readString(formData, "name"),
-      permission_ids: formData.has("permission_ids_present")
-        ? readNumberList(formData, "permission_ids")
-        : undefined,
+      permission_ids: formData.has("permission_ids_present") ? readNumberList(formData, "permission_ids") : undefined,
     });
 
     roleId = role.id;
@@ -140,9 +152,7 @@ export async function updateRoleAction(roleId: number, formData: FormData) {
   try {
     await updateRole(roleId, {
       name: readString(formData, "name"),
-      permission_ids: formData.has("permission_ids_present")
-        ? readNumberList(formData, "permission_ids")
-        : undefined,
+      permission_ids: formData.has("permission_ids_present") ? readNumberList(formData, "permission_ids") : undefined,
     });
   } catch (error) {
     redirectForUnauthorized(error);
@@ -163,10 +173,6 @@ export async function deleteRoleAction(roleId: number) {
 
   revalidateAccessManagementPaths(["/app/roles", `/app/roles/${roleId}/edit`]);
   redirect(appendMessage("/app/roles", "status", "deleted"));
-}
-
-function readOptionalCheckbox(formData: FormData, key: string) {
-  return formData.get(key) === "1";
 }
 
 export async function createClientAction(formData: FormData) {
@@ -217,7 +223,7 @@ export async function updateClientAction(clientId: number, formData: FormData) {
 
 export async function deleteClientAction(clientId: number) {
   try {
-    await deleteClient(clientId)
+    await deleteClient(clientId);
   } catch (error) {
     redirectForUnauthorized(error);
     redirect(appendMessage("/app/clients", "error", getFallbackErrorMessage(error)));
@@ -228,7 +234,7 @@ export async function deleteClientAction(clientId: number) {
 }
 
 export async function createContractAction(formData: FormData) {
-  let contractId: number | null = null
+  let contractId: number | null = null;
 
   try {
     const contract = await createContract({
@@ -244,9 +250,9 @@ export async function createContractAction(formData: FormData) {
       payment_scheme_summary: readOptionalString(formData, "payment_scheme_summary"),
       contract_status: readString(formData, "contract_status"),
       notes: readOptionalString(formData, "notes"),
-    })
+    });
 
-    contractId = contract.id
+    contractId = contract.id;
   } catch (error) {
     redirectForUnauthorized(error);
     redirect(appendMessage("/app/contracts/new", "error", getFallbackErrorMessage(error)));
@@ -271,7 +277,7 @@ export async function updateContractAction(contractId: number, formData: FormDat
       payment_scheme_summary: readOptionalString(formData, "payment_scheme_summary"),
       contract_status: readString(formData, "contract_status"),
       notes: readOptionalString(formData, "notes"),
-    })
+    });
   } catch (error) {
     redirectForUnauthorized(error);
     redirect(appendMessage(`/app/contracts/${contractId}/edit`, "error", getFallbackErrorMessage(error)));
@@ -283,7 +289,7 @@ export async function updateContractAction(contractId: number, formData: FormDat
 
 export async function deleteContractAction(contractId: number) {
   try {
-    await deleteContract(contractId)
+    await deleteContract(contractId);
   } catch (error) {
     redirectForUnauthorized(error);
     redirect(appendMessage("/app/contracts", "error", getFallbackErrorMessage(error)));
@@ -293,31 +299,198 @@ export async function deleteContractAction(contractId: number) {
   redirect(appendMessage("/app/contracts", "status", "deleted"));
 }
 
+export async function createPaymentTermAction(contractId: number, formData: FormData) {
+  try {
+    await createPaymentTerm({
+      contract_id: contractId,
+      term_number: Number(readString(formData, "term_number")),
+      term_title: readString(formData, "term_title"),
+      due_date: readString(formData, "due_date"),
+      amount: readString(formData, "amount"),
+      description: readOptionalString(formData, "description"),
+      status: readString(formData, "status"),
+      payable_after_condition: readOptionalString(formData, "payable_after_condition"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_term_created"));
+}
+
+export async function updatePaymentTermAction(contractId: number, paymentTermId: number, formData: FormData) {
+  try {
+    await updatePaymentTerm(paymentTermId, {
+      contract_id: contractId,
+      term_number: Number(readString(formData, "term_number")),
+      term_title: readString(formData, "term_title"),
+      due_date: readString(formData, "due_date"),
+      amount: readString(formData, "amount"),
+      description: readOptionalString(formData, "description"),
+      status: readString(formData, "status"),
+      payable_after_condition: readOptionalString(formData, "payable_after_condition"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_term_updated"));
+}
+
+export async function deletePaymentTermAction(contractId: number, paymentTermId: number) {
+  try {
+    await deletePaymentTerm(paymentTermId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_term_deleted"));
+}
+
+export async function createPaymentAction(contractId: number, formData: FormData) {
+  try {
+    await createPayment({
+      payment_term_id: Number(readString(formData, "payment_term_id")),
+      payment_date: readString(formData, "payment_date"),
+      amount: readString(formData, "amount"),
+      method: readString(formData, "method"),
+      status: readString(formData, "status"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_created"));
+}
+
+export async function updatePaymentAction(contractId: number, paymentId: number, formData: FormData) {
+  try {
+    await updatePayment(paymentId, {
+      payment_term_id: Number(readString(formData, "payment_term_id")),
+      payment_date: readString(formData, "payment_date"),
+      amount: readString(formData, "amount"),
+      method: readString(formData, "method"),
+      status: readString(formData, "status"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_updated"));
+}
+
+export async function deletePaymentAction(contractId: number, paymentId: number) {
+  try {
+    await deletePayment(paymentId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_deleted"));
+}
+
+export async function uploadPaymentProofAction(contractId: number, paymentId: number, formData: FormData) {
+  try {
+    await uploadPaymentProof(paymentId, formData);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_proof_uploaded"));
+}
+
+export async function createProjectProgressAction(contractId: number, formData: FormData) {
+  try {
+    await createProjectProgress({
+      contract_id: contractId,
+      progress_date: readString(formData, "progress_date"),
+      progress_title: readString(formData, "progress_title"),
+      progress_description: readString(formData, "progress_description"),
+      percentage: Number(readString(formData, "percentage")),
+      status: readString(formData, "status"),
+      milestone_reference: readOptionalString(formData, "milestone_reference"),
+      notes: readOptionalString(formData, "notes"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "project_progress_created"));
+}
+
+export async function updateProjectProgressAction(contractId: number, progressId: number, formData: FormData) {
+  try {
+    await updateProjectProgress(progressId, {
+      contract_id: contractId,
+      progress_date: readString(formData, "progress_date"),
+      progress_title: readString(formData, "progress_title"),
+      progress_description: readString(formData, "progress_description"),
+      percentage: Number(readString(formData, "percentage")),
+      status: readString(formData, "status"),
+      milestone_reference: readOptionalString(formData, "milestone_reference"),
+      notes: readOptionalString(formData, "notes"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "project_progress_updated"));
+}
+
+export async function deleteProjectProgressAction(contractId: number, progressId: number) {
+  try {
+    await deleteProjectProgress(progressId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`, `/app/contracts/${contractId}/edit`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "project_progress_deleted"));
+}
+
 export async function uploadContractDocumentVersionAction(
   contractId: number,
   redirectPathOrFormData: string | FormData,
-  maybeFormData?: FormData
+  maybeFormData?: FormData,
 ) {
-  "use server"
-
-  const redirectPath = typeof redirectPathOrFormData === "string"
-    ? redirectPathOrFormData
-    : `/app/contracts/${contractId}/versions`
-  const formData = typeof redirectPathOrFormData === "string"
-    ? maybeFormData
-    : redirectPathOrFormData
+  const redirectPath = typeof redirectPathOrFormData === "string" ? redirectPathOrFormData : `/app/contracts/${contractId}/versions`;
+  const formData = typeof redirectPathOrFormData === "string" ? maybeFormData : redirectPathOrFormData;
 
   if (!formData) {
-    throw new Error("Form data is required.")
+    throw new Error("Form data is required.");
   }
 
   try {
-    await uploadContractDocumentVersion(contractId, formData)
+    await uploadContractDocumentVersion(contractId, formData);
   } catch (error) {
     redirectForUnauthorized(error);
     redirect(appendMessage(redirectPath, "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`, `/app/contracts/${contractId}/versions`, `/app/contracts/${contractId}/documents`]);
+  revalidateAccessManagementPaths([
+    "/app/contracts",
+    `/app/contracts/${contractId}/edit`,
+    `/app/contracts/${contractId}/versions`,
+    `/app/contracts/${contractId}/documents`,
+  ]);
   redirect(appendMessage(redirectPath, "status", "document_uploaded"));
 }

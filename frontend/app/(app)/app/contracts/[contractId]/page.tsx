@@ -1,13 +1,28 @@
 import Link from "next/link"
-import { FileTextIcon, GitCompareArrowsIcon, HistoryIcon, PencilIcon } from "lucide-react"
+import { FileTextIcon, GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
 
+import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { ContractStatusBadge } from "@/components/access-management/entity-status-badge"
 import { BackLinkButton, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
+import { ContractOperationsSections } from "@/components/contract-management/contract-operations-sections"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getContract } from "@/lib/access-management/backend"
-import { handleModulePageError, type PageRouteParams } from "@/lib/access-management/page"
+import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
+
+const statusMessages = {
+  payment_term_created: "Termin pembayaran baru berhasil ditambahkan.",
+  payment_term_updated: "Termin pembayaran berhasil diperbarui.",
+  payment_term_deleted: "Termin pembayaran berhasil dihapus.",
+  payment_created: "Pembayaran baru berhasil dicatat.",
+  payment_updated: "Data pembayaran berhasil diperbarui.",
+  payment_deleted: "Data pembayaran berhasil dihapus.",
+  payment_proof_uploaded: "Bukti pembayaran berhasil diunggah untuk proses verifikasi.",
+  project_progress_created: "Update progres proyek berhasil ditambahkan.",
+  project_progress_updated: "Update progres proyek berhasil diperbarui.",
+  project_progress_deleted: "Update progres proyek berhasil dihapus.",
+} satisfies Record<string, string>
 
 const versionStatusLabels: Record<string, string> = {
   draft: "Draft",
@@ -79,13 +94,18 @@ function DetailItem({
 
 export default async function ContractDetailPage({
   params,
+  searchParams,
 }: {
   params: PageRouteParams<{ contractId: string }>
+  searchParams: PageSearchParams
 }) {
   const { contractId } = await params
+  const resolvedSearchParams = await searchParams
+  const status = readSearchParam(resolvedSearchParams, "status")
+  const error = readSearchParam(resolvedSearchParams, "error")
 
   let contract = null
-  let message: string | null = null
+  let message: string | null = error ?? null
 
   try {
     contract = await getContract(Number(contractId))
@@ -101,6 +121,7 @@ export default async function ContractDetailPage({
           eyebrow="Manajemen kontrak"
           title="Detail kontrak"
         />
+        <StatusToastBridge error={error ?? undefined} />
         <StatusBanner error={message ?? undefined} />
       </PageStack>
     )
@@ -116,15 +137,19 @@ export default async function ContractDetailPage({
       ].join(" • ")
     : "Belum ada arsip dokumen."
 
+  const latestProgress = contract.latest_progress
+
   return (
     <PageStack data-testid="contract-detail-page">
       <PageHeaderCard
         actionHref={`/app/contracts/${contract.id}/edit`}
         actionLabel="Ubah kontrak"
-        description="Halaman detail ini memusatkan konteks kontrak, proyek, dan arsip dokumen."
+        description="Halaman detail ini memusatkan konteks kontrak, proyek, arsip dokumen, dan seluruh operasi pembayaran di satu alur kerja."
         eyebrow="Manajemen kontrak"
         title={contract.contract_number}
       />
+
+      <StatusToastBridge error={error ?? undefined} messages={statusMessages} status={status} />
 
       <div className="flex flex-wrap items-center gap-3">
         <BackLinkButton href="/app/contracts" />
@@ -134,7 +159,7 @@ export default async function ContractDetailPage({
         </span>
       </div>
 
-      <StatusBanner error={message ?? undefined} />
+      <StatusBanner error={message ?? undefined} messages={statusMessages} status={status} />
 
       <div className="flex flex-wrap gap-2 rounded-lg border border-line bg-card-strong p-2">
         <Link
@@ -147,7 +172,7 @@ export default async function ContractDetailPage({
         </Link>
         <Link
           href={`/app/contracts/${contract.id}/documents`}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground`}
+          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <FileTextIcon className="h-4 w-4" />
           Dokumen
@@ -159,14 +184,14 @@ export default async function ContractDetailPage({
         </Link>
         <Link
           href={`/app/contracts/${contract.id}/compare`}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground`}
+          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <GitCompareArrowsIcon className="h-4 w-4" />
           Komparasi
         </Link>
         <Link
           href={`/app/contracts/${contract.id}/history`}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground`}
+          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <HistoryIcon className="h-4 w-4" />
           Riwayat
@@ -237,6 +262,20 @@ export default async function ContractDetailPage({
           </div>
         </div>
       </Alert>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Ringkasan operasional kontrak</CardTitle>
+          <CardDescription>Panel ini merangkum progres terbaru, jumlah termin, dan aktivitas pembayaran langsung dari kontrak.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <DetailItem label="Jumlah termin" value={String(contract.payment_terms_count ?? contract.payment_terms?.length ?? 0)} />
+          <DetailItem label="Jumlah update progres" value={String(contract.project_progress_updates_count ?? contract.project_progress?.length ?? 0)} />
+          <DetailItem label="Progres terbaru" value={latestProgress ? `${latestProgress.percentage}% • ${latestProgress.progress_title}` : "Belum ada laporan progres"} />
+        </CardContent>
+      </Card>
+
+      <ContractOperationsSections contract={contract} />
     </PageStack>
   )
 }
