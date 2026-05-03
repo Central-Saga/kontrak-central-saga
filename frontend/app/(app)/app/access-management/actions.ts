@@ -494,3 +494,111 @@ export async function uploadContractDocumentVersionAction(
   ]);
   redirect(appendMessage(redirectPath, "status", "document_uploaded"));
 }
+
+export async function createPaymentTermStandaloneAction(formData: FormData) {
+  try {
+    await createPaymentTerm({
+      contract_id: Number(readString(formData, "contract_id")),
+      term_number: Number(readString(formData, "term_number")),
+      term_title: readString(formData, "term_title"),
+      due_date: readString(formData, "due_date"),
+      amount: readString(formData, "amount"),
+      description: readOptionalString(formData, "description"),
+      status: readString(formData, "status"),
+      payable_after_condition: readOptionalString(formData, "payable_after_condition"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/payment-terms/new", "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/payment-terms", "/app/contracts"]);
+  redirect(appendMessage("/app/payment-terms", "status", "payment_term_created"));
+}
+
+export async function updatePaymentTermStandaloneAction(paymentTermId: number, formData: FormData) {
+  try {
+    await updatePaymentTerm(paymentTermId, {
+      contract_id: Number(readString(formData, "contract_id")),
+      term_number: Number(readString(formData, "term_number")),
+      term_title: readString(formData, "term_title"),
+      due_date: readString(formData, "due_date"),
+      amount: readString(formData, "amount"),
+      description: readOptionalString(formData, "description"),
+      status: readString(formData, "status"),
+      payable_after_condition: readOptionalString(formData, "payable_after_condition"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/payment-terms/${paymentTermId}/edit`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/payment-terms", "/app/contracts"]);
+  redirect(appendMessage("/app/payment-terms", "status", "payment_term_updated"));
+}
+
+export async function deletePaymentTermStandaloneAction(paymentTermId: number) {
+  try {
+    await deletePaymentTerm(paymentTermId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/payment-terms", "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/payment-terms", "/app/contracts"]);
+  redirect(appendMessage("/app/payment-terms", "status", "payment_term_deleted"));
+}
+
+export async function createProjectProgressStandaloneAction(formData: FormData) {
+  try {
+    await createProjectProgress({
+      contract_id: Number(readString(formData, "contract_id")),
+      progress_date: readString(formData, "progress_date"),
+      progress_title: readString(formData, "progress_title"),
+      progress_description: readString(formData, "progress_description"),
+      percentage: Number(readString(formData, "percentage")),
+      status: readString(formData, "status"),
+      milestone_reference: readOptionalString(formData, "milestone_reference"),
+      notes: readOptionalString(formData, "notes"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/project-progress/new", "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/project-progress", "/app/contracts"]);
+  redirect(appendMessage("/app/project-progress", "status", "project_progress_created"));
+}
+
+export async function updateProjectProgressStandaloneAction(progressId: number, formData: FormData) {
+  try {
+    await updateProjectProgress(progressId, {
+      contract_id: Number(readString(formData, "contract_id")),
+      progress_date: readString(formData, "progress_date"),
+      progress_title: readString(formData, "progress_title"),
+      progress_description: readString(formData, "progress_description"),
+      percentage: Number(readString(formData, "percentage")),
+      status: readString(formData, "status"),
+      milestone_reference: readOptionalString(formData, "milestone_reference"),
+      notes: readOptionalString(formData, "notes"),
+    });
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/project-progress/${progressId}/edit`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/project-progress", "/app/contracts"]);
+  redirect(appendMessage("/app/project-progress", "status", "project_progress_updated"));
+}
+
+export async function deleteProjectProgressStandaloneAction(progressId: number) {
+  try {
+    await deleteProjectProgress(progressId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage("/app/project-progress", "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths(["/app/project-progress", "/app/contracts"]);
+  redirect(appendMessage("/app/project-progress", "status", "project_progress_deleted"));
+}

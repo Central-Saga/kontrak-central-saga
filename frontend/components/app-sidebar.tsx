@@ -3,7 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { Building2, FileText, KeyRound, ShieldCheck, UsersRound } from "lucide-react"
+import { Building2, CalendarClock, FileText, KeyRound, ShieldCheck, TrendingUp, UsersRound } from "lucide-react"
 
 import {
   Sidebar,
@@ -41,6 +41,18 @@ const navigation = [
     url: "/app/contracts",
     icon: FileText,
     testId: "sidebar-nav-contracts",
+  },
+  {
+    title: "Termin Pembayaran",
+    url: "/app/payment-terms",
+    icon: CalendarClock,
+    testId: "sidebar-nav-payment-terms",
+  },
+  {
+    title: "Progres Proyek",
+    url: "/app/project-progress",
+    icon: TrendingUp,
+    testId: "sidebar-nav-project-progress",
   },
   {
     title: "Peran",

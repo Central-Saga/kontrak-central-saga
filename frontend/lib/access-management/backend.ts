@@ -794,6 +794,34 @@ export async function generateContractCode(): Promise<string> {
   return response.contract_number;
 }
 
+export async function listPaymentTerms(options: {
+  contractId?: number;
+  status?: string;
+  overdueOnly?: boolean;
+  perPage?: number;
+  page?: number;
+} = {}): Promise<PaginatedCollection<PaymentTermRecord>> {
+  const query = buildQueryString({
+    contract_id: options.contractId,
+    status: options.status,
+    overdue_only: options.overdueOnly ? "1" : undefined,
+    per_page: options.perPage ?? 10,
+    page: options.page,
+  });
+
+  return requestBackend<PaginatedCollection<PaymentTermRecord>>(`/api/v1/payment-terms${query}`, {
+    method: "GET",
+  });
+}
+
+export async function getPaymentTerm(paymentTermId: number): Promise<PaymentTermRecord> {
+  const response = await requestBackend<DetailEnvelope<PaymentTermRecord>>(`/api/v1/payment-terms/${paymentTermId}`, {
+    method: "GET",
+  });
+
+  return response.data;
+}
+
 export async function createPaymentTerm(input: PaymentTermMutationInput): Promise<PaymentTermRecord> {
   const response = await requestBackend<DetailEnvelope<PaymentTermRecord>>("/api/v1/payment-terms", {
     method: "POST",
@@ -864,6 +892,32 @@ export async function uploadPaymentProof(paymentId: number, formData: FormData):
   const response = await requestBackend<{ data: PaymentProofUploadResult }>(`/api/v1/payments/${paymentId}/proof`, {
     method: "POST",
     body: formData,
+  });
+
+  return response.data;
+}
+
+export async function listProjectProgress(options: {
+  contractId?: number;
+  status?: string;
+  perPage?: number;
+  page?: number;
+} = {}): Promise<PaginatedCollection<ProjectProgressRecord>> {
+  const query = buildQueryString({
+    contract_id: options.contractId,
+    status: options.status,
+    per_page: options.perPage ?? 10,
+    page: options.page,
+  });
+
+  return requestBackend<PaginatedCollection<ProjectProgressRecord>>(`/api/v1/project-progress${query}`, {
+    method: "GET",
+  });
+}
+
+export async function getProjectProgress(progressId: number): Promise<ProjectProgressRecord> {
+  const response = await requestBackend<DetailEnvelope<ProjectProgressRecord>>(`/api/v1/project-progress/${progressId}`, {
+    method: "GET",
   });
 
   return response.data;
