@@ -7,7 +7,9 @@ use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Http\Resources\ClientResource;
 use App\Models\Client;
+use App\Models\User;
 use App\Services\ClientUserService;
+use App\Support\OperationalDataAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -20,11 +22,18 @@ class ClientController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $clients = Client::query()
+        /** @var User $user */
+        $user = $request->user();
+
+        $clientsQuery = Client::query()
             ->withCount([
                 'contracts',
                 'contracts as active_contracts_count' => fn ($query) => $query->where('contract_status', 'active'),
-            ])
+            ]);
+
+        OperationalDataAccess::scopeClients($clientsQuery, $user);
+
+        $clients = $clientsQuery
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('status', $status))
             ->when(
                 trim((string) $request->query('search')),
@@ -54,10 +63,7 @@ class ClientController extends Controller
 
         // If portal access is enabled, create user account
         if (! empty($data['portal_access_enabled']) && $data['portal_access_enabled']) {
-            $userResult = $this->clientUserService->createOrUpdateClientUser($client);
-
-            // You might want to send an email here with credentials
-            // Mail::to($client->email)->send(new ClientPortalCredentials($userResult));
+            $this->clientUserService->createOrUpdateClientUser($client);
         }
 
         return (new ClientResource($client->loadCount('contracts')->load('user')))
@@ -65,8 +71,13 @@ class ClientController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(Client $client): ClientResource
+    public function show(Request $request, Client $client): ClientResource
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessClient($client, $user), 403);
+
         $client->loadCount([
             'contracts',
             'contracts as active_contracts_count' => fn ($query) => $query->where('contract_status', 'active'),
@@ -82,6 +93,11 @@ class ClientController extends Controller
 
     public function update(UpdateClientRequest $request, Client $client): ClientResource
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessClient($client, $user), 403);
+
         $data = $request->validated();
         $oldPortalAccess = $client->portal_access_enabled;
 
@@ -101,8 +117,13 @@ class ClientController extends Controller
         return new ClientResource($client->fresh()->loadCount('contracts')->load('user'));
     }
 
-    public function destroy(Client $client): JsonResponse
+    public function destroy(Request $request, Client $client): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessClient($client, $user), 403);
+
         if ($client->contracts()->exists()) {
             return response()->json([
                 'message' => 'Client with related contracts cannot be deleted.',

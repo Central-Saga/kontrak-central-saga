@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { listClients, listContracts, listPermissionOptions, listRoles, listUsers } from "@/lib/access-management/backend";
 import { handleModulePageError } from "@/lib/access-management/page";
+import { hasAnyPermission } from "@/lib/auth/permissions";
+import { readSessionState } from "@/lib/auth/session";
+import type { AuthUser } from "@/lib/auth/types";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeaderCard, PageStack, PillList } from "@/components/access-management/shared";
@@ -12,6 +15,7 @@ const overviewModules = [
     href: "/app/users",
     actionLabel: "Buka modul pengguna",
     description: "Akun internal, email kerja, dan peran yang menempel pada setiap pengguna sistem.",
+    permissions: ["read users"],
     fetcher: async () => {
       const response = await listUsers({ perPage: 3 });
 
@@ -26,6 +30,7 @@ const overviewModules = [
     href: "/app/clients",
     actionLabel: "Buka modul klien",
     description: "Data perusahaan, kontak utama, dan status portal yang menjadi akar relasi untuk kontrak proyek.",
+    permissions: ["manage clients"],
     fetcher: async () => {
       const response = await listClients({ perPage: 3 });
 
@@ -40,13 +45,14 @@ const overviewModules = [
     href: "/app/contracts",
     actionLabel: "Buka modul kontrak",
     description: "Ringkasan kontrak aktif, nilai proyek, dan hubungan operasional yang menjadi pusat modul pembayaran dan progres.",
+    permissions: ["read contracts", "manage contracts"],
     fetcher: async () => {
-      const response = await listContracts({ perPage: 3 })
+      const response = await listContracts({ perPage: 3 });
 
       return {
         items: response.data.map((item) => item.contract_number),
         total: response.meta.total,
-      }
+      };
     },
   },
   {
@@ -54,6 +60,7 @@ const overviewModules = [
     href: "/app/roles",
     actionLabel: "Buka modul peran",
     description: "Peran untuk mengelompokkan akses operasional lintas modul dan penugasan izin.",
+    permissions: ["read roles"],
     fetcher: async () => {
       const response = await listRoles({ perPage: 3 });
 
@@ -68,6 +75,7 @@ const overviewModules = [
     href: "/app/permissions",
     actionLabel: "Lihat izin akses",
     description: "Daftar izin akses tersedia kembali sebagai referensi baca-saja yang dikelompokkan per modul dan keluarga aksi.",
+    permissions: ["read permissions"],
     fetcher: async () => {
       const permissions = await listPermissionOptions();
 
@@ -79,19 +87,25 @@ const overviewModules = [
   },
 ];
 
+function getAuthorizedOverviewModules(user: AuthUser) {
+  return overviewModules.filter((module) => hasAnyPermission(user, module.permissions));
+}
+
 export default async function AppHomePage() {
-  const moduleResults = await Promise.allSettled(overviewModules.map((module) => module.fetcher()));
+  const session = await readSessionState();
+  const authorizedModules = session.status === "authenticated" ? getAuthorizedOverviewModules(session.user) : [];
+  const moduleResults = await Promise.allSettled(authorizedModules.map((module) => module.fetcher()));
 
   return (
     <PageStack>
       <PageHeaderCard
-        description="Workspace `/app` menjadi pintu masuk ringkas untuk modul pengguna, klien, kontrak, peran, dan izin akses. Modul izin sekarang tampil kembali sebagai halaman baca-saja, sementara identitas akun aktif dipusatkan di navbar atas."
+        description="Workspace `/app` menjadi pintu masuk ringkas untuk modul yang sesuai dengan izin akun aktif. Data ringkasan hanya dipanggil dari API yang memang boleh diakses."
         eyebrow="Manajemen akses"
         title="Ringkasan akses aplikasi"
       />
 
       <div className="grid gap-4 xl:grid-cols-5">
-        {overviewModules.map((module, index) => {
+        {authorizedModules.map((module, index) => {
           const result = moduleResults[index];
 
           if (result.status === "rejected") {

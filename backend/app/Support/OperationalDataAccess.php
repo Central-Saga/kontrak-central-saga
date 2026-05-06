@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Client;
 use App\Models\Contract;
 use App\Models\Payment;
 use App\Models\PaymentTerm;
@@ -20,7 +21,24 @@ class OperationalDataAccess
     }
 
     /**
-     * @param Builder<Contract> $query
+     * @param  Builder<Client>  $query
+     * @return Builder<Client>
+     */
+    public static function scopeClients(Builder $query, User $user): Builder
+    {
+        if ($user->hasRole('client')) {
+            return $query->where('user_id', $user->id);
+        }
+
+        if ($user->hasAnyRole(['admin', 'finance']) || $user->can('manage clients')) {
+            return $query;
+        }
+
+        return $query->whereRaw('1 = 0');
+    }
+
+    /**
+     * @param  Builder<Contract>  $query
      * @return Builder<Contract>
      */
     public static function scopeContracts(Builder $query, User $user): Builder
@@ -46,7 +64,7 @@ class OperationalDataAccess
     }
 
     /**
-     * @param Builder<PaymentTerm> $query
+     * @param  Builder<PaymentTerm>  $query
      * @return Builder<PaymentTerm>
      */
     public static function scopePaymentTerms(Builder $query, User $user): Builder
@@ -55,7 +73,7 @@ class OperationalDataAccess
     }
 
     /**
-     * @param Builder<Payment> $query
+     * @param  Builder<Payment>  $query
      * @return Builder<Payment>
      */
     public static function scopePayments(Builder $query, User $user): Builder
@@ -64,12 +82,17 @@ class OperationalDataAccess
     }
 
     /**
-     * @param Builder<ProjectProgress> $query
+     * @param  Builder<ProjectProgress>  $query
      * @return Builder<ProjectProgress>
      */
     public static function scopeProjectProgress(Builder $query, User $user): Builder
     {
         return $query->whereHas('contract', fn (Builder $contractQuery): Builder => self::scopeContracts($contractQuery, $user));
+    }
+
+    public static function canAccessClient(Client $client, User $user): bool
+    {
+        return self::scopeClients(Client::query()->whereKey($client->getKey()), $user)->exists();
     }
 
     public static function canAccessContract(Contract $contract, User $user): bool

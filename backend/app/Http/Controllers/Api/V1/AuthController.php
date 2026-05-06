@@ -26,9 +26,7 @@ class AuthController extends Controller
             ]);
         }
 
-        $abilities = $user->hasRole('admin')
-            ? ['*']
-            : $user->getAllPermissions()->pluck('name')->values()->all();
+        $abilities = $user->getAllPermissions()->pluck('name')->values()->all();
 
         $token = $user->createToken($request->string('device_name')->toString(), $abilities);
 

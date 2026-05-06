@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Client;
+use App\Models\Contract;
 use App\Models\Payment;
+use App\Models\PaymentTerm;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\ModuleStarterSeeder;
@@ -9,6 +12,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -43,6 +47,12 @@ it('logs in and returns token plus roles and permissions', function (): void {
         ])
         ->assertJsonPath('data.user.username', null)
         ->assertJsonPath('data.user.avatar_url', null);
+
+    $admin = User::query()->where('email', 'admin@centralsaga.test')->firstOrFail();
+    $token = PersonalAccessToken::query()->where('tokenable_id', $admin->id)->latest('id')->firstOrFail();
+
+    expect($token->abilities)->not->toContain('*')
+        ->and($token->abilities)->toContain('read users', 'manage clients', 'read contracts');
 });
 
 it('returns avatar url in auth me payload when user has avatar', function (): void {
@@ -174,14 +184,67 @@ it('returns dashboard summary for authorized api v1 user', function (): void {
         ->assertOk()
         ->assertJsonPath('data.clients.total', 3)
         ->assertJsonPath('data.contracts.total', 3)
-        ->assertJsonPath('data.payment_terms.overdue', 1)
+        ->assertJsonPath('data.payment_terms.overdue', 2)
         ->assertJsonPath('data.payments.verified', 5);
+});
+
+it('scopes dashboard summary to the authenticated client data when reporting permission is assigned', function (): void {
+    $clientUser = User::query()->where('email', 'client@centralsaga.test')->firstOrFail();
+    $clientUser->givePermissionTo('view reporting dashboard');
+
+    Sanctum::actingAs($clientUser);
+
+    $this->getJson('/api/v1/dashboard/summary')
+        ->assertOk()
+        ->assertJsonPath('data.clients.total', 1)
+        ->assertJsonPath('data.contracts.total', 1)
+        ->assertJsonPath('data.contracts.total_value', '450000000.00')
+        ->assertJsonPath('data.payment_terms.total', 3)
+        ->assertJsonPath('data.payments.total', 1)
+        ->assertJsonPath('data.payments.verified', 1)
+        ->assertJsonPath('data.project_progress.total_updates', 2);
+});
+
+it('scopes client index to the authenticated client even if manage clients permission is assigned', function (): void {
+    $clientUser = User::query()->where('email', 'client@centralsaga.test')->firstOrFail();
+    $clientUser->givePermissionTo('manage clients');
+
+    Sanctum::actingAs($clientUser);
+
+    $this->getJson('/api/v1/clients')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.user_id', $clientUser->id);
+
+    $otherClient = Client::query()->create([
+        'client_code' => 'CL-OTHER-AUTH',
+        'company_name' => 'Other Client Auth Test',
+        'contact_person' => 'Other Contact',
+        'email' => 'other-auth-client.test@example.test',
+        'phone' => '081200000000',
+        'address' => 'Denpasar',
+        'status' => 'active',
+        'portal_access_enabled' => false,
+        'user_id' => null,
+    ]);
+
+    $this->getJson("/api/v1/clients/{$otherClient->id}")
+        ->assertForbidden();
+
+    $this->putJson("/api/v1/clients/{$otherClient->id}", [
+        'company_name' => 'Client Cannot Update Other Client',
+    ])->assertForbidden();
+
+    $this->deleteJson("/api/v1/clients/{$otherClient->id}")
+        ->assertForbidden();
 });
 
 it('returns contract detail with related payment terms and latest progress', function (): void {
     Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
 
-    $this->getJson('/api/v1/contracts/1')
+    $contract = Contract::query()->where('contract_number', 'KCS-2026-001')->firstOrFail();
+
+    $this->getJson("/api/v1/contracts/{$contract->id}")
         ->assertOk()
         ->assertJsonPath('data.contract_number', 'KCS-2026-001')
         ->assertJsonCount(3, 'data.payment_terms')
@@ -228,10 +291,13 @@ it('returns payments index with related payment term data', function (): void {
         ]);
 });
 
-it('uploads a payment proof using media library', function (): void {
-    Sanctum::actingAs(User::query()->where('email', 'client@centralsaga.test')->firstOrFail());
+it('uploads a payment proof only for the authenticated client own payment', function (): void {
+    $clientUser = User::query()->where('email', 'client@centralsaga.test')->firstOrFail();
+    Sanctum::actingAs($clientUser);
 
-    $payment = Payment::query()->where('status', 'pending_review')->firstOrFail();
+    $payment = Payment::query()
+        ->whereHas('paymentTerm.contract.client', fn ($query) => $query->where('user_id', $clientUser->id))
+        ->firstOrFail();
 
     $this->post("/api/v1/payments/{$payment->id}/proof", [
         'file' => UploadedFile::fake()->image('proof.png'),
@@ -242,12 +308,67 @@ it('uploads a payment proof using media library', function (): void {
         ->assertJsonPath('data.proof.notes', 'Bukti transfer dari client');
 });
 
+it('forbids client payment proof uploads for other client payments', function (): void {
+    $clientUser = User::query()->where('email', 'client@centralsaga.test')->firstOrFail();
+    Sanctum::actingAs($clientUser);
+
+    $otherClient = Client::query()->create([
+        'client_code' => 'CL-OTHER-PAYMENT',
+        'company_name' => 'Other Payment Client',
+        'contact_person' => 'Other Payment Contact',
+        'email' => 'other-payment-client.test@example.test',
+        'phone' => '081200000001',
+        'address' => 'Denpasar',
+        'status' => 'active',
+        'portal_access_enabled' => false,
+        'user_id' => null,
+    ]);
+    $contract = Contract::query()->create([
+        'client_id' => $otherClient->id,
+        'contract_number' => 'KCS-AUTH-OTHER',
+        'contract_title' => 'Other Client Contract',
+        'project_name' => 'Other Client Project',
+        'contract_date' => '2026-01-01',
+        'start_date' => '2026-01-02',
+        'end_date' => '2026-02-01',
+        'contract_value' => 1000000,
+        'project_scope' => 'Authorization fixture.',
+        'payment_scheme_summary' => '100%',
+        'contract_status' => 'active',
+        'notes' => 'Authorization fixture.',
+    ]);
+    $paymentTerm = PaymentTerm::query()->create([
+        'contract_id' => $contract->id,
+        'term_number' => 1,
+        'term_title' => 'Other Client Term',
+        'due_date' => '2026-01-15',
+        'amount' => 1000000,
+        'description' => 'Authorization fixture.',
+        'status' => 'pending',
+        'payable_after_condition' => 'Authorization fixture.',
+    ]);
+    $payment = Payment::query()->create([
+        'payment_term_id' => $paymentTerm->id,
+        'payment_date' => '2026-01-15',
+        'amount' => 1000000,
+        'method' => 'transfer',
+        'status' => 'pending_review',
+    ]);
+
+    $this->post("/api/v1/payments/{$payment->id}/proof", [
+        'file' => UploadedFile::fake()->image('proof.png'),
+        'notes' => 'Bukti transfer dari client',
+    ])->assertForbidden();
+});
+
 it('rejects contract document uploads larger than 20 mb', function (): void {
     Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
 
     Config::set('media-library.max_file_size', 1024 * 1024 * 20);
 
-    $this->withHeader('Accept', 'application/json')->post('/api/v1/contracts/1/document-versions', [
+    $contract = Contract::query()->where('contract_number', 'KCS-2026-001')->firstOrFail();
+
+    $this->withHeader('Accept', 'application/json')->post("/api/v1/contracts/{$contract->id}/document-versions", [
         'file' => UploadedFile::fake()->create('contract-too-large.pdf', 21 * 1024, 'application/pdf'),
         'document_type' => 'main_contract',
         'version_status' => 'draft',
@@ -260,7 +381,9 @@ it('rejects contract document uploads larger than 20 mb', function (): void {
 it('stores contract document versions and compares version metadata', function (): void {
     Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
 
-    $firstUploadResponse = $this->post('/api/v1/contracts/1/document-versions', [
+    $contract = Contract::query()->where('contract_number', 'KCS-2026-001')->firstOrFail();
+
+    $firstUploadResponse = $this->post("/api/v1/contracts/{$contract->id}/document-versions", [
         'file' => UploadedFile::fake()->createWithContent('contract-v1.pdf', "%PDF-1.4\ncontract-version-1"),
         'document_type' => 'main_contract',
         'version_status' => 'draft',
@@ -269,13 +392,13 @@ it('stores contract document versions and compares version metadata', function (
 
     $firstUploadResponse
         ->assertCreated()
-        ->assertJsonPath('data.contract_id', 1)
+        ->assertJsonPath('data.contract_id', $contract->id)
         ->assertJsonPath('data.version_number', 1)
         ->assertJsonPath('data.version_status', 'draft');
 
     $firstVersionId = (int) $firstUploadResponse->json('data.id');
 
-    $secondUploadResponse = $this->post('/api/v1/contracts/1/document-versions', [
+    $secondUploadResponse = $this->post("/api/v1/contracts/{$contract->id}/document-versions", [
         'file' => UploadedFile::fake()->createWithContent('contract-v2.pdf', "%PDF-1.4\ncontract-version-2-updated"),
         'document_type' => 'main_contract',
         'version_status' => 'final',
@@ -289,20 +412,20 @@ it('stores contract document versions and compares version metadata', function (
 
     $secondVersionId = (int) $secondUploadResponse->json('data.id');
 
-    $this->getJson('/api/v1/contracts/1/document-versions?document_type=main_contract')
+    $this->getJson("/api/v1/contracts/{$contract->id}/document-versions?document_type=main_contract")
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.version_number', 2)
         ->assertJsonPath('data.1.version_number', 1);
 
-    $this->getJson("/api/v1/contracts/1/document-versions/compare?from_version_id={$firstVersionId}&to_version_id={$secondVersionId}")
+    $this->getJson("/api/v1/contracts/{$contract->id}/document-versions/compare?from_version_id={$firstVersionId}&to_version_id={$secondVersionId}")
         ->assertOk()
-        ->assertJsonPath('data.contract_id', 1)
+        ->assertJsonPath('data.contract_id', $contract->id)
         ->assertJsonPath('data.same_file', false)
         ->assertJsonPath('data.from_version.id', $firstVersionId)
         ->assertJsonPath('data.to_version.id', $secondVersionId);
 
-    $this->get("/api/v1/contracts/1/document-versions/{$secondVersionId}/download")
+    $this->get("/api/v1/contracts/{$contract->id}/document-versions/{$secondVersionId}/download")
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf')
         ->assertHeader('content-disposition', 'inline; filename="contract-v2.pdf"');
@@ -331,18 +454,23 @@ it('seeds role and permission foundation for user access modules', function (): 
         );
 });
 
-it('applies granular users permissions for read vs create', function (): void {
+it('restricts user access management endpoints to admin users', function (): void {
     Sanctum::actingAs(User::query()->where('email', 'finance@centralsaga.test')->firstOrFail());
 
     $this->getJson('/api/v1/users?search=Central&per_page=5')
-        ->assertOk()
-        ->assertJsonPath('meta.per_page', 5);
+        ->assertForbidden();
 
     $this->postJson('/api/v1/users', [
         'name' => 'Finance Cannot Create',
         'email' => 'finance-no-create@centralsaga.test',
         'password' => 'password123',
     ])->assertForbidden();
+
+    $this->getJson('/api/v1/roles')
+        ->assertForbidden();
+
+    $this->getJson('/api/v1/permissions')
+        ->assertForbidden();
 });
 
 it('supports users crud with role syncing and optional password update', function (): void {
@@ -446,8 +574,7 @@ it('prevents deleting the primary seeded role even without assigned users', func
     $primaryUser->removeRole($primaryRole);
 
     $this->deleteJson("/api/v1/roles/{$primaryRole->id}")
-        ->assertStatus(409)
-        ->assertJsonPath('message', 'Role utama tidak dapat dihapus.');
+        ->assertForbidden();
 
     expect(Role::query()->whereKey($primaryRole->id)->exists())->toBeTrue();
 });

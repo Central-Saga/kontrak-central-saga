@@ -5,6 +5,9 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { Building2, CalendarClock, FileText, KeyRound, ShieldCheck, TrendingUp, UsersRound } from "lucide-react"
 
+import { hasAnyPermission } from "@/lib/auth/permissions"
+import type { AuthUser } from "@/lib/auth/types"
+
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +24,7 @@ import {
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   hasLogoAsset: boolean
   logoPath: string
+  user: AuthUser
 }
 
 const navigation = [
@@ -29,42 +33,49 @@ const navigation = [
     url: "/app/users",
     icon: UsersRound,
     testId: "sidebar-nav-users",
+    permissions: ["read users"],
   },
   {
     title: "Klien",
     url: "/app/clients",
     icon: Building2,
     testId: "sidebar-nav-clients",
+    permissions: ["manage clients"],
   },
   {
     title: "Kontrak",
     url: "/app/contracts",
     icon: FileText,
     testId: "sidebar-nav-contracts",
+    permissions: ["read contracts", "manage contracts"],
   },
   {
     title: "Termin Pembayaran",
     url: "/app/payment-terms",
     icon: CalendarClock,
     testId: "sidebar-nav-payment-terms",
+    permissions: ["read payment terms", "manage payment terms"],
   },
   {
     title: "Progres Proyek",
     url: "/app/project-progress",
     icon: TrendingUp,
     testId: "sidebar-nav-project-progress",
+    permissions: ["read project progress", "manage project progress"],
   },
   {
     title: "Peran",
     url: "/app/roles",
     icon: ShieldCheck,
     testId: "sidebar-nav-roles",
+    permissions: ["read roles"],
   },
   {
     title: "Izin akses",
     url: "/app/permissions",
     icon: KeyRound,
     testId: "sidebar-nav-permissions",
+    permissions: ["read permissions"],
   },
 ]
 
@@ -84,9 +95,10 @@ function BrandBadge({ hasLogoAsset, logoPath }: { hasLogoAsset: boolean; logoPat
   )
 }
 
-export function AppSidebar({ hasLogoAsset, logoPath, ...props }: AppSidebarProps) {
+export function AppSidebar({ hasLogoAsset, logoPath, user, ...props }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const visibleNavigation = navigation.filter((item) => hasAnyPermission(user, item.permissions))
 
   return (
     <Sidebar collapsible="offcanvas" data-testid="app-sidebar" variant="inset" {...props}>
@@ -106,7 +118,7 @@ export function AppSidebar({ hasLogoAsset, logoPath, ...props }: AppSidebarProps
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {navigation.map((item) => (
+            {visibleNavigation.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   data-testid={item.testId}
@@ -126,7 +138,7 @@ export function AppSidebar({ hasLogoAsset, logoPath, ...props }: AppSidebarProps
         <div className="rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/40 px-3 py-3 text-sm group-data-[collapsible=icon]:hidden">
           <p className="font-medium text-sidebar-foreground">Navigasi akses</p>
           <p className="mt-1 text-xs leading-5 text-sidebar-foreground/70">
-            Kelola pengguna, peran, dan izin akses dari menu utama aplikasi.
+            Menu hanya menampilkan modul yang sesuai dengan izin akun aktif.
           </p>
         </div>
       </SidebarFooter>

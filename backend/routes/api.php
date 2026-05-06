@@ -111,22 +111,24 @@ Route::prefix('v1')->group(function (): void {
             ->middlewareFor('update', 'role_or_permission:manage project progress|update project progress')
             ->middlewareFor('destroy', 'role_or_permission:manage project progress|delete project progress');
 
-        Route::apiResource('users', UserController::class)
-            ->middlewareFor(['index', 'show'], 'permission:read users')
-            ->middlewareFor('store', 'permission:create users')
-            ->middlewareFor('update', 'permission:update users')
-            ->middlewareFor('destroy', 'permission:delete users');
+        Route::middleware('role:admin')->group(function (): void {
+            Route::apiResource('users', UserController::class)
+                ->middlewareFor(['index', 'show'], 'permission:read users')
+                ->middlewareFor('store', 'permission:create users')
+                ->middlewareFor('update', 'permission:update users')
+                ->middlewareFor('destroy', 'permission:delete users');
 
-        Route::apiResource('roles', RoleController::class)
-            ->middlewareFor(['index', 'show'], 'permission:read roles')
-            ->middlewareFor('store', 'permission:create roles')
-            ->middlewareFor('update', 'permission:update roles')
-            ->middlewareFor('destroy', 'permission:delete roles');
+            Route::apiResource('roles', RoleController::class)
+                ->middlewareFor(['index', 'show'], 'permission:read roles')
+                ->middlewareFor('store', 'permission:create roles')
+                ->middlewareFor('update', 'permission:update roles')
+                ->middlewareFor('destroy', 'permission:delete roles');
 
-        Route::apiResource('permissions', PermissionController::class)
-            ->middlewareFor(['index', 'show'], 'permission:read permissions')
-            ->middlewareFor('store', 'permission:create permissions')
-            ->middlewareFor('update', 'permission:update permissions')
-            ->middlewareFor('destroy', 'permission:delete permissions');
+            Route::apiResource('permissions', PermissionController::class)
+                ->middlewareFor(['index', 'show'], 'permission:read permissions')
+                ->middlewareFor('store', 'permission:create permissions')
+                ->middlewareFor('update', 'permission:update permissions')
+                ->middlewareFor('destroy', 'permission:delete permissions');
+        });
     });
 });
