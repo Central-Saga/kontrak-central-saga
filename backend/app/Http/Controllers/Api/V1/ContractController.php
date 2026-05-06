@@ -7,6 +7,8 @@ use App\Http\Requests\StoreContractRequest;
 use App\Http\Requests\UpdateContractRequest;
 use App\Http\Resources\ContractResource;
 use App\Models\Contract;
+use App\Models\User;
+use App\Support\OperationalDataAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -15,9 +17,16 @@ class ContractController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $contracts = Contract::query()
+        /** @var User $user */
+        $user = $request->user();
+
+        $contractsQuery = Contract::query()
             ->with(['client:id,client_code,company_name', 'latestDocumentVersion'])
-            ->withCount(['paymentTerms', 'projectProgressUpdates', 'documentVersions'])
+            ->withCount(['paymentTerms', 'projectProgressUpdates', 'documentVersions']);
+
+        OperationalDataAccess::scopeContracts($contractsQuery, $user);
+
+        $contracts = $contractsQuery
             ->when($request->integer('client_id'), fn ($query, $clientId) => $query->where('client_id', $clientId))
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('contract_status', $status))
             ->when(
@@ -52,8 +61,13 @@ class ContractController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(Contract $contract): ContractResource
+    public function show(Request $request, Contract $contract): ContractResource
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         $contract->load([
             'client:id,client_code,company_name',
             'documentVersions' => fn ($query) => $query->with(['media', 'uploader:id,name,email']),
@@ -68,6 +82,11 @@ class ContractController extends Controller
 
     public function update(UpdateContractRequest $request, Contract $contract): ContractResource
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         $contract->update($request->validated());
 
         return new ContractResource(
@@ -75,8 +94,13 @@ class ContractController extends Controller
         );
     }
 
-    public function destroy(Contract $contract): JsonResponse
+    public function destroy(Request $request, Contract $contract): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         if ($contract->paymentTerms()->exists() || $contract->projectProgressUpdates()->exists()) {
             return response()->json([
                 'message' => 'Contract with related payment terms or progress records cannot be deleted.',

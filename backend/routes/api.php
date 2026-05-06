@@ -74,7 +74,10 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('permission:manage clients');
 
         Route::apiResource('contracts', ContractController::class)
-            ->middleware('permission:manage contracts');
+            ->middlewareFor(['index', 'show'], 'role_or_permission:manage contracts|read contracts')
+            ->middlewareFor('store', 'role_or_permission:manage contracts|create contracts')
+            ->middlewareFor('update', 'role_or_permission:manage contracts|update contracts')
+            ->middlewareFor('destroy', 'role_or_permission:manage contracts|delete contracts');
 
         Route::prefix('contracts/{contract}')->middleware('permission:manage contracts')->group(function (): void {
             Route::get('document-versions', [ContractDocumentVersionController::class, 'index']);
@@ -88,16 +91,25 @@ Route::prefix('v1')->group(function (): void {
         });
 
         Route::apiResource('payment-terms', PaymentTermController::class)
-            ->middleware('permission:manage payment terms');
+            ->middlewareFor(['index', 'show'], 'role_or_permission:manage payment terms|read payment terms')
+            ->middlewareFor('store', 'role_or_permission:manage payment terms|create payment terms')
+            ->middlewareFor('update', 'role_or_permission:manage payment terms|update payment terms')
+            ->middlewareFor('destroy', 'role_or_permission:manage payment terms|delete payment terms');
 
         Route::apiResource('payments', PaymentController::class)
-            ->middleware('permission:manage payments');
+            ->middlewareFor(['index', 'show'], 'role_or_permission:manage payments|read payments')
+            ->middlewareFor('store', 'role_or_permission:manage payments|create payments')
+            ->middlewareFor('update', 'role_or_permission:manage payments|update payments|verification payments')
+            ->middlewareFor('destroy', 'role_or_permission:manage payments|delete payments');
 
         Route::post('payments/{payment}/proof', PaymentProofController::class)
-            ->middleware('role_or_permission:client|manage payments|upload payment proofs');
+            ->middleware('role_or_permission:client|manage payments|upload payment proofs|create payment proofs');
 
         Route::apiResource('project-progress', ProjectProgressController::class)
-            ->middleware('permission:manage project progress');
+            ->middlewareFor(['index', 'show'], 'role_or_permission:manage project progress|read project progress')
+            ->middlewareFor('store', 'role_or_permission:manage project progress|create project progress')
+            ->middlewareFor('update', 'role_or_permission:manage project progress|update project progress')
+            ->middlewareFor('destroy', 'role_or_permission:manage project progress|delete project progress');
 
         Route::apiResource('users', UserController::class)
             ->middlewareFor(['index', 'show'], 'permission:read users')

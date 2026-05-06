@@ -151,12 +151,14 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                                 action={deleteAction}
                                 description="Update progres ini akan dihapus permanen."
                                 title="Hapus progres proyek?"
+                                triggerButtonProps={{
+                                  className: "h-auto px-0 py-0 text-sm text-destructive hover:text-destructive",
+                                  size: "sm",
+                                  variant: "link",
+                                }}
+                                triggerLabel="Hapus"
                                 tooltipLabel="Hapus progres"
-                              >
-                                <button className="text-sm text-destructive underline-offset-4 hover:underline" type="button">
-                                  Hapus
-                                </button>
-                              </DeleteConfirmationDialog>
+                              />
                             </div>
                           </td>
                         </tr>

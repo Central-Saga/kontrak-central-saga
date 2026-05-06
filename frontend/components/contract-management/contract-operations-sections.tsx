@@ -311,10 +311,10 @@ function PaymentTermCard({ contractId, term, paymentTerms }: { contractId: numbe
           action={deleteAction}
           description="Termin pembayaran ini akan dihapus permanen dari kontrak."
           title="Hapus termin pembayaran?"
+          triggerButtonProps={{ size: "sm", variant: "destructive" }}
+          triggerLabel="Hapus"
           tooltipLabel="Hapus termin"
-        >
-          <Button type="button" variant="destructive" size="sm">Hapus</Button>
-        </DeleteConfirmationDialog>
+        />
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
@@ -346,10 +346,10 @@ function PaymentTermCard({ contractId, term, paymentTerms }: { contractId: numbe
                   action={deletePaymentAction.bind(null, contractId, payment.id)}
                   description="Data pembayaran ini akan dihapus permanen."
                   title="Hapus pembayaran?"
+                  triggerButtonProps={{ size: "sm", variant: "destructive" }}
+                  triggerLabel="Hapus"
                   tooltipLabel="Hapus pembayaran"
-                >
-                  <Button type="button" variant="destructive" size="sm">Hapus</Button>
-                </DeleteConfirmationDialog>
+                />
                 <PaymentEditForm contractId={contractId} payment={payment} paymentTerms={paymentTerms} />
                 <PaymentProofUploadForm contractId={contractId} payment={payment} />
               </div>
@@ -380,10 +380,10 @@ function ProgressCard({ contractId, progress }: { contractId: number; progress: 
           action={deleteProjectProgressAction.bind(null, contractId, progress.id)}
           description="Catatan progres ini akan dihapus permanen."
           title="Hapus progres proyek?"
+          triggerButtonProps={{ size: "sm", variant: "destructive" }}
+          triggerLabel="Hapus"
           tooltipLabel="Hapus progres"
-        >
-          <Button type="button" variant="destructive" size="sm">Hapus</Button>
-        </DeleteConfirmationDialog>
+        />
       </div>
       <div className="mt-4">
         <ProjectProgressEditForm contractId={contractId} progress={progress} />

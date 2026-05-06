@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
+use App\Models\User;
+use App\Support\OperationalDataAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,6 +14,11 @@ class PaymentProofController extends Controller
 {
     public function __invoke(Request $request, Payment $payment): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessPayment($payment, $user), 403);
+
         $validated = $request->validate([
             'file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
             'notes' => ['nullable', 'string', 'max:500'],

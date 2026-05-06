@@ -1,0 +1,19 @@
+```powershell
+# Start the stack
+wsl --cd /mnt/c/kontrak-central-saga -- bash scripts/wsl-nip-dev.sh up
+
+# Stop the stack
+wsl --cd /mnt/c/kontrak-central-saga -- bash scripts/wsl-nip-dev.sh down
+
+# Restart/recreate the stack after WSL IP changes
+wsl --cd /mnt/c/kontrak-central-saga -- bash scripts/wsl-nip-dev.sh rebuild
+
+# Check running containers
+wsl --cd /mnt/c/kontrak-central-saga -- bash scripts/wsl-nip-dev.sh ps
+
+# Watch logs
+wsl --cd /mnt/c/kontrak-central-saga -- bash scripts/wsl-nip-dev.sh logs
+
+# Print the current URLs only
+wsl --cd /mnt/c/kontrak-central-saga -- bash scripts/wsl-nip-dev.sh url
+```

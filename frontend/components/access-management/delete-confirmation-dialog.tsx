@@ -23,8 +23,10 @@ type DeleteConfirmationDialogProps = {
   confirmTestId?: string
   description: string
   title: string
+  triggerButtonProps?: Omit<React.ComponentProps<typeof Button>, "children" | "type">
+  triggerLabel?: React.ReactNode
   tooltipLabel?: string
-  children: React.ReactElement
+  children?: React.ReactElement
 }
 
 export function DeleteConfirmationDialog({
@@ -34,10 +36,17 @@ export function DeleteConfirmationDialog({
   confirmTestId,
   description,
   title,
+  triggerButtonProps,
+  triggerLabel,
   tooltipLabel,
   children,
 }: DeleteConfirmationDialogProps) {
-  const trigger = <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+  const triggerChild = children ?? (
+    <Button type="button" variant="destructive" {...triggerButtonProps}>
+      {triggerLabel ?? "Hapus"}
+    </Button>
+  )
+  const trigger = <AlertDialogTrigger asChild>{triggerChild}</AlertDialogTrigger>
 
   return (
     <AlertDialog>

@@ -44,7 +44,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <AppSidebar hasLogoAsset={hasLogoAsset} logoPath={BRAND_LOGO_PATH} />
+      <AppSidebar hasLogoAsset={hasLogoAsset} logoPath={BRAND_LOGO_PATH} user={session.user} />
       <SidebarInset className="min-h-0 overflow-hidden">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/60 bg-background/90 px-4 backdrop-blur-sm">
           <SidebarTrigger className="-ml-1" />

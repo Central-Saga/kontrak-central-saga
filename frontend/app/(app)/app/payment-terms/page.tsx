@@ -156,12 +156,14 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
                                 action={deleteAction}
                                 description="Termin pembayaran ini akan dihapus permanen."
                                 title="Hapus termin pembayaran?"
+                                triggerButtonProps={{
+                                  className: "h-auto px-0 py-0 text-sm text-destructive hover:text-destructive",
+                                  size: "sm",
+                                  variant: "link",
+                                }}
+                                triggerLabel="Hapus"
                                 tooltipLabel="Hapus termin"
-                              >
-                                <button className="text-sm text-destructive underline-offset-4 hover:underline" type="button">
-                                  Hapus
-                                </button>
-                              </DeleteConfirmationDialog>
+                              />
                             </div>
                           </td>
                         </tr>

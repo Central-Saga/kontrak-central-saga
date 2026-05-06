@@ -89,11 +89,9 @@ export function RoleForm({ action, deleteAction, mode, permissions, values }: Ro
               action={deleteAction}
               description="Peran ini akan dihapus permanen dari access management. Pastikan tidak ada tim yang masih bergantung pada peran ini sebelum melanjutkan."
               title="Hapus peran ini?"
-            >
-              <Button aria-label="Hapus peran" size="lg" type="button" variant="destructive">
-                Hapus peran
-              </Button>
-            </DeleteConfirmationDialog>
+              triggerButtonProps={{ "aria-label": "Hapus peran", size: "lg", variant: "destructive" }}
+              triggerLabel="Hapus peran"
+            />
           ) : null}
         </CardFooter>
       </Card>

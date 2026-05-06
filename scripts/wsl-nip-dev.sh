@@ -43,10 +43,17 @@ case "$action" in
   ps|status)
     podman compose -f docker-compose.dev.yml ps
     ;;
+  seed)
+    podman compose -f docker-compose.dev.yml exec -T backend php artisan migrate --force
+    podman compose -f docker-compose.dev.yml exec -T backend php artisan db:seed --force
+    ;;
+  fresh-seed)
+    podman compose -f docker-compose.dev.yml exec -T backend php artisan migrate:fresh --seed --force
+    ;;
   url)
     ;;
   *)
-    echo "Usage: bash scripts/wsl-nip-dev.sh [up|rebuild|restart|down|logs|ps|url]" >&2
+    echo "Usage: bash scripts/wsl-nip-dev.sh [up|rebuild|restart|down|logs|ps|seed|fresh-seed|url]" >&2
     exit 1
     ;;
 esac
@@ -55,4 +62,17 @@ cat <<EOF
 
 Frontend: http://${FRONTEND_APP_DOMAIN}:8080
 API:      http://${BACKEND_APP_DOMAIN}:8080/api/health
+
+Panduan seeding:
+  bash scripts/wsl-nip-dev.sh seed
+    Jalankan migration dan DatabaseSeeder tanpa reset data.
+
+  bash scripts/wsl-nip-dev.sh fresh-seed
+    Reset database, lalu jalankan semua migration dan seeder.
+
+Akun starter:
+  admin@centralsaga.test / password
+  finance@centralsaga.test / password
+  pm@centralsaga.test / password
+  client@centralsaga.test / password
 EOF

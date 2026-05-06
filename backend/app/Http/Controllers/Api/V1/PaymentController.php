@@ -8,6 +8,8 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Models\Payment;
 use App\Models\PaymentTerm;
+use App\Models\User;
+use App\Support\OperationalDataAccess;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,8 +19,15 @@ class PaymentController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $payments = Payment::query()
-            ->with('paymentTerm:id,contract_id,term_number,term_title,status')
+        /** @var User $user */
+        $user = $request->user();
+
+        $paymentsQuery = Payment::query()
+            ->with('paymentTerm:id,contract_id,term_number,term_title,status');
+
+        OperationalDataAccess::scopePayments($paymentsQuery, $user);
+
+        $payments = $paymentsQuery
             ->when($request->integer('payment_term_id'), fn ($query, $paymentTermId) => $query->where('payment_term_id', $paymentTermId))
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('status', $status))
             ->latest('payment_date')
@@ -31,7 +40,14 @@ class PaymentController extends Controller
 
     public function store(StorePaymentRequest $request): PaymentResource|JsonResponse
     {
-        $payment = Payment::create($request->validated());
+        /** @var User $user */
+        $user = $request->user();
+        $data = $request->validated();
+        $paymentTerm = PaymentTerm::query()->findOrFail($data['payment_term_id']);
+
+        abort_unless(OperationalDataAccess::canAccessPaymentTerm($paymentTerm, $user), 403);
+
+        $payment = Payment::create($data);
         $this->syncPaymentTermStatus($payment->paymentTerm()->firstOrFail());
 
         return (new PaymentResource($payment->load('paymentTerm:id,contract_id,term_number,term_title,status')))
@@ -39,21 +55,39 @@ class PaymentController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(Payment $payment): PaymentResource
+    public function show(Request $request, Payment $payment): PaymentResource
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessPayment($payment, $user), 403);
+
         return new PaymentResource($payment->load('paymentTerm:id,contract_id,term_number,term_title,status'));
     }
 
     public function update(UpdatePaymentRequest $request, Payment $payment): PaymentResource
     {
-        $payment->update($request->validated());
+        /** @var User $user */
+        $user = $request->user();
+        $data = $request->validated();
+        $paymentTerm = PaymentTerm::query()->findOrFail($data['payment_term_id']);
+
+        abort_unless(OperationalDataAccess::canAccessPayment($payment, $user), 403);
+        abort_unless(OperationalDataAccess::canAccessPaymentTerm($paymentTerm, $user), 403);
+
+        $payment->update($data);
         $this->syncPaymentTermStatus($payment->paymentTerm()->firstOrFail());
 
         return new PaymentResource($payment->fresh()->load('paymentTerm:id,contract_id,term_number,term_title,status'));
     }
 
-    public function destroy(Payment $payment): JsonResponse
+    public function destroy(Request $request, Payment $payment): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessPayment($payment, $user), 403);
+
         $paymentTerm = $payment->paymentTerm()->first();
         $payment->delete();
 

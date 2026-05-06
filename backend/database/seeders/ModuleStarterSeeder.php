@@ -68,45 +68,35 @@ class ModuleStarterSeeder extends Seeder
 
         $adminRole->syncPermissions($permissions->values());
         $financeRole->syncPermissions([
-            $permissions['read clients'],
             $permissions['read contracts'],
             $permissions['read payment terms'],
             $permissions['create payment terms'],
             $permissions['update payment terms'],
+            $permissions['delete payment terms'],
             $permissions['read payment proofs'],
             $permissions['verification payment proofs'],
-            $permissions['read project progress'],
-            $permissions['read users'],
             $permissions['manage payment terms'],
             $permissions['manage payments'],
-            $permissions['upload payment proofs'],
             $permissions['view reporting dashboard'],
-            $permissions['view activity logs'],
             $permissions['export reports'],
             $permissions['read payments'],
             $permissions['create payments'],
             $permissions['update payments'],
+            $permissions['delete payments'],
             $permissions['verification payments'],
             $permissions['export payment terms'],
             $permissions['export payments'],
         ]);
         $projectManagerRole->syncPermissions([
-            $permissions['read clients'],
             $permissions['read contracts'],
-            $permissions['create contracts'],
-            $permissions['update contracts'],
-            $permissions['export contracts'],
             $permissions['read payment terms'],
             $permissions['read payments'],
             $permissions['read payment proofs'],
+            $permissions['create payment proofs'],
+            $permissions['upload payment proofs'],
             $permissions['read project progress'],
             $permissions['create project progress'],
             $permissions['update project progress'],
-            $permissions['export project progress'],
-            $permissions['manage contracts'],
-            $permissions['manage project progress'],
-            $permissions['view reporting dashboard'],
-            $permissions['export reports'],
         ]);
         $clientRole->syncPermissions([
             $permissions['read contracts'],
@@ -172,6 +162,7 @@ class ModuleStarterSeeder extends Seeder
                 'address' => 'Denpasar, Bali',
                 'status' => 'active',
                 'portal_access_enabled' => true,
+                'user_id' => $clientUser->id,
             ],
             [
                 'client_code' => 'CL-002',
@@ -182,6 +173,7 @@ class ModuleStarterSeeder extends Seeder
                 'address' => 'Jakarta Selatan',
                 'status' => 'active',
                 'portal_access_enabled' => true,
+                'user_id' => null,
             ],
             [
                 'client_code' => 'CL-003',
@@ -192,6 +184,7 @@ class ModuleStarterSeeder extends Seeder
                 'address' => 'Surabaya, Jawa Timur',
                 'status' => 'inactive',
                 'portal_access_enabled' => false,
+                'user_id' => null,
             ],
         ])->mapWithKeys(fn (array $attributes): array => [
             $attributes['client_code'] => Client::updateOrCreate(
@@ -243,7 +236,11 @@ class ModuleStarterSeeder extends Seeder
                 'contract_status' => 'completed',
                 'notes' => 'Project selesai dan menjadi referensi laporan.',
             ],
-        ])->mapWithKeys(function (array $attributes) use ($clients, $admin): array {
+        ])->mapWithKeys(function (array $attributes) use ($clients, $admin, $projectManager): array {
+            $operationalOwner = in_array($attributes['contract_number'], ['KCS-2026-001', 'KCS-2026-002'], true)
+                ? $projectManager
+                : $admin;
+
             $contract = Contract::updateOrCreate(
                 ['contract_number' => $attributes['contract_number']],
                 [
@@ -259,7 +256,7 @@ class ModuleStarterSeeder extends Seeder
                     'contract_status' => $attributes['contract_status'],
                     'notes' => $attributes['notes'],
                     'created_by' => $admin->id,
-                    'updated_by' => $admin->id,
+                    'updated_by' => $operationalOwner->id,
                 ],
             );
 
@@ -352,6 +349,8 @@ class ModuleStarterSeeder extends Seeder
         ];
 
         foreach ($progressUpdates as $progressUpdate) {
+            $progressOwner = $progressUpdate['contract'] === 'KCS-2026-003' ? $admin : $projectManager;
+
             ProjectProgress::updateOrCreate(
                 [
                     'contract_id' => $contracts[$progressUpdate['contract']]->id,
@@ -364,7 +363,7 @@ class ModuleStarterSeeder extends Seeder
                     'status' => $progressUpdate['status'],
                     'milestone_reference' => 'Milestone '.($progressUpdate['percentage'] >= 100 ? 'final' : 'berjalan'),
                     'notes' => 'Starter data untuk pengujian modul progres.',
-                    'updated_by' => $projectManager->id,
+                    'updated_by' => $progressOwner->id,
                 ],
             );
         }
