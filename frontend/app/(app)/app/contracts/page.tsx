@@ -8,6 +8,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { listClients, listContracts, type ContractRecord } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
+import { hasAnyPermission } from "@/lib/auth/permissions"
+import { readSessionState } from "@/lib/auth/session"
+import type { AuthUser } from "@/lib/auth/types"
 import { ContractFilters } from "@/components/contract-management/contract-filters"
 
 const statusMessages = {
@@ -85,6 +88,14 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
 
+  const session = await readSessionState()
+  const user: AuthUser | null = session.status === "authenticated" ? session.user : null
+  const canManageContracts = user ? hasAnyPermission(user, ["manage contracts"]) : false
+  const canCreateContracts = user ? hasAnyPermission(user, ["manage contracts", "create contracts"]) : false
+  const canUpdateContracts = user ? hasAnyPermission(user, ["manage contracts", "update contracts"]) : false
+  const canDeleteContracts = user ? hasAnyPermission(user, ["manage contracts", "delete contracts"]) : false
+  const canListClients = user ? hasAnyPermission(user, ["manage clients"]) : false
+
   let contracts = null
   let clients = [] as Awaited<ReturnType<typeof listClients>>["data"]
   let message: string | null = null
@@ -92,10 +103,12 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
   try {
     const [contractsResponse, clientsResponse] = await Promise.all([
       listContracts({ clientId, search, status: statusFilter || undefined }),
-      listClients({ perPage: 100 }),
+      canListClients ? listClients({ perPage: 100 }) : Promise.resolve(null),
     ])
     contracts = contractsResponse
-    clients = clientsResponse.data
+    if (clientsResponse) {
+      clients = clientsResponse.data
+    }
   } catch (fetchError) {
     message = handleModulePageError(fetchError)
   }
@@ -103,8 +116,8 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
   return (
     <PageStack data-testid="contracts-list-page">
       <PageHeaderCard
-        actionHref="/app/contracts/new"
-        actionLabel="Tambah kontrak"
+        actionHref={canCreateContracts ? "/app/contracts/new" : undefined}
+        actionLabel={canCreateContracts ? "Tambah kontrak" : undefined}
         description="Kelola kontrak dari daftar yang lebih ringkas, lalu buka halaman detail untuk melihat konteks bisnis dan dokumennya."
         title="Kelola kontrak"
         eyebrow="Manajemen kontrak"
@@ -127,6 +140,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
             clientId={clientId}
             search={search}
             statusFilter={statusFilter}
+            showClientFilter={canListClients}
           />
 
           <Alert>
@@ -206,13 +220,15 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <RowActionButtons
+                              canDelete={canDeleteContracts}
+                              canEdit={canUpdateContracts}
                               deleteAction={deleteAction}
                               deleteLabel={`Hapus ${contract.contract_number}`}
                               deleteTestId={`contract-delete-${contract.id}`}
                               editHref={`/app/contracts/${contract.id}/edit`}
                               editLabel={`Ubah ${contract.contract_number}`}
                               editTestId={`contract-edit-${contract.id}`}
-                              historyHref={documentHistoryHref}
+                              historyHref={canManageContracts ? documentHistoryHref : undefined}
                               historyLabel={`Buka riwayat dokumen ${contract.contract_number}`}
                               historyTestId={`contract-history-${contract.id}`}
                               viewHref={`/app/contracts/${contract.id}`}

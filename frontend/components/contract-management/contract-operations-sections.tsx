@@ -145,6 +145,45 @@ function PaymentProofUploadForm({ contractId, payment }: { contractId: number; p
   );
 }
 
+export type ContractOperationsPermissions = {
+  canCreatePaymentTerms: boolean;
+  canUpdatePaymentTerms: boolean;
+  canDeletePaymentTerms: boolean;
+  canCreatePayments: boolean;
+  canUpdatePayments: boolean;
+  canDeletePayments: boolean;
+  canCreateProgress: boolean;
+  canUpdateProgress: boolean;
+  canDeleteProgress: boolean;
+  canUploadPaymentProof: boolean;
+};
+
+export const readOnlyContractOperationsPermissions: ContractOperationsPermissions = {
+  canCreatePaymentTerms: false,
+  canUpdatePaymentTerms: false,
+  canDeletePaymentTerms: false,
+  canCreatePayments: false,
+  canUpdatePayments: false,
+  canDeletePayments: false,
+  canCreateProgress: false,
+  canUpdateProgress: false,
+  canDeleteProgress: false,
+  canUploadPaymentProof: false,
+};
+
+export const fullContractOperationsPermissions: ContractOperationsPermissions = {
+  canCreatePaymentTerms: true,
+  canUpdatePaymentTerms: true,
+  canDeletePaymentTerms: true,
+  canCreatePayments: true,
+  canUpdatePayments: true,
+  canDeletePayments: true,
+  canCreateProgress: true,
+  canUpdateProgress: true,
+  canDeleteProgress: true,
+  canUploadPaymentProof: true,
+};
+
 function PaymentEditForm({ contractId, payment, paymentTerms }: { contractId: number; payment: PaymentRecord; paymentTerms: PaymentTermRecord[] }) {
   const updateAction = updatePaymentAction.bind(null, contractId, payment.id);
 
@@ -287,7 +326,7 @@ function ProjectProgressEditForm({ contractId, progress }: { contractId: number;
   );
 }
 
-function PaymentTermCard({ contractId, term, paymentTerms }: { contractId: number; term: PaymentTermRecord; paymentTerms: PaymentTermRecord[] }) {
+function PaymentTermCard({ contractId, term, paymentTerms, permissions }: { contractId: number; term: PaymentTermRecord; paymentTerms: PaymentTermRecord[]; permissions: ContractOperationsPermissions }) {
   const deleteAction = deletePaymentTermAction.bind(null, contractId, term.id);
   const payments = term.payments ?? [];
 
@@ -307,18 +346,20 @@ function PaymentTermCard({ contractId, term, paymentTerms }: { contractId: numbe
           {term.payable_after_condition ? <p className="text-xs text-muted">Syarat bayar: {term.payable_after_condition}</p> : null}
         </div>
 
-        <DeleteConfirmationDialog
-          action={deleteAction}
-          description="Termin pembayaran ini akan dihapus permanen dari kontrak."
-          title="Hapus termin pembayaran?"
-          triggerButtonProps={{ size: "sm", variant: "destructive" }}
-          triggerLabel="Hapus"
-          tooltipLabel="Hapus termin"
-        />
+        {permissions.canDeletePaymentTerms ? (
+          <DeleteConfirmationDialog
+            action={deleteAction}
+            description="Termin pembayaran ini akan dihapus permanen dari kontrak."
+            title="Hapus termin pembayaran?"
+            triggerButtonProps={{ size: "sm", variant: "destructive" }}
+            triggerLabel="Hapus"
+            tooltipLabel="Hapus termin"
+          />
+        ) : null}
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
-        <PaymentTermEditForm contractId={contractId} term={term} />
+        {permissions.canUpdatePaymentTerms ? <PaymentTermEditForm contractId={contractId} term={term} /> : null}
 
         {payments.length ? payments.map((payment) => (
           <div key={payment.id} className="rounded-2xl border border-line bg-background p-4">
@@ -342,16 +383,18 @@ function PaymentTermCard({ contractId, term, paymentTerms }: { contractId: numbe
                 )}
               </div>
               <div className="flex w-full max-w-sm flex-col gap-3">
-                <DeleteConfirmationDialog
-                  action={deletePaymentAction.bind(null, contractId, payment.id)}
-                  description="Data pembayaran ini akan dihapus permanen."
-                  title="Hapus pembayaran?"
-                  triggerButtonProps={{ size: "sm", variant: "destructive" }}
-                  triggerLabel="Hapus"
-                  tooltipLabel="Hapus pembayaran"
-                />
-                <PaymentEditForm contractId={contractId} payment={payment} paymentTerms={paymentTerms} />
-                <PaymentProofUploadForm contractId={contractId} payment={payment} />
+                {permissions.canDeletePayments ? (
+                  <DeleteConfirmationDialog
+                    action={deletePaymentAction.bind(null, contractId, payment.id)}
+                    description="Data pembayaran ini akan dihapus permanen."
+                    title="Hapus pembayaran?"
+                    triggerButtonProps={{ size: "sm", variant: "destructive" }}
+                    triggerLabel="Hapus"
+                    tooltipLabel="Hapus pembayaran"
+                  />
+                ) : null}
+                {permissions.canUpdatePayments ? <PaymentEditForm contractId={contractId} payment={payment} paymentTerms={paymentTerms} /> : null}
+                {permissions.canUploadPaymentProof ? <PaymentProofUploadForm contractId={contractId} payment={payment} /> : null}
               </div>
             </div>
           </div>
@@ -361,7 +404,7 @@ function PaymentTermCard({ contractId, term, paymentTerms }: { contractId: numbe
   );
 }
 
-function ProgressCard({ contractId, progress }: { contractId: number; progress: ProjectProgressRecord }) {
+function ProgressCard({ contractId, progress, permissions }: { contractId: number; progress: ProjectProgressRecord; permissions: ContractOperationsPermissions }) {
   return (
     <div className="rounded-2xl border border-line bg-card-strong p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -376,32 +419,38 @@ function ProgressCard({ contractId, progress }: { contractId: number; progress: 
           {progress.milestone_reference ? <p className="text-xs text-muted">Milestone: {progress.milestone_reference}</p> : null}
           {progress.notes ? <p className="text-xs text-muted">Catatan: {progress.notes}</p> : null}
         </div>
-        <DeleteConfirmationDialog
-          action={deleteProjectProgressAction.bind(null, contractId, progress.id)}
-          description="Catatan progres ini akan dihapus permanen."
-          title="Hapus progres proyek?"
-          triggerButtonProps={{ size: "sm", variant: "destructive" }}
-          triggerLabel="Hapus"
-          tooltipLabel="Hapus progres"
-        />
+        {permissions.canDeleteProgress ? (
+          <DeleteConfirmationDialog
+            action={deleteProjectProgressAction.bind(null, contractId, progress.id)}
+            description="Catatan progres ini akan dihapus permanen."
+            title="Hapus progres proyek?"
+            triggerButtonProps={{ size: "sm", variant: "destructive" }}
+            triggerLabel="Hapus"
+            tooltipLabel="Hapus progres"
+          />
+        ) : null}
       </div>
-      <div className="mt-4">
-        <ProjectProgressEditForm contractId={contractId} progress={progress} />
-      </div>
+      {permissions.canUpdateProgress ? (
+        <div className="mt-4">
+          <ProjectProgressEditForm contractId={contractId} progress={progress} />
+        </div>
+      ) : null}
     </div>
   );
 }
 
-export function ContractOperationsSections({ contract }: { contract: ContractRecord }) {
+export function ContractOperationsSections({ contract, permissions }: { contract: ContractRecord; permissions: ContractOperationsPermissions }) {
   const contractId = contract.id;
   const paymentTerms = contract.payment_terms ?? [];
   const progressUpdates = contract.project_progress ?? [];
   const createPaymentTerm = createPaymentTermAction.bind(null, contractId);
   const createPayment = createPaymentAction.bind(null, contractId);
   const createProgress = createProjectProgressAction.bind(null, contractId);
+  const showCreateColumn =
+    permissions.canCreatePaymentTerms || permissions.canCreatePayments || permissions.canCreateProgress;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+    <div className={showCreateColumn ? "grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]" : "flex flex-col gap-6"}>
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader>
@@ -409,7 +458,7 @@ export function ContractOperationsSections({ contract }: { contract: ContractRec
             <CardDescription>Jadwal pembayaran bertahap sesuai kontrak, lengkap dengan status dan realisasi pembayaran per termin.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {paymentTerms.length ? paymentTerms.map((term) => <PaymentTermCard key={term.id} contractId={contractId} term={term} paymentTerms={paymentTerms} />) : (
+            {paymentTerms.length ? paymentTerms.map((term) => <PaymentTermCard key={term.id} contractId={contractId} term={term} paymentTerms={paymentTerms} permissions={permissions} />) : (
               <Alert>
                 <AlertTitle>Belum ada termin pembayaran</AlertTitle>
                 <AlertDescription>Tambahkan termin pertama agar jadwal penagihan kontrak bisa dipantau oleh tim dan klien.</AlertDescription>
@@ -424,7 +473,7 @@ export function ContractOperationsSections({ contract }: { contract: ContractRec
             <CardDescription>Catatan perkembangan proyek berdasarkan tanggal laporan, persentase capaian, dan milestone terkait.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {progressUpdates.length ? progressUpdates.map((progress) => <ProgressCard key={progress.id} contractId={contractId} progress={progress} />) : (
+            {progressUpdates.length ? progressUpdates.map((progress) => <ProgressCard key={progress.id} contractId={contractId} progress={progress} permissions={permissions} />) : (
               <Alert>
                 <AlertTitle>Belum ada progres proyek</AlertTitle>
                 <AlertDescription>Tambahkan laporan progres agar kondisi eksekusi proyek terbaca langsung dari halaman kontrak.</AlertDescription>
@@ -434,147 +483,155 @@ export function ContractOperationsSections({ contract }: { contract: ContractRec
         </Card>
       </div>
 
-      <div className="flex flex-col gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tambah termin pembayaran</CardTitle>
-            <CardDescription>Gunakan form ini untuk menambahkan termin baru ke kontrak aktif.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form action={createPaymentTerm} className="flex flex-col gap-6">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-number">Nomor termin</FieldLabel>
-                  <Input id="create-payment-term-number" name="term_number" type="number" min="1" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-title">Judul termin</FieldLabel>
-                  <Input id="create-payment-term-title" name="term_title" placeholder="DP proyek, Termin 1, Final payment" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-due-date">Tanggal jatuh tempo</FieldLabel>
-                  <Input id="create-payment-term-due-date" name="due_date" type="date" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-amount">Nilai termin</FieldLabel>
-                  <Input id="create-payment-term-amount" name="amount" type="number" min="0" step="0.01" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-status">Status termin</FieldLabel>
-                  <select id="create-payment-term-status" name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue="pending">
-                    <option value="pending">Menunggu</option>
-                    <option value="upcoming">Akan datang</option>
-                    <option value="overdue">Jatuh tempo</option>
-                    <option value="paid">Lunas</option>
-                    <option value="partially_paid">Terbayar sebagian</option>
-                    <option value="cancelled">Dibatalkan</option>
-                  </select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-condition">Syarat bayar</FieldLabel>
-                  <Input id="create-payment-term-condition" name="payable_after_condition" placeholder="Setelah BAST / setelah invoice terbit" />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-description">Keterangan</FieldLabel>
-                  <Textarea id="create-payment-term-description" name="description" placeholder="Rincian termin pembayaran" />
-                </Field>
-              </FieldGroup>
-              <Button type="submit">Simpan termin</Button>
-            </form>
-          </CardContent>
-        </Card>
+      {showCreateColumn ? (
+        <div className="flex flex-col gap-6">
+          {permissions.canCreatePaymentTerms ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tambah termin pembayaran</CardTitle>
+                <CardDescription>Gunakan form ini untuk menambahkan termin baru ke kontrak aktif.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={createPaymentTerm} className="flex flex-col gap-6">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-number">Nomor termin</FieldLabel>
+                      <Input id="create-payment-term-number" name="term_number" type="number" min="1" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-title">Judul termin</FieldLabel>
+                      <Input id="create-payment-term-title" name="term_title" placeholder="DP proyek, Termin 1, Final payment" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-due-date">Tanggal jatuh tempo</FieldLabel>
+                      <Input id="create-payment-term-due-date" name="due_date" type="date" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-amount">Nilai termin</FieldLabel>
+                      <Input id="create-payment-term-amount" name="amount" type="number" min="0" step="0.01" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-status">Status termin</FieldLabel>
+                      <select id="create-payment-term-status" name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue="pending">
+                        <option value="pending">Menunggu</option>
+                        <option value="upcoming">Akan datang</option>
+                        <option value="overdue">Jatuh tempo</option>
+                        <option value="paid">Lunas</option>
+                        <option value="partially_paid">Terbayar sebagian</option>
+                        <option value="cancelled">Dibatalkan</option>
+                      </select>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-condition">Syarat bayar</FieldLabel>
+                      <Input id="create-payment-term-condition" name="payable_after_condition" placeholder="Setelah BAST / setelah invoice terbit" />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-description">Keterangan</FieldLabel>
+                      <Textarea id="create-payment-term-description" name="description" placeholder="Rincian termin pembayaran" />
+                    </Field>
+                  </FieldGroup>
+                  <Button type="submit">Simpan termin</Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Tambah pembayaran</CardTitle>
-            <CardDescription>Catat realisasi pembayaran klien untuk salah satu termin yang sudah dibuat.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form action={createPayment} className="flex flex-col gap-6">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-term-select">Pilih termin</FieldLabel>
-                  <select id="create-payment-term-select" name="payment_term_id" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" required>
-                    <option value="">Pilih termin pembayaran</option>
-                    {paymentTerms.map((term) => (
-                      <option key={term.id} value={term.id}>{`Termin ${term.term_number} • ${term.term_title}`}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-date">Tanggal bayar</FieldLabel>
-                  <Input id="create-payment-date" name="payment_date" type="date" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-amount">Nominal bayar</FieldLabel>
-                  <Input id="create-payment-amount" name="amount" type="number" min="0" step="0.01" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-method">Metode pembayaran</FieldLabel>
-                  <Input id="create-payment-method" name="method" placeholder="Transfer bank, giro, tunai" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-payment-status">Status pembayaran</FieldLabel>
-                  <select id="create-payment-status" name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue="pending_review">
-                    <option value="pending_review">Menunggu verifikasi</option>
-                    <option value="verified">Terverifikasi</option>
-                    <option value="rejected">Ditolak</option>
-                  </select>
-                </Field>
-              </FieldGroup>
-              <Button type="submit" disabled={!paymentTerms.length}>Simpan pembayaran</Button>
-            </form>
-          </CardContent>
-        </Card>
+          {permissions.canCreatePayments ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tambah pembayaran</CardTitle>
+                <CardDescription>Catat realisasi pembayaran klien untuk salah satu termin yang sudah dibuat.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={createPayment} className="flex flex-col gap-6">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-term-select">Pilih termin</FieldLabel>
+                      <select id="create-payment-term-select" name="payment_term_id" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" required>
+                        <option value="">Pilih termin pembayaran</option>
+                        {paymentTerms.map((term) => (
+                          <option key={term.id} value={term.id}>{`Termin ${term.term_number} • ${term.term_title}`}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-date">Tanggal bayar</FieldLabel>
+                      <Input id="create-payment-date" name="payment_date" type="date" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-amount">Nominal bayar</FieldLabel>
+                      <Input id="create-payment-amount" name="amount" type="number" min="0" step="0.01" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-method">Metode pembayaran</FieldLabel>
+                      <Input id="create-payment-method" name="method" placeholder="Transfer bank, giro, tunai" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-payment-status">Status pembayaran</FieldLabel>
+                      <select id="create-payment-status" name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue="pending_review">
+                        <option value="pending_review">Menunggu verifikasi</option>
+                        <option value="verified">Terverifikasi</option>
+                        <option value="rejected">Ditolak</option>
+                      </select>
+                    </Field>
+                  </FieldGroup>
+                  <Button type="submit" disabled={!paymentTerms.length}>Simpan pembayaran</Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Tambah progres proyek</CardTitle>
-            <CardDescription>Masukkan perkembangan pekerjaan proyek sesuai tahapan yang sedang berjalan.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form action={createProgress} className="flex flex-col gap-6">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="create-project-progress-date">Tanggal laporan</FieldLabel>
-                  <Input id="create-project-progress-date" name="progress_date" type="date" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-project-progress-title">Judul progres</FieldLabel>
-                  <Input id="create-project-progress-title" name="progress_title" placeholder="Pondasi selesai, instalasi dimulai" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-project-progress-percentage">Persentase progres</FieldLabel>
-                  <Input id="create-project-progress-percentage" name="percentage" type="number" min="0" max="100" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-project-progress-status">Status progres</FieldLabel>
-                  <select id="create-project-progress-status" name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue="in_progress">
-                    <option value="not_started">Belum mulai</option>
-                    <option value="in_progress">Berjalan</option>
-                    <option value="on_hold">Tertahan</option>
-                    <option value="delayed">Terlambat</option>
-                    <option value="completed">Selesai</option>
-                  </select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-project-progress-milestone">Referensi milestone</FieldLabel>
-                  <Input id="create-project-progress-milestone" name="milestone_reference" placeholder="Tahap struktur / finishing / serah terima" />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-project-progress-description">Deskripsi progres</FieldLabel>
-                  <Textarea id="create-project-progress-description" name="progress_description" placeholder="Jelaskan pekerjaan yang sudah selesai dan isu pentingnya." required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="create-project-progress-notes">Catatan tambahan</FieldLabel>
-                  <Textarea id="create-project-progress-notes" name="notes" placeholder="Hambatan, tindak lanjut, atau catatan lapangan" />
-                </Field>
-              </FieldGroup>
-              <Button type="submit">Simpan progres</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+          {permissions.canCreateProgress ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tambah progres proyek</CardTitle>
+                <CardDescription>Masukkan perkembangan pekerjaan proyek sesuai tahapan yang sedang berjalan.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={createProgress} className="flex flex-col gap-6">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="create-project-progress-date">Tanggal laporan</FieldLabel>
+                      <Input id="create-project-progress-date" name="progress_date" type="date" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-project-progress-title">Judul progres</FieldLabel>
+                      <Input id="create-project-progress-title" name="progress_title" placeholder="Pondasi selesai, instalasi dimulai" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-project-progress-percentage">Persentase progres</FieldLabel>
+                      <Input id="create-project-progress-percentage" name="percentage" type="number" min="0" max="100" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-project-progress-status">Status progres</FieldLabel>
+                      <select id="create-project-progress-status" name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue="in_progress">
+                        <option value="not_started">Belum mulai</option>
+                        <option value="in_progress">Berjalan</option>
+                        <option value="on_hold">Tertahan</option>
+                        <option value="delayed">Terlambat</option>
+                        <option value="completed">Selesai</option>
+                      </select>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-project-progress-milestone">Referensi milestone</FieldLabel>
+                      <Input id="create-project-progress-milestone" name="milestone_reference" placeholder="Tahap struktur / finishing / serah terima" />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-project-progress-description">Deskripsi progres</FieldLabel>
+                      <Textarea id="create-project-progress-description" name="progress_description" placeholder="Jelaskan pekerjaan yang sudah selesai dan isu pentingnya." required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="create-project-progress-notes">Catatan tambahan</FieldLabel>
+                      <Textarea id="create-project-progress-notes" name="notes" placeholder="Hambatan, tindak lanjut, atau catatan lapangan" />
+                    </Field>
+                  </FieldGroup>
+                  <Button type="submit">Simpan progres</Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

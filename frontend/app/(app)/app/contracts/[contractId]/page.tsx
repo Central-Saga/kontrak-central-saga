@@ -4,12 +4,15 @@ import { FileTextIcon, GitCompareArrowsIcon, HistoryIcon } from "lucide-react"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { ContractStatusBadge } from "@/components/access-management/entity-status-badge"
 import { BackLinkButton, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
-import { ContractOperationsSections } from "@/components/contract-management/contract-operations-sections"
+import { ContractOperationsSections, type ContractOperationsPermissions } from "@/components/contract-management/contract-operations-sections"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getContract } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
+import { hasAnyPermission } from "@/lib/auth/permissions"
+import { readSessionState } from "@/lib/auth/session"
+import type { AuthUser } from "@/lib/auth/types"
 
 const statusMessages = {
   payment_term_created: "Termin pembayaran baru berhasil ditambahkan.",
@@ -104,6 +107,23 @@ export default async function ContractDetailPage({
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
 
+  const session = await readSessionState()
+  const user: AuthUser | null = session.status === "authenticated" ? session.user : null
+  const canManageContracts = user ? hasAnyPermission(user, ["manage contracts"]) : false
+  const canUpdateContracts = user ? hasAnyPermission(user, ["manage contracts", "update contracts"]) : false
+  const operationsPermissions: ContractOperationsPermissions = {
+    canCreatePaymentTerms: user ? hasAnyPermission(user, ["manage payment terms", "create payment terms"]) : false,
+    canUpdatePaymentTerms: user ? hasAnyPermission(user, ["manage payment terms", "update payment terms"]) : false,
+    canDeletePaymentTerms: user ? hasAnyPermission(user, ["manage payment terms", "delete payment terms"]) : false,
+    canCreatePayments: user ? hasAnyPermission(user, ["manage payments", "create payments"]) : false,
+    canUpdatePayments: user ? hasAnyPermission(user, ["manage payments", "update payments", "verification payments"]) : false,
+    canDeletePayments: user ? hasAnyPermission(user, ["manage payments", "delete payments"]) : false,
+    canCreateProgress: user ? hasAnyPermission(user, ["manage project progress", "create project progress"]) : false,
+    canUpdateProgress: user ? hasAnyPermission(user, ["manage project progress", "update project progress"]) : false,
+    canDeleteProgress: user ? hasAnyPermission(user, ["manage project progress", "delete project progress"]) : false,
+    canUploadPaymentProof: user ? hasAnyPermission(user, ["manage payments", "upload payment proofs", "create payment proofs"]) : false,
+  }
+
   let contract = null
   let message: string | null = error ?? null
 
@@ -142,8 +162,8 @@ export default async function ContractDetailPage({
   return (
     <PageStack data-testid="contract-detail-page">
       <PageHeaderCard
-        actionHref={`/app/contracts/${contract.id}/edit`}
-        actionLabel="Ubah kontrak"
+        actionHref={canUpdateContracts ? `/app/contracts/${contract.id}/edit` : undefined}
+        actionLabel={canUpdateContracts ? "Ubah kontrak" : undefined}
         description="Halaman detail ini memusatkan konteks kontrak, proyek, arsip dokumen, dan seluruh operasi pembayaran di satu alur kerja."
         eyebrow="Manajemen kontrak"
         title={contract.contract_number}
@@ -170,32 +190,36 @@ export default async function ContractDetailPage({
         >
           Detail
         </Link>
-        <Link
-          href={`/app/contracts/${contract.id}/documents`}
-          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <FileTextIcon className="h-4 w-4" />
-          Dokumen
-          {documentVersionsCount > 0 && (
-            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs">
-              {documentVersionsCount}
-            </span>
-          )}
-        </Link>
-        <Link
-          href={`/app/contracts/${contract.id}/compare`}
-          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <GitCompareArrowsIcon className="h-4 w-4" />
-          Komparasi
-        </Link>
-        <Link
-          href={`/app/contracts/${contract.id}/history`}
-          className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <HistoryIcon className="h-4 w-4" />
-          Riwayat
-        </Link>
+        {canManageContracts ? (
+          <>
+            <Link
+              href={`/app/contracts/${contract.id}/documents`}
+              className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <FileTextIcon className="h-4 w-4" />
+              Dokumen
+              {documentVersionsCount > 0 && (
+                <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs">
+                  {documentVersionsCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href={`/app/contracts/${contract.id}/compare`}
+              className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <GitCompareArrowsIcon className="h-4 w-4" />
+              Komparasi
+            </Link>
+            <Link
+              href={`/app/contracts/${contract.id}/history`}
+              className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <HistoryIcon className="h-4 w-4" />
+              Riwayat
+            </Link>
+          </>
+        ) : null}
       </div>
 
       <Card>
@@ -235,33 +259,35 @@ export default async function ContractDetailPage({
         </CardContent>
       </Card>
 
-      <Alert>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex flex-col gap-1">
-            <AlertTitle>Arsip dokumen kontrak</AlertTitle>
-            <AlertDescription>
-              {documentVersionsCount > 0
-                ? `Saat ini tersedia ${documentVersionsCount} versi dokumen. Versi terbaru ${latestDocumentSummary}.`
-                : "Belum ada versi dokumen yang tersimpan untuk kontrak ini."}
-            </AlertDescription>
-          </div>
+      {canManageContracts ? (
+        <Alert>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-1">
+              <AlertTitle>Arsip dokumen kontrak</AlertTitle>
+              <AlertDescription>
+                {documentVersionsCount > 0
+                  ? `Saat ini tersedia ${documentVersionsCount} versi dokumen. Versi terbaru ${latestDocumentSummary}.`
+                  : "Belum ada versi dokumen yang tersimpan untuk kontrak ini."}
+              </AlertDescription>
+            </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/documents`}>
-              <FileTextIcon className="mr-2 h-4 w-4" />
-              Kelola Dokumen
-            </Link>
-            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/compare`}>
-              <GitCompareArrowsIcon className="mr-2 h-4 w-4" />
-              Komparasi
-            </Link>
-            <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/history`}>
-              <HistoryIcon className="mr-2 h-4 w-4" />
-              Riwayat
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/documents`}>
+                <FileTextIcon className="mr-2 h-4 w-4" />
+                Kelola Dokumen
+              </Link>
+              <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/compare`}>
+                <GitCompareArrowsIcon className="mr-2 h-4 w-4" />
+                Komparasi
+              </Link>
+              <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/history`}>
+                <HistoryIcon className="mr-2 h-4 w-4" />
+                Riwayat
+              </Link>
+            </div>
           </div>
-        </div>
-      </Alert>
+        </Alert>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -275,7 +301,7 @@ export default async function ContractDetailPage({
         </CardContent>
       </Card>
 
-      <ContractOperationsSections contract={contract} />
+      <ContractOperationsSections contract={contract} permissions={operationsPermissions} />
     </PageStack>
   )
 }

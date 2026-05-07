@@ -1,14 +1,19 @@
 import Link from "next/link"
+import { EyeIcon, Trash2Icon } from "lucide-react"
 
 import { DeleteConfirmationDialog } from "@/components/access-management/delete-confirmation-dialog"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   deleteProjectProgressStandaloneAction,
 } from "@/app/(app)/app/access-management/actions"
 import { listContracts, listProjectProgress, type ProjectProgressRecord } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
+import { hasAnyPermission } from "@/lib/auth/permissions"
+import { readSessionState } from "@/lib/auth/session"
+import type { AuthUser } from "@/lib/auth/types"
 
 const statusMessages = {
   project_progress_created: "Update progres proyek berhasil ditambahkan.",
@@ -51,6 +56,11 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
 
+  const session = await readSessionState()
+  const user: AuthUser | null = session.status === "authenticated" ? session.user : null
+  const canCreate = user ? hasAnyPermission(user, ["manage project progress", "create project progress"]) : false
+  const canDelete = user ? hasAnyPermission(user, ["manage project progress", "delete project progress"]) : false
+
   let progressItems = null
   let contracts = [] as Awaited<ReturnType<typeof listContracts>>["data"]
   let message: string | null = null
@@ -71,8 +81,8 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
   return (
     <PageStack data-testid="project-progress-list-page">
       <PageHeaderCard
-        actionHref="/app/project-progress/new"
-        actionLabel="Tambah progres"
+        actionHref={canCreate ? "/app/project-progress/new" : undefined}
+        actionLabel={canCreate ? "Tambah progres" : undefined}
         description="Pantau perkembangan proyek dari seluruh kontrak dalam satu daftar terpusat."
         title="Kelola progres proyek"
         eyebrow="Manajemen progres"
@@ -140,25 +150,26 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                             <ProgressStatusPill status={progress.status} />
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-nowrap items-center gap-2">
                               <Link
-                                className="text-sm text-primary underline-offset-4 hover:underline"
+                                aria-label={`Lihat detail kontrak ${contract?.contract_number ?? progress.contract_id}`}
+                                className={buttonVariants({ size: "icon-sm", variant: "outline" })}
                                 href={`/app/contracts/${progress.contract_id}`}
                               >
-                                Detail kontrak
+                                <EyeIcon aria-hidden data-icon="inline-start" />
                               </Link>
-                              <DeleteConfirmationDialog
-                                action={deleteAction}
-                                description="Update progres ini akan dihapus permanen."
-                                title="Hapus progres proyek?"
-                                triggerButtonProps={{
-                                  className: "h-auto px-0 py-0 text-sm text-destructive hover:text-destructive",
-                                  size: "sm",
-                                  variant: "link",
-                                }}
-                                triggerLabel="Hapus"
-                                tooltipLabel="Hapus progres"
-                              />
+                              {canDelete ? (
+                                <DeleteConfirmationDialog
+                                  action={deleteAction}
+                                  description="Update progres ini akan dihapus permanen."
+                                  title="Hapus progres proyek?"
+                                  tooltipLabel="Hapus progres"
+                                >
+                                  <Button aria-label={`Hapus progres ${progress.progress_title}`} size="icon-sm" type="button" variant="destructive">
+                                    <Trash2Icon aria-hidden data-icon="inline-start" />
+                                  </Button>
+                                </DeleteConfirmationDialog>
+                              ) : null}
                             </div>
                           </td>
                         </tr>

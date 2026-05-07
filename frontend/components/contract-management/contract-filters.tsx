@@ -21,6 +21,7 @@ type ContractFiltersProps = {
   search: string
   statusFilter: string
   clientId?: number
+  showClientFilter?: boolean
 }
 
 const contractStatusLabels: Record<string, string> = {
@@ -32,7 +33,7 @@ const contractStatusLabels: Record<string, string> = {
   cancelled: "Dibatalkan",
 }
 
-export function ContractFilters({ clients, search, statusFilter, clientId }: ContractFiltersProps) {
+export function ContractFilters({ clients, search, statusFilter, clientId, showClientFilter = true }: ContractFiltersProps) {
   const router = useRouter()
 
   const handleSearch = (formData: FormData) => {
@@ -59,10 +60,11 @@ export function ContractFilters({ clients, search, statusFilter, clientId }: Con
         name="search"
         placeholder="Cari nomor, judul, atau nama proyek"
       />
-      <div className="relative w-full xl:max-w-56">
+      <div className="relative w-full xl:max-w-56" hidden={!showClientFilter}>
         <Select
           name="client_id"
           defaultValue={clientId ? String(clientId) : "all"}
+          disabled={!showClientFilter}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Semua klien" />

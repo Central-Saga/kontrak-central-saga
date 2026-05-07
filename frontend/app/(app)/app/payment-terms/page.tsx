@@ -1,14 +1,19 @@
 import Link from "next/link"
+import { EyeIcon, Trash2Icon } from "lucide-react"
 
 import { DeleteConfirmationDialog } from "@/components/access-management/delete-confirmation-dialog"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   deletePaymentTermStandaloneAction,
 } from "@/app/(app)/app/access-management/actions"
 import { listContracts, listPaymentTerms, type PaymentTermRecord } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
+import { hasAnyPermission } from "@/lib/auth/permissions"
+import { readSessionState } from "@/lib/auth/session"
+import type { AuthUser } from "@/lib/auth/types"
 
 const statusMessages = {
   payment_term_created: "Termin pembayaran baru berhasil ditambahkan.",
@@ -58,6 +63,11 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
 
+  const session = await readSessionState()
+  const user: AuthUser | null = session.status === "authenticated" ? session.user : null
+  const canCreate = user ? hasAnyPermission(user, ["manage payment terms", "create payment terms"]) : false
+  const canDelete = user ? hasAnyPermission(user, ["manage payment terms", "delete payment terms"]) : false
+
   let paymentTerms = null
   let contracts = [] as Awaited<ReturnType<typeof listContracts>>["data"]
   let message: string | null = null
@@ -78,8 +88,8 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
   return (
     <PageStack data-testid="payment-terms-list-page">
       <PageHeaderCard
-        actionHref="/app/payment-terms/new"
-        actionLabel="Tambah termin"
+        actionHref={canCreate ? "/app/payment-terms/new" : undefined}
+        actionLabel={canCreate ? "Tambah termin" : undefined}
         description="Kelola jadwal termin pembayaran dari seluruh kontrak dalam satu daftar terpusat."
         title="Kelola termin pembayaran"
         eyebrow="Manajemen termin"
@@ -145,25 +155,26 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
                             <PaymentTermStatusPill status={term.status} />
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-nowrap items-center gap-2">
                               <Link
-                                className="text-sm text-primary underline-offset-4 hover:underline"
+                                aria-label={`Lihat detail kontrak ${contract?.contract_number ?? term.contract_id}`}
+                                className={buttonVariants({ size: "icon-sm", variant: "outline" })}
                                 href={`/app/contracts/${term.contract_id}`}
                               >
-                                Detail kontrak
+                                <EyeIcon aria-hidden data-icon="inline-start" />
                               </Link>
-                              <DeleteConfirmationDialog
-                                action={deleteAction}
-                                description="Termin pembayaran ini akan dihapus permanen."
-                                title="Hapus termin pembayaran?"
-                                triggerButtonProps={{
-                                  className: "h-auto px-0 py-0 text-sm text-destructive hover:text-destructive",
-                                  size: "sm",
-                                  variant: "link",
-                                }}
-                                triggerLabel="Hapus"
-                                tooltipLabel="Hapus termin"
-                              />
+                              {canDelete ? (
+                                <DeleteConfirmationDialog
+                                  action={deleteAction}
+                                  description="Termin pembayaran ini akan dihapus permanen."
+                                  title="Hapus termin pembayaran?"
+                                  tooltipLabel="Hapus termin"
+                                >
+                                  <Button aria-label={`Hapus termin ${term.term_number}`} size="icon-sm" type="button" variant="destructive">
+                                    <Trash2Icon aria-hidden data-icon="inline-start" />
+                                  </Button>
+                                </DeleteConfirmationDialog>
+                              ) : null}
                             </div>
                           </td>
                         </tr>

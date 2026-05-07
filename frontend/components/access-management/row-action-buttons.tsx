@@ -9,6 +9,8 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 type RowActionButtonsProps = {
+  canDelete?: boolean
+  canEdit?: boolean
   deleteAction: () => Promise<void>
   deleteLabel: string
   deleteTestId: string
@@ -46,6 +48,8 @@ function ActionLinkButton({ href, icon, label, testId, tooltipLabel }: ActionLin
 }
 
 export function RowActionButtons({
+  canDelete = true,
+  canEdit = true,
   deleteAction,
   deleteLabel,
   deleteTestId,
@@ -75,25 +79,29 @@ export function RowActionButtons({
           />
         ) : null}
 
-        <ActionLinkButton
-          href={editHref}
-          icon={<PencilLineIcon aria-hidden data-icon="inline-start" />}
-          label={editLabel}
-          testId={editTestId}
-          tooltipLabel="Ubah"
-        />
+        {canEdit ? (
+          <ActionLinkButton
+            href={editHref}
+            icon={<PencilLineIcon aria-hidden data-icon="inline-start" />}
+            label={editLabel}
+            testId={editTestId}
+            tooltipLabel="Ubah"
+          />
+        ) : null}
 
-        <DeleteConfirmationDialog
-          action={deleteAction}
-          confirmTestId={`${deleteTestId}-confirm`}
-          description="Data yang dipilih akan dihapus permanen. Tindakan ini tidak bisa dibatalkan."
-          title="Hapus data ini?"
-          tooltipLabel="Hapus"
-        >
-          <Button aria-label={deleteLabel} data-testid={deleteTestId} size="icon-sm" type="button" variant="destructive">
-            <Trash2Icon aria-hidden data-icon="inline-start" />
-          </Button>
-        </DeleteConfirmationDialog>
+        {canDelete ? (
+          <DeleteConfirmationDialog
+            action={deleteAction}
+            confirmTestId={`${deleteTestId}-confirm`}
+            description="Data yang dipilih akan dihapus permanen. Tindakan ini tidak bisa dibatalkan."
+            title="Hapus data ini?"
+            tooltipLabel="Hapus"
+          >
+            <Button aria-label={deleteLabel} data-testid={deleteTestId} size="icon-sm" type="button" variant="destructive">
+              <Trash2Icon aria-hidden data-icon="inline-start" />
+            </Button>
+          </DeleteConfirmationDialog>
+        ) : null}
 
         {historyHref && historyLabel ? (
           <ActionLinkButton
