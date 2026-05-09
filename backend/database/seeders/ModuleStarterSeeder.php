@@ -88,7 +88,11 @@ class ModuleStarterSeeder extends Seeder
             $permissions['export payments'],
         ]);
         $projectManagerRole->syncPermissions([
+            $permissions['read clients'],
             $permissions['read contracts'],
+            $permissions['create contracts'],
+            $permissions['update contracts'],
+            $permissions['export contracts'],
             $permissions['read payment terms'],
             $permissions['read payments'],
             $permissions['read payment proofs'],
@@ -97,6 +101,11 @@ class ModuleStarterSeeder extends Seeder
             $permissions['read project progress'],
             $permissions['create project progress'],
             $permissions['update project progress'],
+            $permissions['export project progress'],
+            $permissions['manage contracts'],
+            $permissions['manage project progress'],
+            $permissions['view reporting dashboard'],
+            $permissions['export reports'],
         ]);
         $clientRole->syncPermissions([
             $permissions['read contracts'],

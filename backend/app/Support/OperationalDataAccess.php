@@ -14,10 +14,12 @@ class OperationalDataAccess
 {
     public static function canSeeAllOperationalData(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'finance'])
+        return $user->hasAnyRole(['admin', 'finance', 'project-manager'])
             || $user->can('manage contracts')
             || $user->can('manage payments')
-            || $user->can('manage payment terms');
+            || $user->can('manage payment terms')
+            || $user->can('manage project progress')
+            || $user->can('manage clients');
     }
 
     /**
