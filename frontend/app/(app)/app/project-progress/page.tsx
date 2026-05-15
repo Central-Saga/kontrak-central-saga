@@ -14,6 +14,7 @@ import { handleModulePageError, readSearchParam, type PageSearchParams } from "@
 import { hasAnyPermission } from "@/lib/auth/permissions"
 import { readSessionState } from "@/lib/auth/session"
 import type { AuthUser } from "@/lib/auth/types"
+import { ProjectProgressFilters } from "@/components/project-progress-management/project-progress-filters"
 
 const statusMessages = {
   project_progress_created: "Update progres proyek berhasil ditambahkan.",
@@ -55,6 +56,8 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
   const resolvedSearchParams = await searchParams
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
+  const statusFilter = readSearchParam(resolvedSearchParams, "progress_status") ?? ""
+  const contractId = Number(readSearchParam(resolvedSearchParams, "contract_id") ?? "") || undefined
 
   const session = await readSessionState()
   const user: AuthUser | null = session.status === "authenticated" ? session.user : null
@@ -67,7 +70,7 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
 
   try {
     const [progressResponse, contractsResponse] = await Promise.all([
-      listProjectProgress({ perPage: 100 }),
+      listProjectProgress({ perPage: 100, contractId, status: statusFilter || undefined }),
       listContracts({ perPage: 100 }),
     ])
     progressItems = progressResponse
@@ -99,6 +102,8 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
               Update progres dari seluruh kontrak dalam satu tabel agar tim proyek bisa memantau kondisi eksekusi.
             </CardDescription>
           </div>
+
+          <ProjectProgressFilters contracts={contracts} contractId={contractId} statusFilter={statusFilter} />
         </CardHeader>
         <CardContent>
           {progressItems && progressItems.data.length > 0 ? (

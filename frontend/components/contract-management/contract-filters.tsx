@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -34,25 +34,14 @@ const contractStatusLabels: Record<string, string> = {
 }
 
 export function ContractFilters({ clients, search, statusFilter, clientId, showClientFilter = true }: ContractFiltersProps) {
-  const router = useRouter()
-
-  const handleSearch = (formData: FormData) => {
-    const params = new URLSearchParams()
-    const searchValue = formData.get("search") as string
-    const clientValue = formData.get("client_id") as string
-    const statusValue = formData.get("contract_status") as string
-
-    if (searchValue) params.set("search", searchValue)
-    if (clientValue) params.set("client_id", clientValue)
-    if (statusValue) params.set("contract_status", statusValue)
-
-    router.push(`/app/contracts?${params.toString()}`)
-  }
+  const [clientValue, setClientValue] = useState(clientId ? String(clientId) : "all")
+  const [statusValue, setStatusValue] = useState(statusFilter || "all")
 
   return (
     <form
-      action={handleSearch}
+      action="/app/contracts"
       className="flex w-full flex-col gap-3 xl:flex-row"
+      method="GET"
     >
       <Input
         data-testid="contracts-search-input"
@@ -60,14 +49,16 @@ export function ContractFilters({ clients, search, statusFilter, clientId, showC
         name="search"
         placeholder="Cari nomor, judul, atau nama proyek"
       />
+      <input name="client_id" type="hidden" value={clientValue === "all" ? "" : clientValue} />
+      <input name="contract_status" type="hidden" value={statusValue === "all" ? "" : statusValue} />
       <div className="relative w-full xl:max-w-56" hidden={!showClientFilter}>
         <Select
-          name="client_id"
-          defaultValue={clientId ? String(clientId) : "all"}
+          value={clientValue}
+          onValueChange={setClientValue}
           disabled={!showClientFilter}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Semua klien" />
+            <SelectValue placeholder="Filter klien" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -82,13 +73,16 @@ export function ContractFilters({ clients, search, statusFilter, clientId, showC
         </Select>
       </div>
       <div className="relative w-full xl:max-w-48">
-        <Select name="contract_status" defaultValue={statusFilter || "all"}>
+        <Select
+          value={statusValue || "all"}
+          onValueChange={setStatusValue}
+        >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Semua status" />
+            <SelectValue placeholder="Filter status kontrak" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="all">Semua status</SelectItem>
+              <SelectItem value="all">Semua status kontrak</SelectItem>
               {Object.entries(contractStatusLabels).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}

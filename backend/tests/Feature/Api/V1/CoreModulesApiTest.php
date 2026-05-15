@@ -264,6 +264,8 @@ it('creates a client through api v1', function (): void {
         'address' => 'Bandung, Jawa Barat',
         'status' => 'active',
         'portal_access_enabled' => true,
+        'password' => 'PortalSecret123',
+        'password_confirmation' => 'PortalSecret123',
     ])
         ->assertCreated()
         ->assertJsonPath('data.client_code', 'CL-010')

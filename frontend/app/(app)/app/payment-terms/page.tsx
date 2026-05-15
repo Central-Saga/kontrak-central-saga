@@ -14,6 +14,7 @@ import { handleModulePageError, readSearchParam, type PageSearchParams } from "@
 import { hasAnyPermission } from "@/lib/auth/permissions"
 import { readSessionState } from "@/lib/auth/session"
 import type { AuthUser } from "@/lib/auth/types"
+import { PaymentTermFilters } from "@/components/payment-term-management/payment-term-filters"
 
 const statusMessages = {
   payment_term_created: "Termin pembayaran baru berhasil ditambahkan.",
@@ -62,6 +63,8 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
   const resolvedSearchParams = await searchParams
   const status = readSearchParam(resolvedSearchParams, "status")
   const error = readSearchParam(resolvedSearchParams, "error")
+  const statusFilter = readSearchParam(resolvedSearchParams, "term_status") ?? ""
+  const contractId = Number(readSearchParam(resolvedSearchParams, "contract_id") ?? "") || undefined
 
   const session = await readSessionState()
   const user: AuthUser | null = session.status === "authenticated" ? session.user : null
@@ -74,7 +77,7 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
 
   try {
     const [paymentTermsResponse, contractsResponse] = await Promise.all([
-      listPaymentTerms({ perPage: 100 }),
+      listPaymentTerms({ perPage: 100, contractId, status: statusFilter || undefined }),
       listContracts({ perPage: 100 }),
     ])
     paymentTerms = paymentTermsResponse
@@ -106,6 +109,8 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
               Termin pembayaran dari seluruh kontrak dikemas dalam satu tabel agar tim keuangan bisa memantau jadwal penagihan.
             </CardDescription>
           </div>
+
+          <PaymentTermFilters contracts={contracts} contractId={contractId} statusFilter={statusFilter} />
         </CardHeader>
         <CardContent>
           {paymentTerms && paymentTerms.data.length > 0 ? (

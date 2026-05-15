@@ -188,6 +188,8 @@ export async function createClientAction(formData: FormData) {
       phone: readOptionalString(formData, "phone"),
       portal_access_enabled: readOptionalCheckbox(formData, "portal_access_enabled"),
       status: readString(formData, "status"),
+      password: readOptionalString(formData, "password"),
+      password_confirmation: readOptionalString(formData, "password_confirmation"),
     });
 
     clientId = client.id;
@@ -211,6 +213,8 @@ export async function updateClientAction(clientId: number, formData: FormData) {
       phone: readOptionalString(formData, "phone"),
       portal_access_enabled: readOptionalCheckbox(formData, "portal_access_enabled"),
       status: readString(formData, "status"),
+      password: readOptionalString(formData, "password"),
+      password_confirmation: readOptionalString(formData, "password_confirmation"),
     });
   } catch (error) {
     redirectForUnauthorized(error);

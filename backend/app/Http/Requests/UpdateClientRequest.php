@@ -35,6 +35,27 @@ class UpdateClientRequest extends FormRequest
             'address' => ['nullable', 'string'],
             'status' => ['sometimes', 'required', 'string', Rule::in(Client::STATUSES)],
             'portal_access_enabled' => ['sometimes', 'boolean'],
+            'password' => [
+                Rule::requiredIf(fn (): bool => $this->boolean('portal_access_enabled') && ! $client->portal_access_enabled),
+                'nullable',
+                'string',
+                'min:8',
+                'max:255',
+                'confirmed',
+            ],
+            'password_confirmation' => ['nullable', 'string'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'password.required' => 'Password wajib diisi saat mengaktifkan akses portal untuk klien ini.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ];
     }
 }

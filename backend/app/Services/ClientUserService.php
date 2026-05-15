@@ -11,13 +11,17 @@ use Illuminate\Support\Str;
 class ClientUserService
 {
     /**
-     * Create or update user account for a client when portal access is enabled
+     * Create or update user account for a client when portal access is enabled.
      *
-     * @return array{user: User, password: string, is_new: bool}
+     * When $plainPassword is provided, the password will be applied to the
+     * resulting user (new or existing). When null and the user is new, a
+     * secure random password is generated as fallback.
+     *
+     * @return array{user: User, password: string|null, is_new: bool}
      */
-    public function createOrUpdateClientUser(Client $client): array
+    public function createOrUpdateClientUser(Client $client, ?string $plainPassword = null): array
     {
-        return DB::transaction(function () use ($client) {
+        return DB::transaction(function () use ($client, $plainPassword) {
             // Refresh client data within transaction to avoid race conditions
             $client = Client::lockForUpdate()->find($client->id);
 
@@ -27,8 +31,14 @@ class ClientUserService
 
             // Check if client already has a user
             if ($client->user_id && $client->user) {
+                $existing = $client->user;
+
+                if ($plainPassword !== null && $plainPassword !== '') {
+                    $existing->forceFill(['password' => Hash::make($plainPassword)])->save();
+                }
+
                 return [
-                    'user' => $client->user,
+                    'user' => $existing->fresh(),
                     'password' => null,
                     'is_new' => false,
                 ];
@@ -36,24 +46,31 @@ class ClientUserService
 
             $email = $client->email ?? $this->generateClientEmail($client);
             $username = $this->generateUniqueUsername($client);
-            $password = $this->generatePassword();
+            $isPasswordProvided = $plainPassword !== null && $plainPassword !== '';
+            $password = $isPasswordProvided ? $plainPassword : $this->generatePassword();
 
             // Check if user already exists with this email
             $existingUser = User::where('email', $email)->first();
 
             if ($existingUser) {
                 // Update existing user with unique username
-                $existingUser->update([
+                $attributes = [
                     'name' => $client->company_name,
                     'username' => $username,
-                ]);
+                ];
+
+                if ($isPasswordProvided) {
+                    $attributes['password'] = Hash::make($plainPassword);
+                }
+
+                $existingUser->update($attributes);
 
                 // Update client relation
                 $client->update(['user_id' => $existingUser->id]);
 
                 return [
-                    'user' => $existingUser,
-                    'password' => null, // Don't return password for existing user
+                    'user' => $existingUser->fresh(),
+                    'password' => null,
                     'is_new' => false,
                 ];
             }
@@ -76,7 +93,7 @@ class ClientUserService
 
             return [
                 'user' => $user,
-                'password' => $password,
+                'password' => $isPasswordProvided ? null : $password,
                 'is_new' => true,
             ];
         });

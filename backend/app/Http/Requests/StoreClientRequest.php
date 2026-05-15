@@ -32,6 +32,27 @@ class StoreClientRequest extends FormRequest
             'address' => ['nullable', 'string'],
             'status' => ['required', 'string', Rule::in(Client::STATUSES)],
             'portal_access_enabled' => ['sometimes', 'boolean'],
+            'password' => [
+                Rule::requiredIf(fn (): bool => $this->boolean('portal_access_enabled')),
+                'nullable',
+                'string',
+                'min:8',
+                'max:255',
+                'confirmed',
+            ],
+            'password_confirmation' => ['nullable', 'string'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'password.required' => 'Password wajib diisi saat akses portal diaktifkan.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ];
     }
 }

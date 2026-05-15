@@ -53,6 +53,8 @@ class ClientController extends Controller
     public function store(StoreClientRequest $request): ClientResource|JsonResponse
     {
         $data = $request->validated();
+        $password = $data['password'] ?? null;
+        unset($data['password'], $data['password_confirmation']);
 
         // If client_code is not provided, generate one
         if (empty($data['client_code'])) {
@@ -63,7 +65,7 @@ class ClientController extends Controller
 
         // If portal access is enabled, create user account
         if (! empty($data['portal_access_enabled']) && $data['portal_access_enabled']) {
-            $this->clientUserService->createOrUpdateClientUser($client);
+            $this->clientUserService->createOrUpdateClientUser($client, $password);
         }
 
         return (new ClientResource($client->loadCount('contracts')->load('user')))
@@ -99,6 +101,9 @@ class ClientController extends Controller
         abort_unless(OperationalDataAccess::canAccessClient($client, $user), 403);
 
         $data = $request->validated();
+        $password = $data['password'] ?? null;
+        unset($data['password'], $data['password_confirmation']);
+
         $oldPortalAccess = $client->portal_access_enabled;
 
         $client->update($data);
@@ -107,11 +112,14 @@ class ClientController extends Controller
 
         // Handle portal access changes
         if (! $oldPortalAccess && $newPortalAccess) {
-            // Portal access was just enabled - create user
-            $this->clientUserService->createOrUpdateClientUser($client);
+            // Portal access was just enabled - create user with supplied password
+            $this->clientUserService->createOrUpdateClientUser($client, $password);
         } elseif ($oldPortalAccess && ! $newPortalAccess) {
             // Portal access was just disabled - disable user
             $this->clientUserService->disableClientUser($client);
+        } elseif ($oldPortalAccess && $newPortalAccess && $password !== null && $password !== '') {
+            // Portal access stays enabled but admin is rotating the password
+            $this->clientUserService->createOrUpdateClientUser($client, $password);
         }
 
         return new ClientResource($client->fresh()->loadCount('contracts')->load('user'));

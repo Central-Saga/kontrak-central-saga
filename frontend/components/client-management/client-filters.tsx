@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -22,23 +22,13 @@ const clientStatusLabels: Record<string, string> = {
 }
 
 export function ClientFilters({ search, statusFilter }: ClientFiltersProps) {
-  const router = useRouter()
-
-  const handleSearch = (formData: FormData) => {
-    const params = new URLSearchParams()
-    const searchValue = formData.get("search") as string
-    const statusValue = formData.get("client_status") as string
-
-    if (searchValue) params.set("search", searchValue)
-    if (statusValue) params.set("client_status", statusValue)
-
-    router.push(`/app/clients?${params.toString()}`)
-  }
+  const [statusValue, setStatusValue] = useState(statusFilter || "all")
 
   return (
     <form
-      action={handleSearch}
+      action="/app/clients"
       className="flex w-full flex-col gap-3 sm:flex-row"
+      method="GET"
     >
       <Input
         data-testid="clients-search-input"
@@ -46,8 +36,9 @@ export function ClientFilters({ search, statusFilter }: ClientFiltersProps) {
         name="search"
         placeholder="Cari kode atau nama klien"
       />
+      <input name="client_status" type="hidden" value={statusValue === "all" ? "" : statusValue} />
       <div className="relative w-full sm:max-w-48">
-        <Select name="client_status" defaultValue={statusFilter || "all"}>
+        <Select value={statusValue || "all"} onValueChange={setStatusValue}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Semua status" />
           </SelectTrigger>

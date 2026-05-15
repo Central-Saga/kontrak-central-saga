@@ -245,6 +245,8 @@ export type ClientMutationInput = {
   address?: string;
   status: string;
   portal_access_enabled?: boolean;
+  password?: string;
+  password_confirmation?: string;
 };
 
 export type ContractMutationInput = {
