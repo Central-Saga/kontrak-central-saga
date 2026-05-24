@@ -96,11 +96,13 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                               <p className="text-xs break-all">{client.email || "-"}</p>
                             </div>
                           </td>
-                          <td className="border border-line px-4 py-3.5 align-top text-muted">
-                            {client.portal_access_enabled ? "Aktif" : "Nonaktif"}
-                          </td>
                           <td className="border border-line px-4 py-3.5 align-top">
-                            <ClientStatusPill status={client.status} />
+                            <div className="flex flex-col gap-2">
+                              <ClientStatusPill status={client.status} />
+                              <span className="text-xs text-muted">
+                                Portal: {client.portal_access_enabled ? "Aktif" : "Nonaktif"}
+                              </span>
+                            </div>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <RowActionButtons

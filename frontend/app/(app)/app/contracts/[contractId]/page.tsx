@@ -80,6 +80,34 @@ function formatCurrency(value: number | string) {
   }).format(amount)
 }
 
+function getDaysUntil(dateStr: string): number {
+  const target = new Date(dateStr)
+  const now = new Date()
+  const diff = target.getTime() - now.getTime()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
+function formatDueDateAlert(dateStr: string, label: string): { message: string; variant: "default" | "destructive" | "warning" } | null {
+  const days = getDaysUntil(dateStr)
+  if (days < 0) {
+    return { message: `${label} sudah lewat ${Math.abs(days)} hari yang lalu.`, variant: "destructive" }
+  }
+  if (days === 0) {
+    return { message: `${label} hari ini.`, variant: "destructive" }
+  }
+  if (days <= 7) {
+    return { message: `${label} tinggal ${days} hari lagi.`, variant: "warning" }
+  }
+  if (days <= 30) {
+    return { message: `${label} tinggal ${days} hari lagi.`, variant: "default" }
+  }
+  return null
+}
+
+function formatTermAmount(value: number | string): string {
+  return formatCurrency(value)
+}
+
 function DetailItem({
   label,
   value,
@@ -239,6 +267,42 @@ export default async function ContractDetailPage({
           <DetailItem label="Skema pembayaran" value={contract.payment_scheme_summary || "-"} />
         </CardContent>
       </Card>
+
+      {contract.end_date && (() => {
+        const alert = formatDueDateAlert(contract.end_date, "Selesai kerja")
+        return alert ? (
+          <Alert variant={alert.variant} className="animate-pulse">
+            <AlertTitle>Notifikasi Jatuh Tempo</AlertTitle>
+            <AlertDescription>{alert.message}</AlertDescription>
+          </Alert>
+        ) : null
+      })()}
+
+      {contract.payment_terms?.length ? (() => {
+        const overdueTerms = contract.payment_terms.filter((term) => {
+          const days = getDaysUntil(term.due_date)
+          return days <= 7
+        })
+        return overdueTerms.length ? (
+          <Alert variant="warning">
+            <AlertTitle>Termin Mendekati / Melewati Jatuh Tempo</AlertTitle>
+            <AlertDescription>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                {overdueTerms.map((term) => {
+                  const days = getDaysUntil(term.due_date)
+                  const isOverdue = days < 0
+                  const isToday = days === 0
+                  return (
+                    <li key={term.id} className={isOverdue || isToday ? "font-medium text-destructive" : ""}>
+                      Termin {term.term_number} — {term.term_title}: jatuh tempo {formatDate(term.due_date)} ({isOverdue ? `terlambat ${Math.abs(days)} hari` : isToday ? "hari ini" : `${days} hari lagi`}) — {formatCurrency(term.amount)}
+                    </li>
+                  )
+                })}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        ) : null
+      })() : null}
 
       <Card>
         <CardHeader>

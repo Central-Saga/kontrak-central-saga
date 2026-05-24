@@ -66,6 +66,20 @@ function formatDateTime(value?: string | null) {
   }).format(date)
 }
 
+function formatCurrency(value: number | string) {
+  const amount = typeof value === "string" ? Number(value) : value
+
+  if (Number.isNaN(amount)) {
+    return String(value)
+  }
+
+  return new Intl.NumberFormat("id-ID", {
+    currency: "IDR",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(amount)
+}
+
 function getLatestDocumentVersionSummary(contract: ContractRecord) {
   const latestVersion = contract.latest_document_version
 
@@ -187,7 +201,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                             <div className="flex flex-col gap-1.5">
                               <p className="font-medium text-foreground">{contract.contract_title}</p>
                               <p className="text-sm text-muted">{contract.project_name}</p>
-                              <p className="text-xs text-muted">Nilai kontrak: {contract.contract_value}</p>
+                              <p className="text-xs text-muted">Nilai kontrak: {formatCurrency(contract.contract_value)}</p>
                             </div>
                           </td>
 

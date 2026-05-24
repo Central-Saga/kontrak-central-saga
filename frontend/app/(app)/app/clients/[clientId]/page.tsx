@@ -36,6 +36,20 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(parsedDate)
 }
 
+function formatCurrency(value: number | string) {
+  const amount = typeof value === "string" ? Number(value) : value
+
+  if (Number.isNaN(amount)) {
+    return String(value)
+  }
+
+  return new Intl.NumberFormat("id-ID", {
+    currency: "IDR",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(amount)
+}
+
 function ClientStatusPill({ status }: { status: string }) {
   const isActive = status === "active"
 
@@ -190,7 +204,7 @@ export default async function ClientDetailPage({
                         <td className="border border-line px-4 py-3.5 align-top">
                           <div className="flex flex-col gap-1">
                             <p className="font-medium text-foreground">{contract.contract_title}</p>
-                            <p className="text-xs text-muted">{formatDate(contract.contract_date)} • {contract.contract_value}</p>
+                            <p className="text-xs text-muted">{formatDate(contract.contract_date)} • {formatCurrency(contract.contract_value)}</p>
                           </div>
                         </td>
                         <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.project_name}</td>

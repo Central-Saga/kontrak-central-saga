@@ -142,13 +142,13 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <div className="flex items-center gap-2">
-                              <div className="h-2 w-16 overflow-hidden rounded-full bg-muted">
+                              <div className="h-2 w-16 overflow-hidden rounded-full bg-muted ring-1 ring-line dark:bg-[rgba(238,248,241,0.12)]">
                                 <div
                                   className="h-full rounded-full bg-primary"
                                   style={{ width: `${progress.percentage}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-medium">{progress.percentage}%</span>
+                              <span className="text-xs font-medium text-foreground">{progress.percentage}%</span>
                             </div>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
