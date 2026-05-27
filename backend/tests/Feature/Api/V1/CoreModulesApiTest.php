@@ -5,6 +5,7 @@ use App\Models\Contract;
 use App\Models\Payment;
 use App\Models\PaymentTerm;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\ModuleStarterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -178,6 +179,8 @@ it('rejects password update when current password is invalid', function (): void
 });
 
 it('returns dashboard summary for authorized api v1 user', function (): void {
+    $this->travelTo(CarbonImmutable::create(2026, 4, 16, 12, 0, 0));
+
     Sanctum::actingAs(User::query()->where('email', 'admin@centralsaga.test')->firstOrFail());
 
     $this->getJson('/api/v1/dashboard/summary')

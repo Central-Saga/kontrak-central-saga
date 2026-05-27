@@ -44,7 +44,7 @@ class DashboardSummaryController extends Controller
                     'total' => (clone $contractsQuery)->count(),
                     'active' => (clone $contractsQuery)->where('contract_status', 'active')->count(),
                     'completed' => (clone $contractsQuery)->where('contract_status', 'completed')->count(),
-                    'total_value' => (clone $contractsQuery)->sum('contract_value'),
+                    'total_value' => number_format((float) (clone $contractsQuery)->sum('contract_value'), 2, '.', ''),
                 ],
                 'payment_terms' => [
                     'total' => (clone $paymentTermsQuery)->count(),

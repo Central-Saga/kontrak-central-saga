@@ -7,6 +7,7 @@ use App\Models\DocumentVersionAuditLog;
 use Illuminate\Support\Facades\Log;
 use Jfcherng\Diff\Differ;
 use Jfcherng\Diff\DiffHelper;
+use Jfcherng\Diff\SequenceMatcher;
 
 class DocumentVersionDiffService
 {
@@ -127,7 +128,7 @@ class DocumentVersionDiffService
         $newLineCount = count($newLines);
 
         $differ = new Differ($oldLines, $newLines);
-        $operations = $differ->getOpcodes();
+        $hunks = $differ->getGroupedOpcodes();
 
         $stats = [
             'added' => 0,
@@ -136,22 +137,26 @@ class DocumentVersionDiffService
             'unchanged' => 0,
         ];
 
-        foreach ($operations as $op) {
-            switch ($op->getOpcode()) {
-                case 'insert':
-                    $stats['added'] += $op->getNewRange()[1] - $op->getNewRange()[0];
-                    break;
-                case 'delete':
-                    $stats['deleted'] += $op->getOldRange()[1] - $op->getOldRange()[0];
-                    break;
-                case 'replace':
-                    $oldCount = $op->getOldRange()[1] - $op->getOldRange()[0];
-                    $newCount = $op->getNewRange()[1] - $op->getNewRange()[0];
-                    $stats['modified'] += max($oldCount, $newCount);
-                    break;
-                case 'equal':
-                    $stats['unchanged'] += $op->getOldRange()[1] - $op->getOldRange()[0];
-                    break;
+        foreach ($hunks as $hunk) {
+            foreach ($hunk as $opcode) {
+                [$op, $oldStart, $oldEnd, $newStart, $newEnd] = $opcode;
+                $oldCount = $oldEnd - $oldStart;
+                $newCount = $newEnd - $newStart;
+
+                switch ($op) {
+                    case SequenceMatcher::OP_INS:
+                        $stats['added'] += $newCount;
+                        break;
+                    case SequenceMatcher::OP_DEL:
+                        $stats['deleted'] += $oldCount;
+                        break;
+                    case SequenceMatcher::OP_REP:
+                        $stats['modified'] += max($oldCount, $newCount);
+                        break;
+                    case SequenceMatcher::OP_EQ:
+                        $stats['unchanged'] += $oldCount;
+                        break;
+                }
             }
         }
 

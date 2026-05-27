@@ -130,6 +130,7 @@ class Contract extends Model implements HasMedia
                 'image/jpeg',
                 'image/png',
                 'image/webp',
+                'text/plain',
             ]);
     }
 

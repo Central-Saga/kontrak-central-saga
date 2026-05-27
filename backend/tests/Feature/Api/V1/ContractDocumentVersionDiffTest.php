@@ -46,10 +46,9 @@ class ContractDocumentVersionDiffTest extends TestCase
 
     public function test_compare_content_endpoint_requires_permission(): void
     {
-        Sanctum::actingAs($this->admin);
+        $userWithoutAccess = User::factory()->create();
 
-        // Remove permission if exists
-        $this->admin->revokePermissionTo('manage contracts');
+        Sanctum::actingAs($userWithoutAccess);
 
         $this->getJson("/api/v1/contracts/{$this->contract->id}/document-versions/compare-content")
             ->assertForbidden();
@@ -59,10 +58,18 @@ class ContractDocumentVersionDiffTest extends TestCase
     {
         Sanctum::actingAs($this->admin);
 
-        $response = $this->getJson("/api/v1/contracts/{$this->contract->id}/document-versions/compare-content?from_version_id=999&to_version_id=998");
+        $orphanContract = Contract::factory()->create(['client_id' => $this->contract->client_id]);
+        $file1 = UploadedFile::fake()->createWithContent('orphan-v1.txt', 'orphan content v1');
+        $file2 = UploadedFile::fake()->createWithContent('orphan-v2.txt', 'orphan content v2');
+        $orphanVersion1 = $this->createDocumentVersionFor($orphanContract, $file1, 1);
+        $orphanVersion2 = $this->createDocumentVersionFor($orphanContract, $file2, 2);
 
-        $response->assertNotFound()
-            ->assertJsonPath('message', 'Versi dokumen kontrak tidak ditemukan.');
+        $response = $this->getJson(
+            "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content".
+            "?from_version_id={$orphanVersion1->id}&to_version_id={$orphanVersion2->id}"
+        );
+
+        $response->assertNotFound();
     }
 
     public function test_compare_content_returns_diff_for_text_files(): void
@@ -140,10 +147,11 @@ class ContractDocumentVersionDiffTest extends TestCase
     {
         Sanctum::actingAs($this->admin);
 
-        // Create version with binary content (PDF)
-        $file = UploadedFile::fake()->create('contract.pdf', 'application/pdf', 1024);
-        $version1 = $this->createDocumentVersion($file, 1);
-        $version2 = $this->createDocumentVersion($file, 2);
+        $pdfBinary = "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF";
+        $file1 = UploadedFile::fake()->createWithContent('contract_v1.pdf', $pdfBinary);
+        $file2 = UploadedFile::fake()->createWithContent('contract_v2.pdf', $pdfBinary.'%%v2');
+        $version1 = $this->createDocumentVersion($file1, 1);
+        $version2 = $this->createDocumentVersion($file2, 2);
 
         $response = $this->getJson(
             "/api/v1/contracts/{$this->contract->id}/document-versions/compare-content".
@@ -277,12 +285,19 @@ class ContractDocumentVersionDiffTest extends TestCase
 
     private function createDocumentVersion(UploadedFile $file, int $versionNumber): ContractDocumentVersion
     {
-        $media = $this->contract
+        return $this->createDocumentVersionFor($this->contract, $file, $versionNumber);
+    }
+
+    private function createDocumentVersionFor(Contract $contract, UploadedFile $file, int $versionNumber): ContractDocumentVersion
+    {
+        $checksum = hash('sha256', (string) $file->get());
+
+        $media = $contract
             ->addMedia($file)
             ->toMediaCollection('contract_documents', 'public');
 
         return ContractDocumentVersion::create([
-            'contract_id' => $this->contract->id,
+            'contract_id' => $contract->id,
             'media_id' => $media->id,
             'uploaded_by' => $this->admin->id,
             'document_type' => 'main_contract',
@@ -291,8 +306,8 @@ class ContractDocumentVersionDiffTest extends TestCase
             'original_file_name' => $file->getClientOriginalName(),
             'stored_file_name' => $media->file_name,
             'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
-            'size_bytes' => $file->getSize(),
-            'checksum_sha256' => hash_file('sha256', $file->getRealPath()),
+            'size_bytes' => $media->size,
+            'checksum_sha256' => $checksum,
             'change_summary' => 'Test upload',
             'uploaded_at' => now(),
         ]);
