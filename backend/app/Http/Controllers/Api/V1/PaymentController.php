@@ -3,17 +3,21 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PaymentResource;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
 use App\Models\PaymentTerm;
 use App\Models\User;
+use App\Notifications\PaymentPendingReviewNotification;
+use App\Notifications\PaymentStatusUpdatedNotification;
+use App\Support\NotificationRecipients;
 use App\Support\OperationalDataAccess;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Notification;
 
 class PaymentController extends Controller
 {
@@ -50,6 +54,10 @@ class PaymentController extends Controller
         $payment = Payment::create($data);
         $this->syncPaymentTermStatus($payment->paymentTerm()->firstOrFail());
 
+        if ($payment->status === 'pending_review') {
+            $this->notifyPaymentPendingReview($payment);
+        }
+
         return (new PaymentResource($payment->load('paymentTerm:id,contract_id,term_number,term_title,status')))
             ->response()
             ->setStatusCode(201);
@@ -75,8 +83,13 @@ class PaymentController extends Controller
         abort_unless(OperationalDataAccess::canAccessPayment($payment, $user), 403);
         abort_unless(OperationalDataAccess::canAccessPaymentTerm($paymentTerm, $user), 403);
 
+        $previousStatus = $payment->status;
         $payment->update($data);
         $this->syncPaymentTermStatus($payment->paymentTerm()->firstOrFail());
+
+        if ($previousStatus !== $payment->status && in_array($payment->status, ['verified', 'rejected'], true)) {
+            $this->notifyPaymentStatusChanged($payment, $previousStatus);
+        }
 
         return new PaymentResource($payment->fresh()->load('paymentTerm:id,contract_id,term_number,term_title,status'));
     }
@@ -123,5 +136,33 @@ class PaymentController extends Controller
         }
 
         $paymentTerm->update(['status' => 'pending']);
+    }
+
+    private function notifyPaymentPendingReview(Payment $payment): void
+    {
+        $internal = NotificationRecipients::internal();
+
+        if (! $internal) {
+            return;
+        }
+
+        $notification = new PaymentPendingReviewNotification(
+            $payment->load('paymentTerm.contract.client')
+        );
+
+        Notification::send($internal, $notification);
+    }
+
+    private function notifyPaymentStatusChanged(Payment $payment, string $previousStatus): void
+    {
+        $payment->load('paymentTerm.contract.client');
+        $clientEmail = $payment->paymentTerm?->contract?->client?->email;
+        $client = NotificationRecipients::forEmail($clientEmail);
+
+        if (! $client) {
+            return;
+        }
+
+        Notification::send($client, new PaymentStatusUpdatedNotification($payment, $previousStatus));
     }
 }

@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
 use App\Models\User;
+use App\Notifications\PaymentPendingReviewNotification;
+use App\Support\NotificationRecipients;
 use App\Support\OperationalDataAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class PaymentProofController extends Controller
 {
@@ -34,6 +37,15 @@ class PaymentProofController extends Controller
 
         if ($payment->status !== 'verified') {
             $payment->update(['status' => 'pending_review']);
+
+            $internal = NotificationRecipients::internal();
+
+            if ($internal) {
+                Notification::send(
+                    $internal,
+                    new PaymentPendingReviewNotification($payment->fresh()->load('paymentTerm.contract.client')),
+                );
+            }
         }
 
         return response()->json([
