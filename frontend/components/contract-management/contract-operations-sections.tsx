@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { Textarea } from "@/components/ui/textarea";
 import type { ContractRecord, PaymentRecord, PaymentTermRecord, ProjectProgressRecord } from "@/lib/access-management/backend";
 
@@ -206,7 +208,7 @@ function PaymentEditForm({ contractId, payment, paymentTerms }: { contractId: nu
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-amount-${payment.id}`}>Nominal bayar</FieldLabel>
-            <Input id={`payment-amount-${payment.id}`} name="amount" type="number" min="0" step="0.01" defaultValue={String(payment.amount)} required />
+            <CurrencyInput id={`payment-amount-${payment.id}`} name="amount" defaultValue={String(payment.amount)} required />
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-method-${payment.id}`}>Metode pembayaran</FieldLabel>
@@ -249,7 +251,7 @@ function PaymentTermEditForm({ contractId, term }: { contractId: number; term: P
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-term-amount-${term.id}`}>Nilai termin</FieldLabel>
-            <Input id={`payment-term-amount-${term.id}`} name="amount" type="number" min="0" step="0.01" defaultValue={String(term.amount)} required />
+            <CurrencyInput id={`payment-term-amount-${term.id}`} name="amount" defaultValue={String(term.amount)} required />
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-term-status-${term.id}`}>Status termin</FieldLabel>
@@ -408,13 +410,19 @@ function ProgressCard({ contractId, progress, permissions }: { contractId: numbe
   return (
     <div className="rounded-2xl border border-line bg-card-strong p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-1 flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <SectionPill label={progressStatusLabels[progress.status] ?? progress.status} status={progress.status} kind="progress" />
             <span className="text-xs text-muted">{formatDate(progress.progress_date)}</span>
           </div>
           <p className="text-base font-semibold text-foreground">{progress.progress_title}</p>
-          <p className="text-sm text-muted">Progress {progress.percentage}%</p>
+
+          <ProgressBar
+            label={`Progres ${progress.status === "completed" ? "akhir" : "saat ini"}`}
+            value={Number(progress.percentage) || 0}
+            variant={progress.status as never}
+          />
+
           <p className="text-sm leading-7 text-muted">{progress.progress_description}</p>
           {progress.milestone_reference ? <p className="text-xs text-muted">Milestone: {progress.milestone_reference}</p> : null}
           {progress.notes ? <p className="text-xs text-muted">Catatan: {progress.notes}</p> : null}
@@ -508,7 +516,8 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-term-amount">Nilai termin</FieldLabel>
-                      <Input id="create-payment-term-amount" name="amount" type="number" min="0" step="0.01" required />
+                      <CurrencyInput id="create-payment-term-amount" name="amount" placeholder="5.000.000" required />
+                      <FieldDescription>Pemisah ribuan ditambahkan otomatis.</FieldDescription>
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-term-status">Status termin</FieldLabel>
@@ -560,7 +569,8 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-amount">Nominal bayar</FieldLabel>
-                      <Input id="create-payment-amount" name="amount" type="number" min="0" step="0.01" required />
+                      <CurrencyInput id="create-payment-amount" name="amount" placeholder="5.000.000" required />
+                      <FieldDescription>Pemisah ribuan ditambahkan otomatis.</FieldDescription>
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-method">Metode pembayaran</FieldLabel>

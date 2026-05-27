@@ -7,6 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Textarea } from "@/components/ui/textarea"
 import { listContracts } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
@@ -93,7 +94,8 @@ export default async function NewPaymentTermPage({ searchParams }: { searchParam
 
               <Field>
                 <FieldLabel htmlFor="payment-term-amount">Nilai termin</FieldLabel>
-                <Input id="payment-term-amount" min="0" name="amount" required step="0.01" type="number" />
+                <CurrencyInput id="payment-term-amount" name="amount" placeholder="5.000.000" required />
+                <FieldDescription>Pemisah ribuan ditambahkan otomatis.</FieldDescription>
               </Field>
 
               <Field>

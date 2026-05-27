@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -276,7 +277,17 @@ export function ContractForm({ action, clients, mode, values }: ContractFormProp
 
             <Field>
               <FieldLabel htmlFor="contract_value">Nilai kontrak</FieldLabel>
-              <Input data-testid="contract-form-value" defaultValue={String(values?.contract_value ?? "")} id="contract_value" name="contract_value" required type="number" />
+              <CurrencyInput
+                data-testid="contract-form-value"
+                defaultValue={values?.contract_value ?? ""}
+                id="contract_value"
+                name="contract_value"
+                placeholder="5.000.000"
+                required
+              />
+              <FieldDescription>
+                Masukkan angka tanpa simbol mata uang. Pemisah ribuan (titik) akan ditambahkan otomatis.
+              </FieldDescription>
             </Field>
 
             <Field>
