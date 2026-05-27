@@ -106,6 +106,10 @@ class ClientController extends Controller
 
         $oldPortalAccess = $client->portal_access_enabled;
 
+        if (array_key_exists('status', $data) && $data['status'] === 'inactive') {
+            $data['portal_access_enabled'] = false;
+        }
+
         $client->update($data);
 
         $newPortalAccess = $client->fresh()->portal_access_enabled;

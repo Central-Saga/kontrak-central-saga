@@ -34,9 +34,21 @@ class UpdateClientRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],
             'status' => ['sometimes', 'required', 'string', Rule::in(Client::STATUSES)],
-            'portal_access_enabled' => ['sometimes', 'boolean'],
+            'portal_access_enabled' => [
+                'sometimes',
+                'boolean',
+                function (string $attribute, mixed $value, \Closure $fail) use ($client): void {
+                    $effectiveStatus = $this->input('status', $client->status);
+
+                    if ((bool) $value && $effectiveStatus === 'inactive') {
+                        $fail('Akses portal tidak dapat diaktifkan ketika status klien tidak aktif.');
+                    }
+                },
+            ],
             'password' => [
-                Rule::requiredIf(fn (): bool => $this->boolean('portal_access_enabled') && ! $client->portal_access_enabled),
+                Rule::requiredIf(fn (): bool => $this->boolean('portal_access_enabled')
+                    && ! $client->portal_access_enabled
+                    && $this->input('status', $client->status) !== 'inactive'),
                 'nullable',
                 'string',
                 'min:8',

@@ -31,9 +31,17 @@ class StoreClientRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],
             'status' => ['required', 'string', Rule::in(Client::STATUSES)],
-            'portal_access_enabled' => ['sometimes', 'boolean'],
+            'portal_access_enabled' => [
+                'sometimes',
+                'boolean',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ((bool) $value && $this->input('status') === 'inactive') {
+                        $fail('Akses portal tidak dapat diaktifkan ketika status klien tidak aktif.');
+                    }
+                },
+            ],
             'password' => [
-                Rule::requiredIf(fn (): bool => $this->boolean('portal_access_enabled')),
+                Rule::requiredIf(fn (): bool => $this->boolean('portal_access_enabled') && $this->input('status') !== 'inactive'),
                 'nullable',
                 'string',
                 'min:8',
