@@ -8,6 +8,7 @@ import { ContractOperationsSections, type ContractOperationsPermissions } from "
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ProgressBar } from "@/components/ui/progress-bar"
 import { getContract } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
 import { hasAnyPermission } from "@/lib/auth/permissions"
@@ -358,10 +359,24 @@ export default async function ContractDetailPage({
           <CardTitle className="text-2xl">Ringkasan operasional kontrak</CardTitle>
           <CardDescription>Panel ini merangkum progres terbaru, jumlah termin, dan aktivitas pembayaran langsung dari kontrak.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <DetailItem label="Jumlah termin" value={String(contract.payment_terms_count ?? contract.payment_terms?.length ?? 0)} />
-          <DetailItem label="Jumlah update progres" value={String(contract.project_progress_updates_count ?? contract.project_progress?.length ?? 0)} />
-          <DetailItem label="Progres terbaru" value={latestProgress ? `${latestProgress.percentage}% • ${latestProgress.progress_title}` : "Belum ada laporan progres"} />
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <DetailItem label="Jumlah termin" value={String(contract.payment_terms_count ?? contract.payment_terms?.length ?? 0)} />
+            <DetailItem label="Jumlah update progres" value={String(contract.project_progress_updates_count ?? contract.project_progress?.length ?? 0)} />
+            <DetailItem label="Progres terbaru" value={latestProgress ? `${latestProgress.percentage}% • ${latestProgress.progress_title}` : "Belum ada laporan progres"} />
+          </div>
+
+          {latestProgress ? (
+            <div className="rounded-2xl border border-line bg-card-strong px-4 py-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted">Visualisasi progres terbaru</p>
+              <ProgressBar
+                label={latestProgress.progress_title}
+                size="lg"
+                value={Number(latestProgress.percentage) || 0}
+                variant={latestProgress.status as never}
+              />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

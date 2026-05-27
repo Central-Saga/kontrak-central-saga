@@ -3,12 +3,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 type AlertProps = React.ComponentProps<"div"> & {
-  variant?: "default" | "destructive";
+  variant?: "default" | "destructive" | "warning";
 };
 
 const variantClasses: Record<NonNullable<AlertProps["variant"]>, string> = {
   default: "border-border/80 bg-background/80 text-foreground",
   destructive: "border-destructive/25 bg-destructive/8 text-foreground",
+  warning: "border-yellow-500/30 bg-yellow-500/10 text-foreground",
 };
 
 export function Alert({ className, variant = "default", ...props }: AlertProps) {
