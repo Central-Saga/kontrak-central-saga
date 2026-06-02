@@ -5,6 +5,8 @@ import {
   deletePaymentAction,
   deletePaymentTermAction,
   deleteProjectProgressAction,
+  sendPaymentTermReminderAction,
+  sendProjectProgressReminderAction,
   updatePaymentAction,
   updatePaymentTermAction,
   updateProjectProgressAction,
@@ -19,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "./contract-form";
 import type { ContractRecord, PaymentRecord, PaymentTermRecord, ProjectProgressRecord } from "@/lib/access-management/backend";
 
 const paymentTermStatusLabels: Record<string, string> = {
@@ -204,7 +207,7 @@ function PaymentEditForm({ contractId, payment, paymentTerms }: { contractId: nu
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-date-${payment.id}`}>Tanggal bayar</FieldLabel>
-            <Input id={`payment-date-${payment.id}`} name="payment_date" type="date" defaultValue={payment.payment_date} required />
+            <DatePicker id={`payment-date-${payment.id}`} label="Tanggal bayar" value={payment.payment_date} required name="payment_date" disabledBefore={new Date()} />
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-amount-${payment.id}`}>Nominal bayar</FieldLabel>
@@ -247,7 +250,7 @@ function PaymentTermEditForm({ contractId, term }: { contractId: number; term: P
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-term-due-date-${term.id}`}>Tanggal jatuh tempo</FieldLabel>
-            <Input id={`payment-term-due-date-${term.id}`} name="due_date" type="date" defaultValue={term.due_date} required />
+            <DatePicker id={`payment-term-due-date-${term.id}`} label="Tanggal jatuh tempo" value={term.due_date} required name="due_date" disabledBefore={new Date()} />
           </Field>
           <Field>
             <FieldLabel htmlFor={`payment-term-amount-${term.id}`}>Nilai termin</FieldLabel>
@@ -289,7 +292,7 @@ function ProjectProgressEditForm({ contractId, progress }: { contractId: number;
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor={`project-progress-date-${progress.id}`}>Tanggal laporan</FieldLabel>
-            <Input id={`project-progress-date-${progress.id}`} name="progress_date" type="date" defaultValue={progress.progress_date} required />
+            <DatePicker id={`project-progress-date-${progress.id}`} label="Tanggal laporan" value={progress.progress_date} required name="progress_date" disabledBefore={new Date()} />
           </Field>
           <Field>
             <FieldLabel htmlFor={`project-progress-title-${progress.id}`}>Judul progres</FieldLabel>
@@ -349,14 +352,23 @@ function PaymentTermCard({ contractId, term, paymentTerms, permissions }: { cont
         </div>
 
         {permissions.canDeletePaymentTerms ? (
-          <DeleteConfirmationDialog
-            action={deleteAction}
-            description="Termin pembayaran ini akan dihapus permanen dari kontrak."
-            title="Hapus termin pembayaran?"
-            triggerButtonProps={{ size: "sm", variant: "destructive" }}
-            triggerLabel="Hapus"
-            tooltipLabel="Hapus termin"
-          />
+          <div className="flex flex-wrap gap-2">
+            {permissions.canCreatePaymentTerms ? (
+              <form action={sendPaymentTermReminderAction.bind(null, contractId, term.id)}>
+                <Button type="submit" size="sm" variant="outline">
+                  Kirim Pengingat
+                </Button>
+              </form>
+            ) : null}
+            <DeleteConfirmationDialog
+              action={deleteAction}
+              description="Termin pembayaran ini akan dihapus permanen dari kontrak."
+              title="Hapus termin pembayaran?"
+              triggerButtonProps={{ size: "sm", variant: "destructive" }}
+              triggerLabel="Hapus"
+              tooltipLabel="Hapus termin"
+            />
+          </div>
         ) : null}
       </div>
 
@@ -428,14 +440,23 @@ function ProgressCard({ contractId, progress, permissions }: { contractId: numbe
           {progress.notes ? <p className="text-xs text-muted">Catatan: {progress.notes}</p> : null}
         </div>
         {permissions.canDeleteProgress ? (
-          <DeleteConfirmationDialog
-            action={deleteProjectProgressAction.bind(null, contractId, progress.id)}
-            description="Catatan progres ini akan dihapus permanen."
-            title="Hapus progres proyek?"
-            triggerButtonProps={{ size: "sm", variant: "destructive" }}
-            triggerLabel="Hapus"
-            tooltipLabel="Hapus progres"
-          />
+          <div className="flex flex-wrap gap-2">
+            {permissions.canCreateProgress ? (
+              <form action={sendProjectProgressReminderAction.bind(null, contractId, progress.id)}>
+                <Button type="submit" size="sm" variant="outline">
+                  Kirim Pengingat
+                </Button>
+              </form>
+            ) : null}
+            <DeleteConfirmationDialog
+              action={deleteProjectProgressAction.bind(null, contractId, progress.id)}
+              description="Catatan progres ini akan dihapus permanen."
+              title="Hapus progres proyek?"
+              triggerButtonProps={{ size: "sm", variant: "destructive" }}
+              triggerLabel="Hapus"
+              tooltipLabel="Hapus progres"
+            />
+          </div>
         ) : null}
       </div>
       {permissions.canUpdateProgress ? (
@@ -512,7 +533,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-term-due-date">Tanggal jatuh tempo</FieldLabel>
-                      <Input id="create-payment-term-due-date" name="due_date" type="date" required />
+                      <DatePicker id="create-payment-term-due-date" label="Tanggal jatuh tempo" required name="due_date" disabledBefore={new Date()} />
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-term-amount">Nilai termin</FieldLabel>
@@ -565,7 +586,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-date">Tanggal bayar</FieldLabel>
-                      <Input id="create-payment-date" name="payment_date" type="date" required />
+                      <DatePicker id="create-payment-date" label="Tanggal bayar" required name="payment_date" disabledBefore={new Date()} />
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-payment-amount">Nominal bayar</FieldLabel>
@@ -602,7 +623,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                   <FieldGroup>
                     <Field>
                       <FieldLabel htmlFor="create-project-progress-date">Tanggal laporan</FieldLabel>
-                      <Input id="create-project-progress-date" name="progress_date" type="date" required />
+                      <DatePicker id="create-project-progress-date" label="Tanggal laporan" required name="progress_date" disabledBefore={new Date()} />
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-project-progress-title">Judul progres</FieldLabel>

@@ -8,6 +8,8 @@ import { listClients } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 import { ClientFilters } from "@/components/client-management/client-filters"
 
+export const dynamic = "force-dynamic"
+
 const statusPillClassName = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
 
 const statusMessages = {

@@ -78,7 +78,7 @@ export function ProgressBar({
         aria-valuemin={0}
         aria-valuenow={Math.round(percent)}
         className={cn(
-          "relative w-full overflow-hidden rounded-full border border-line bg-card-strong",
+          "relative w-full overflow-hidden rounded-full border border-line bg-muted/10",
           sizeClassNames[size],
         )}
         role="progressbar"

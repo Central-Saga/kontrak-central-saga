@@ -174,10 +174,13 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
                                   description="Termin pembayaran ini akan dihapus permanen."
                                   title="Hapus termin pembayaran?"
                                   tooltipLabel="Hapus termin"
+                                  triggerButtonProps={{
+                                    "aria-label": `Hapus termin ${term.term_number}`,
+                                    size: "icon-sm",
+                                    variant: "destructive",
+                                  }}
                                 >
-                                  <Button aria-label={`Hapus termin ${term.term_number}`} size="icon-sm" type="button" variant="destructive">
-                                    <Trash2Icon aria-hidden data-icon="inline-start" />
-                                  </Button>
+                                  <Trash2Icon aria-hidden data-icon="inline-start" />
                                 </DeleteConfirmationDialog>
                               ) : null}
                             </div>

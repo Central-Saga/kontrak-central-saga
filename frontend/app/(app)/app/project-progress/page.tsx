@@ -142,7 +142,7 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <div className="flex items-center gap-2">
-                              <div className="h-2 w-16 overflow-hidden rounded-full bg-muted ring-1 ring-line dark:bg-[rgba(238,248,241,0.12)]">
+                              <div className="h-2 w-16 overflow-hidden rounded-full bg-muted/15 ring-1 ring-line dark:bg-[rgba(238,248,241,0.12)]">
                                 <div
                                   className="h-full rounded-full bg-primary"
                                   style={{ width: `${progress.percentage}%` }}
@@ -169,10 +169,13 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                                   description="Update progres ini akan dihapus permanen."
                                   title="Hapus progres proyek?"
                                   tooltipLabel="Hapus progres"
+                                  triggerButtonProps={{
+                                    "aria-label": `Hapus progres ${progress.progress_title}`,
+                                    size: "icon-sm",
+                                    variant: "destructive",
+                                  }}
                                 >
-                                  <Button aria-label={`Hapus progres ${progress.progress_title}`} size="icon-sm" type="button" variant="destructive">
-                                    <Trash2Icon aria-hidden data-icon="inline-start" />
-                                  </Button>
+                                  <Trash2Icon aria-hidden data-icon="inline-start" />
                                 </DeleteConfirmationDialog>
                               ) : null}
                             </div>

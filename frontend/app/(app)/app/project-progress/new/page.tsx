@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/contract-management/contract-form"
 import { listContracts } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 
@@ -75,10 +76,7 @@ export default async function NewProjectProgressPage({ searchParams }: { searchP
                 <FieldDescription>Progres proyek selalu dicatat terhadap satu kontrak.</FieldDescription>
               </Field>
 
-              <Field>
-                <FieldLabel htmlFor="project-progress-date">Tanggal laporan</FieldLabel>
-                <Input id="project-progress-date" name="progress_date" required type="date" />
-              </Field>
+              <DatePicker id="project-progress-date" label="Tanggal laporan" required name="progress_date" disabledBefore={new Date()} />
 
               <Field>
                 <FieldLabel htmlFor="project-progress-title">Judul progres</FieldLabel>

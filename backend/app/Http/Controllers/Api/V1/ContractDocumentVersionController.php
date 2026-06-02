@@ -8,7 +8,9 @@ use App\Http\Resources\ContractDocumentVersionResource;
 use App\Http\Resources\DocumentVersionAuditLogResource;
 use App\Models\Contract;
 use App\Models\ContractDocumentVersion;
+use App\Models\User;
 use App\Services\DocumentVersionDiffService;
+use App\Support\OperationalDataAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,10 @@ class ContractDocumentVersionController extends Controller
 
     public function index(Request $request, Contract $contract): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         $versions = $contract->documentVersions()
             ->with(['media', 'uploader:id,name,email'])
             ->when(
@@ -38,6 +44,10 @@ class ContractDocumentVersionController extends Controller
 
     public function store(StoreContractDocumentVersionRequest $request, Contract $contract): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         $validated = $request->validated();
         $uploadedFile = $validated['file'];
         $documentType = $validated['document_type'];
@@ -97,6 +107,10 @@ class ContractDocumentVersionController extends Controller
 
     public function compare(Request $request, Contract $contract): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         $validated = $request->validate([
             'from_version_id' => ['required', 'integer', 'exists:contract_document_versions,id'],
             'to_version_id' => ['required', 'integer', 'exists:contract_document_versions,id', 'different:from_version_id'],
@@ -144,8 +158,11 @@ class ContractDocumentVersionController extends Controller
         ]);
     }
 
-    public function show(Contract $contract, ContractDocumentVersion $version): JsonResponse
+    public function show(Request $request, Contract $contract, ContractDocumentVersion $version): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
         abort_unless($version->contract_id === $contract->id, 404, 'Versi dokumen kontrak tidak ditemukan.');
 
         $version->load(['media', 'uploader:id,name,email', 'auditLogs.user:id,name,email']);
@@ -155,8 +172,11 @@ class ContractDocumentVersionController extends Controller
         ]);
     }
 
-    public function download(Contract $contract, ContractDocumentVersion $version): Response|BinaryFileResponse
+    public function download(Request $request, Contract $contract, ContractDocumentVersion $version): Response|BinaryFileResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
         abort_unless($version->contract_id === $contract->id, 404, 'Versi dokumen kontrak tidak ditemukan.');
 
         $version->load('media');
@@ -183,6 +203,10 @@ class ContractDocumentVersionController extends Controller
 
     public function compareContent(Request $request, Contract $contract): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         $validated = $request->validate([
             'from_version_id' => ['required', 'integer', 'exists:contract_document_versions,id'],
             'to_version_id' => ['required', 'integer', 'exists:contract_document_versions,id', 'different:from_version_id'],
@@ -212,8 +236,11 @@ class ContractDocumentVersionController extends Controller
         ]);
     }
 
-    public function getAuditLogs(Contract $contract, ContractDocumentVersion $version): JsonResponse
+    public function getAuditLogs(Request $request, Contract $contract, ContractDocumentVersion $version): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
         abort_unless($version->contract_id === $contract->id, 404, 'Versi dokumen kontrak tidak ditemukan.');
 
         $logs = $this->diffService->getVersionAuditLogs($version);
@@ -225,6 +252,10 @@ class ContractDocumentVersionController extends Controller
 
     public function getHistory(Request $request, Contract $contract): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
+
         $documentType = $request->string('document_type', 'main_contract')->toString();
         $history = $this->diffService->getContractDocumentHistory($contract->id, $documentType);
 

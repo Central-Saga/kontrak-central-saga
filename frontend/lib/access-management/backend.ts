@@ -848,6 +848,18 @@ export async function deletePaymentTerm(paymentTermId: number): Promise<void> {
   });
 }
 
+export async function sendPaymentTermReminder(paymentTermId: number): Promise<{ message: string }> {
+  return requestBackend<{ message: string }>(`/api/v1/payment-terms/${paymentTermId}/send-reminder`, {
+    method: "POST",
+  });
+}
+
+export async function sendProjectProgressReminder(projectProgressId: number): Promise<{ message: string }> {
+  return requestBackend<{ message: string }>(`/api/v1/project-progress/${projectProgressId}/send-reminder`, {
+    method: "POST",
+  });
+}
+
 export async function listPayments(options: {
   paymentTermId?: number;
   status?: string;

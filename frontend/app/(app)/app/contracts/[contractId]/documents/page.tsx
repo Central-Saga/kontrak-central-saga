@@ -14,6 +14,9 @@ import {
   listContractDocumentVersions,
 } from "@/lib/access-management/backend";
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page";
+import { hasAnyPermission } from "@/lib/auth/permissions";
+import { readSessionState } from "@/lib/auth/session";
+import type { AuthUser } from "@/lib/auth/types";
 
 const statusMessages = {
   document_uploaded: "Versi dokumen kontrak berhasil diunggah dan masuk ke arsip versi.",
@@ -68,6 +71,10 @@ export default async function ContractDocumentsPage({
   const resolvedSearchParams = await searchParams;
   const error = readSearchParam(resolvedSearchParams, "error");
   const status = readSearchParam(resolvedSearchParams, "status");
+
+  const session = await readSessionState();
+  const user: AuthUser | null = session.status === "authenticated" ? session.user : null;
+  const canManageContracts = user ? hasAnyPermission(user, ["manage contracts"]) : false;
 
   let contract = null;
   let versions: Awaited<ReturnType<typeof listContractDocumentVersions>> = [];
@@ -131,7 +138,8 @@ export default async function ContractDocumentsPage({
 
       {error && <StatusBanner error={error} />}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+      <div className={`grid gap-6 ${canManageContracts ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]' : ''}`}>
+        {canManageContracts ? (
         <Card>
           <CardHeader>
             <CardTitle>Unggah Versi Baru</CardTitle>
@@ -190,6 +198,7 @@ export default async function ContractDocumentsPage({
             </form>
           </CardContent>
         </Card>
+        ) : null}
 
         <Card>
           <CardHeader>

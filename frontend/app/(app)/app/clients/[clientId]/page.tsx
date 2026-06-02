@@ -246,24 +246,29 @@ export default async function ClientDetailPage({
                   </thead>
                   <tbody>
                     {contracts.map((contract) => (
-                      <tr key={contract.id}>
-                        <td className="border border-line px-4 py-3.5 align-top font-medium text-foreground">{contract.contract_number}</td>
-                        <td className="border border-line px-4 py-3.5 align-top">
-                          <div className="flex flex-col gap-1">
-                            <p className="font-medium text-foreground">{contract.contract_title}</p>
-                            <p className="text-xs text-muted">{formatDate(contract.contract_date)} • {formatCurrency(contract.contract_value)}</p>
-                          </div>
-                        </td>
-                        <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.project_name}</td>
-                        <td className="border border-line px-4 py-3.5 align-top">
-                          <ContractStatusPill status={contract.contract_status} />
-                        </td>
-                        <td className="border border-line px-4 py-3.5 align-top">
-                          <Link className={buttonVariants({ size: "sm", variant: "outline" })} href={`/app/contracts/${contract.id}/edit`}>
-                            Ubah kontrak
+                    <tr key={contract.id}>
+                      <td className="border border-line px-4 py-3.5 align-top font-medium text-foreground">{contract.contract_number}</td>
+                      <td className="border border-line px-4 py-3.5 align-top">
+                        <div className="flex flex-col gap-1">
+                          <p className="font-medium text-foreground">{contract.contract_title}</p>
+                          <p className="text-xs text-muted">{formatDate(contract.contract_date)} • {formatCurrency(contract.contract_value)}</p>
+                        </div>
+                      </td>
+                      <td className="border border-line px-4 py-3.5 align-top text-muted">{contract.project_name}</td>
+                      <td className="border border-line px-4 py-3.5 align-top">
+                        <ContractStatusPill status={contract.contract_status} />
+                      </td>
+                      <td className="border border-line px-4 py-3.5 align-top">
+                        <div className="flex flex-wrap gap-2">
+                          <Link className={buttonVariants({ size: "sm", variant: "outline" })} href={`/app/contracts/${contract.id}`}>
+                            Detail
                           </Link>
-                        </td>
-                      </tr>
+                          <Link className={buttonVariants({ size: "sm", variant: "secondary" })} href={`/app/contracts/${contract.id}/documents`}>
+                            Dokumen
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
                     ))}
                   </tbody>
                 </table>

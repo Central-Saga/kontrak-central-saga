@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 
 import {
@@ -21,6 +22,8 @@ import {
   getAccessManagementErrorMessage,
   getFirstValidationError,
   isAccessManagementError,
+  sendPaymentTermReminder,
+  sendProjectProgressReminder,
   updateClient,
   updateContract,
   updatePayment,
@@ -65,6 +68,12 @@ function getFallbackErrorMessage(error: unknown) {
   }
 
   return getAccessManagementErrorMessage(error);
+}
+
+function rethrowIfRedirect(error: unknown) {
+  if (isRedirectError(error)) {
+    throw error;
+  }
 }
 
 function redirectForUnauthorized(error: unknown) {
@@ -262,8 +271,8 @@ export async function createContractAction(formData: FormData) {
     redirect(appendMessage("/app/contracts/new", "error", getFallbackErrorMessage(error)));
   }
 
-  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}/edit`]);
-  redirect(appendMessage(`/app/contracts/${contractId}/edit`, "status", "created"));
+  revalidateAccessManagementPaths(["/app/contracts", `/app/contracts/${contractId}`]);
+  redirect(appendMessage("/app/contracts", "status", "created"));
 }
 
 export async function updateContractAction(contractId: number, formData: FormData) {
@@ -486,6 +495,7 @@ export async function uploadContractDocumentVersionAction(
   try {
     await uploadContractDocumentVersion(contractId, formData);
   } catch (error) {
+    rethrowIfRedirect(error);
     redirectForUnauthorized(error);
     redirect(appendMessage(redirectPath, "error", getFallbackErrorMessage(error)));
   }
@@ -605,4 +615,28 @@ export async function deleteProjectProgressStandaloneAction(progressId: number) 
 
   revalidateAccessManagementPaths(["/app/project-progress", "/app/contracts"]);
   redirect(appendMessage("/app/project-progress", "status", "project_progress_deleted"));
+}
+
+export async function sendPaymentTermReminderAction(contractId: number, paymentTermId: number) {
+  try {
+    await sendPaymentTermReminder(paymentTermId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths([`/app/contracts/${contractId}`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "payment_reminder_sent"));
+}
+
+export async function sendProjectProgressReminderAction(contractId: number, progressId: number) {
+  try {
+    await sendProjectProgressReminder(progressId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/contracts/${contractId}`, "error", getFallbackErrorMessage(error)));
+  }
+
+  revalidateAccessManagementPaths([`/app/contracts/${contractId}`]);
+  redirect(appendMessage(`/app/contracts/${contractId}`, "status", "progress_reminder_sent"));
 }

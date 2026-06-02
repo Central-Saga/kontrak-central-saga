@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\PaymentProofController;
 use App\Http\Controllers\Api\V1\PaymentTermController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\ProjectProgressController;
+use App\Http\Controllers\Api\V1\ReminderController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Http\Request;
@@ -79,15 +80,22 @@ Route::prefix('v1')->group(function (): void {
             ->middlewareFor('update', 'role_or_permission:manage contracts|update contracts')
             ->middlewareFor('destroy', 'role_or_permission:manage contracts|delete contracts');
 
-        Route::prefix('contracts/{contract}')->middleware('permission:manage contracts')->group(function (): void {
-            Route::get('document-versions', [ContractDocumentVersionController::class, 'index']);
-            Route::post('document-versions', [ContractDocumentVersionController::class, 'store']);
-            Route::get('document-versions/compare', [ContractDocumentVersionController::class, 'compare']);
-            Route::get('document-versions/compare-content', [ContractDocumentVersionController::class, 'compareContent']);
-            Route::get('document-versions/history', [ContractDocumentVersionController::class, 'getHistory']);
-            Route::get('document-versions/{version}', [ContractDocumentVersionController::class, 'show']);
-            Route::get('document-versions/{version}/download', [ContractDocumentVersionController::class, 'download']);
-            Route::get('document-versions/{version}/audit-logs', [ContractDocumentVersionController::class, 'getAuditLogs']);
+        Route::prefix('contracts/{contract}')->group(function (): void {
+            // Read-only document routes: allow client role with read contracts permission
+            Route::middleware('role_or_permission:manage contracts|read contracts')->group(function (): void {
+                Route::get('document-versions', [ContractDocumentVersionController::class, 'index']);
+                Route::get('document-versions/compare', [ContractDocumentVersionController::class, 'compare']);
+                Route::get('document-versions/compare-content', [ContractDocumentVersionController::class, 'compareContent']);
+                Route::get('document-versions/history', [ContractDocumentVersionController::class, 'getHistory']);
+                Route::get('document-versions/{version}', [ContractDocumentVersionController::class, 'show']);
+                Route::get('document-versions/{version}/download', [ContractDocumentVersionController::class, 'download']);
+                Route::get('document-versions/{version}/audit-logs', [ContractDocumentVersionController::class, 'getAuditLogs']);
+            });
+
+            // Write operations: only users who can manage contracts
+            Route::middleware('permission:manage contracts')->group(function (): void {
+                Route::post('document-versions', [ContractDocumentVersionController::class, 'store']);
+            });
         });
 
         Route::apiResource('payment-terms', PaymentTermController::class)
@@ -110,6 +118,12 @@ Route::prefix('v1')->group(function (): void {
             ->middlewareFor('store', 'role_or_permission:manage project progress|create project progress')
             ->middlewareFor('update', 'role_or_permission:manage project progress|update project progress')
             ->middlewareFor('destroy', 'role_or_permission:manage project progress|delete project progress');
+
+        Route::post('payment-terms/{paymentTerm}/send-reminder', [ReminderController::class, 'sendPaymentTermReminder'])
+            ->middleware('role_or_permission:manage payment terms|manage payments');
+
+        Route::post('project-progress/{projectProgress}/send-reminder', [ReminderController::class, 'sendProjectProgressReminder'])
+            ->middleware('role_or_permission:manage project progress');
 
         Route::middleware('role:admin')->group(function (): void {
             Route::apiResource('users', UserController::class)

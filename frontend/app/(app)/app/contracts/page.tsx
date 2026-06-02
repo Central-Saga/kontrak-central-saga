@@ -13,6 +13,8 @@ import { readSessionState } from "@/lib/auth/session"
 import type { AuthUser } from "@/lib/auth/types"
 import { ContractFilters } from "@/components/contract-management/contract-filters"
 
+export const dynamic = "force-dynamic"
+
 const statusMessages = {
   created: "Kontrak baru berhasil ditambahkan.",
   updated: "Data kontrak berhasil diperbarui.",
@@ -109,6 +111,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
   const canUpdateContracts = user ? hasAnyPermission(user, ["manage contracts", "update contracts"]) : false
   const canDeleteContracts = user ? hasAnyPermission(user, ["manage contracts", "delete contracts"]) : false
   const canListClients = user ? hasAnyPermission(user, ["manage clients"]) : false
+  const canViewDocuments = user ? hasAnyPermission(user, ["manage contracts", "read contracts"]) : false
 
   let contracts = null
   let clients = [] as Awaited<ReturnType<typeof listClients>>["data"]
@@ -242,7 +245,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pa
                               editHref={`/app/contracts/${contract.id}/edit`}
                               editLabel={`Ubah ${contract.contract_number}`}
                               editTestId={`contract-edit-${contract.id}`}
-                              historyHref={canManageContracts ? documentHistoryHref : undefined}
+                              historyHref={canViewDocuments ? documentHistoryHref : undefined}
                               historyLabel={`Buka riwayat dokumen ${contract.contract_number}`}
                               historyTestId={`contract-history-${contract.id}`}
                               viewHref={`/app/contracts/${contract.id}`}

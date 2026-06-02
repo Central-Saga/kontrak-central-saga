@@ -2,7 +2,7 @@
 
 import type * as React from "react"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +14,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
+
+type ButtonStyleProps = Omit<React.ComponentProps<typeof Button>, "children" | "type" | "asChild"> & {
+  "data-testid"?: string
+}
 
 type DeleteConfirmationDialogProps = {
   action: () => Promise<void>
@@ -23,10 +27,10 @@ type DeleteConfirmationDialogProps = {
   confirmTestId?: string
   description: string
   title: string
-  triggerButtonProps?: Omit<React.ComponentProps<typeof Button>, "children" | "type">
+  triggerButtonProps?: ButtonStyleProps
   triggerLabel?: React.ReactNode
   tooltipLabel?: string
-  children?: React.ReactElement
+  children?: React.ReactNode
 }
 
 export function DeleteConfirmationDialog({
@@ -41,23 +45,24 @@ export function DeleteConfirmationDialog({
   tooltipLabel,
   children,
 }: DeleteConfirmationDialogProps) {
-  const triggerChild = children ?? (
-    <Button type="button" variant="destructive" {...triggerButtonProps}>
-      {triggerLabel ?? "Hapus"}
-    </Button>
-  )
-  const trigger = <AlertDialogTrigger asChild>{triggerChild}</AlertDialogTrigger>
+  const variant = triggerButtonProps?.variant ?? "destructive"
+  const size = triggerButtonProps?.size
+  const ariaLabel = triggerButtonProps?.["aria-label"]
+  const testId = triggerButtonProps?.["data-testid"]
+  const className = triggerButtonProps?.className
+  const triggerContent = children ?? triggerLabel ?? "Hapus"
 
   return (
     <AlertDialog>
-      {tooltipLabel ? (
-        <Tooltip>
-          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-          <TooltipContent side="top">{tooltipLabel}</TooltipContent>
-        </Tooltip>
-      ) : (
-        trigger
-      )}
+      <AlertDialogTrigger
+        type="button"
+        aria-label={ariaLabel}
+        data-testid={testId}
+        title={tooltipLabel}
+        className={cn(buttonVariants({ variant, size }), className)}
+      >
+        {triggerContent}
+      </AlertDialogTrigger>
 
       <AlertDialogContent>
         <AlertDialogHeader>

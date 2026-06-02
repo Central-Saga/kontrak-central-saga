@@ -50,6 +50,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
+  const [contentValue, setContentValue] = useState(content);
 
   const editor = useEditor({
     extensions: [
@@ -86,7 +87,9 @@ export function RichTextEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      onChange?.(editor.getHTML());
+      const html = editor.getHTML();
+      setContentValue(html);
+      onChange?.(html);
     },
     immediatelyRender: false,
   });
@@ -349,7 +352,7 @@ export function RichTextEditor({
       )}
 
       <EditorContent editor={editor} />
-      {name && <input type="hidden" name={name} value={editor.getHTML()} />}
+      {name && <input type="hidden" name={name} value={contentValue} />}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 const idFormatter = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 })
 
 function digitsOnly(value: string) {
-  return value.replace(/\D+/g, "")
+  return value.replace(/\.\d{2}$/, "").replace(/\D+/g, "")
 }
 
 function formatDigits(digits: string) {

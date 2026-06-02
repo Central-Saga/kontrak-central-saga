@@ -4,7 +4,7 @@ else
 SHELL := /bin/sh
 endif
 
-.PHONY: up down rebuild ps fresh health test-local boost-mcp boost-stdio boost-inspector e2e-up e2e-seed e2e-bootstrap e2e-down tls-dev-cert dev-build dev-up dev-down dev-rebuild dev-logs dev-auto
+.PHONY: up down rebuild ps fresh health test-local boost-mcp boost-stdio boost-inspector e2e-up e2e-seed e2e-bootstrap e2e-down tls-dev-cert dev-build dev-up dev-down dev-rebuild dev-logs dev-auto start start-fresh notify-now
 
 E2E_FRONTEND_APP_DOMAIN := app.127.0.0.1.nip.io
 E2E_BACKEND_APP_DOMAIN := api.127.0.0.1.nip.io
@@ -126,6 +126,68 @@ dev-auto:
 	echo ""; \
 	echo "🛑 Untuk berhenti: make down"; \
 	echo ""
+
+# One-shot launcher: bring up dev stack, run migrations (non-destructive),
+# then trigger the daily reminder command once so today's emails get processed.
+start:
+	@echo ""
+	@echo "========================================"
+	@echo "Kontrak Central Saga - one-shot start"
+	@echo "========================================"
+	@echo ""
+	@echo "[1/4] TLS cert + dev stack up"
+	$(MAKE) dev-up
+	@echo ""
+	@echo "[2/4] Menunggu backend healthy..."
+	@for i in $$(seq 1 60); do \
+		if $(DEV_COMPOSE_ENV) $(COMPOSE_CMD) -f docker-compose.dev.yml exec -T backend php -r "exit(@file_get_contents('http://127.0.0.1/api/health') === false ? 1 : 0);" >/dev/null 2>&1; then \
+			echo "    backend siap."; \
+			break; \
+		fi; \
+		printf "."; \
+		sleep 2; \
+		if [ $$i -eq 60 ]; then \
+			echo ""; \
+			echo "    Backend tidak healthy dalam 120 detik. Cek: make dev-logs"; \
+			exit 1; \
+		fi; \
+	done
+	@echo ""
+	@echo "[3/4] Migrate (non-destructive)"
+	$(DEV_COMPOSE_ENV) $(COMPOSE_CMD) -f docker-compose.dev.yml exec -T backend php artisan migrate --force
+	@echo ""
+	@echo "[4/4] Kirim reminder harian sekali jalan"
+	$(DEV_COMPOSE_ENV) $(COMPOSE_CMD) -f docker-compose.dev.yml exec -T backend php artisan notifications:send-due-date-reminders
+	@echo ""
+	@echo "Selesai. URL akses tergantung PROXY_HTTPS_PORT/PROXY_HTTP_PORT di .env"
+	@echo "  Frontend: $${FRONTEND_APP_URL:-https://app.kontrak-centralsaga.site:8443}"
+	@echo "  Backend:  $${BACKEND_APP_URL:-https://api.kontrak-centralsaga.site:8443}"
+	@echo ""
+	@echo "Catatan:"
+	@echo "  - MAIL_MAILER=log -> email masuk ke backend/storage/logs/laravel.log"
+	@echo "  - Set NOTIFY_INTERNAL_EMAILS di .env supaya ada penerima internal"
+	@echo "  - Scheduler container aktif: reminder otomatis tiap 07:00 Asia/Makassar"
+	@echo "  - Kirim ulang manual: make notify-now"
+	@echo "  - Lihat log scheduler: docker compose -f docker-compose.dev.yml logs -f scheduler"
+	@echo "  - Berhentikan stack: make dev-down"
+	@echo ""
+
+# Sama seperti `make start` tapi reset database (DESTRUCTIVE: hapus semua data, lalu seed).
+start-fresh:
+	$(MAKE) dev-up
+	@echo "Menunggu backend healthy..."
+	@for i in $$(seq 1 60); do \
+		if $(DEV_COMPOSE_ENV) $(COMPOSE_CMD) -f docker-compose.dev.yml exec -T backend php -r "exit(@file_get_contents('http://127.0.0.1/api/health') === false ? 1 : 0);" >/dev/null 2>&1; then \
+			break; \
+		fi; \
+		sleep 2; \
+	done
+	$(DEV_COMPOSE_ENV) $(COMPOSE_CMD) -f docker-compose.dev.yml exec -T backend php artisan migrate:fresh --seed --force
+	$(DEV_COMPOSE_ENV) $(COMPOSE_CMD) -f docker-compose.dev.yml exec -T backend php artisan notifications:send-due-date-reminders
+
+# Trigger reminder email manual (stack dev harus sudah jalan).
+notify-now:
+	$(DEV_COMPOSE_ENV) $(COMPOSE_CMD) -f docker-compose.dev.yml exec -T backend php artisan notifications:send-due-date-reminders
 
 tls-dev-cert:
 	@mkdir -p docker/proxy/certs

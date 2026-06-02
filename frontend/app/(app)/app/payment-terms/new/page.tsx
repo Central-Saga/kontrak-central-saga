@@ -9,6 +9,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input"
 import { CurrencyInput } from "@/components/ui/currency-input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/contract-management/contract-form"
 import { listContracts } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 
@@ -87,10 +88,7 @@ export default async function NewPaymentTermPage({ searchParams }: { searchParam
                 <Input id="payment-term-title" name="term_title" placeholder="DP proyek, Termin 1, Final payment" required />
               </Field>
 
-              <Field>
-                <FieldLabel htmlFor="payment-term-due-date">Tanggal jatuh tempo</FieldLabel>
-                <Input id="payment-term-due-date" name="due_date" required type="date" />
-              </Field>
+              <DatePicker id="payment-term-due-date" label="Tanggal jatuh tempo" required name="due_date" disabledBefore={new Date()} />
 
               <Field>
                 <FieldLabel htmlFor="payment-term-amount">Nilai termin</FieldLabel>

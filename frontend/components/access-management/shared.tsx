@@ -118,9 +118,9 @@ export function PillList({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {items.map((item) => (
+      {items.map((item, index) => (
         <span
-          key={item}
+          key={`${item}-${index}`}
           className="rounded-full border border-line bg-card-strong px-2.5 py-1 text-xs font-medium text-foreground"
         >
           {item}

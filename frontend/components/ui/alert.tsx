@@ -25,10 +25,10 @@ export function Alert({ className, variant = "default", ...props }: AlertProps) 
   );
 }
 
-export function AlertTitle({ className, ...props }: React.ComponentProps<"p">) {
-  return <p className={cn("font-semibold text-foreground", className)} {...props} />;
+export function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return <div className={cn("font-semibold text-foreground", className)} {...props} />;
 }
 
-export function AlertDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return <p className={cn("text-sm leading-6 text-muted", className)} {...props} />;
+export function AlertDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return <div className={cn("text-sm leading-6 text-muted", className)} {...props} />;
 }

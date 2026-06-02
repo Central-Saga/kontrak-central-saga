@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProgressBar } from "@/components/ui/progress-bar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getContract } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
 import { hasAnyPermission } from "@/lib/auth/permissions"
@@ -26,6 +27,8 @@ const statusMessages = {
   project_progress_created: "Update progres proyek berhasil ditambahkan.",
   project_progress_updated: "Update progres proyek berhasil diperbarui.",
   project_progress_deleted: "Update progres proyek berhasil dihapus.",
+  payment_reminder_sent: "Pengingat pembayaran berhasil dikirim ke email klien.",
+  progress_reminder_sent: "Pengingat progres proyek berhasil dikirim ke email klien.",
 } satisfies Record<string, string>
 
 const versionStatusLabels: Record<string, string> = {
@@ -140,6 +143,7 @@ export default async function ContractDetailPage({
   const user: AuthUser | null = session.status === "authenticated" ? session.user : null
   const canManageContracts = user ? hasAnyPermission(user, ["manage contracts"]) : false
   const canUpdateContracts = user ? hasAnyPermission(user, ["manage contracts", "update contracts"]) : false
+  const canViewDocuments = user ? hasAnyPermission(user, ["manage contracts", "read contracts"]) : false
   const operationsPermissions: ContractOperationsPermissions = {
     canCreatePaymentTerms: user ? hasAnyPermission(user, ["manage payment terms", "create payment terms"]) : false,
     canUpdatePaymentTerms: user ? hasAnyPermission(user, ["manage payment terms", "update payment terms"]) : false,
@@ -210,46 +214,14 @@ export default async function ContractDetailPage({
 
       <StatusBanner error={message ?? undefined} messages={statusMessages} status={status} />
 
-      <div className="flex flex-wrap gap-2 rounded-lg border border-line bg-card-strong p-2">
-        <Link
-          href={`/app/contracts/${contract.id}`}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            "ring-primary/20 ring-[3px] bg-primary text-primary-foreground"
-          }`}
-        >
-          Detail
-        </Link>
-        {canManageContracts ? (
-          <>
-            <Link
-              href={`/app/contracts/${contract.id}/documents`}
-              className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <FileTextIcon className="h-4 w-4" />
-              Dokumen
-              {documentVersionsCount > 0 && (
-                <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs">
-                  {documentVersionsCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              href={`/app/contracts/${contract.id}/compare`}
-              className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <GitCompareArrowsIcon className="h-4 w-4" />
-              Komparasi
-            </Link>
-            <Link
-              href={`/app/contracts/${contract.id}/history`}
-              className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <HistoryIcon className="h-4 w-4" />
-              Riwayat
-            </Link>
-          </>
-        ) : null}
-      </div>
+      <Tabs defaultValue="summary" className="gap-4">
+        <TabsList className="bg-card-strong border border-line">
+          <TabsTrigger value="summary" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Ringkasan</TabsTrigger>
+          <TabsTrigger value="operations" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Operasional</TabsTrigger>
+          {canViewDocuments ? <TabsTrigger value="documents" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Dokumen</TabsTrigger> : null}
+        </TabsList>
+
+        <TabsContent value="summary" className="flex flex-col gap-4">
 
       <Card>
         <CardHeader>
@@ -315,7 +287,10 @@ export default async function ContractDetailPage({
         <CardContent className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-line bg-card-strong px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">Ruang lingkup proyek</p>
-            <p className="mt-2 text-sm leading-7 text-foreground">{contract.project_scope || "-"}</p>
+            <div
+              className="prose prose-sm mt-2 max-w-none text-sm leading-7 text-foreground"
+              dangerouslySetInnerHTML={{ __html: contract.project_scope || "<p>-</p>" }}
+            />
           </div>
           <div className="rounded-2xl border border-line bg-card-strong px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">Catatan</p>
@@ -323,36 +298,6 @@ export default async function ContractDetailPage({
           </div>
         </CardContent>
       </Card>
-
-      {canManageContracts ? (
-        <Alert>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex flex-col gap-1">
-              <AlertTitle>Arsip dokumen kontrak</AlertTitle>
-              <AlertDescription>
-                {documentVersionsCount > 0
-                  ? `Saat ini tersedia ${documentVersionsCount} versi dokumen. Versi terbaru ${latestDocumentSummary}.`
-                  : "Belum ada versi dokumen yang tersimpan untuk kontrak ini."}
-              </AlertDescription>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/documents`}>
-                <FileTextIcon className="mr-2 h-4 w-4" />
-                Kelola Dokumen
-              </Link>
-              <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/compare`}>
-                <GitCompareArrowsIcon className="mr-2 h-4 w-4" />
-                Komparasi
-              </Link>
-              <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/history`}>
-                <HistoryIcon className="mr-2 h-4 w-4" />
-                Riwayat
-              </Link>
-            </div>
-          </div>
-        </Alert>
-      ) : null}
 
       <Card>
         <CardHeader>
@@ -380,7 +325,45 @@ export default async function ContractDetailPage({
         </CardContent>
       </Card>
 
-      <ContractOperationsSections contract={contract} permissions={operationsPermissions} />
+        </TabsContent>
+
+        <TabsContent value="operations" className="flex flex-col gap-4">
+          <ContractOperationsSections contract={contract} permissions={operationsPermissions} />
+        </TabsContent>
+
+        {canViewDocuments ? (
+          <TabsContent value="documents" className="flex flex-col gap-4">
+            <Alert>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex flex-col gap-1">
+                  <AlertTitle>Arsip dokumen kontrak</AlertTitle>
+                  <AlertDescription>
+                    {documentVersionsCount > 0
+                      ? `Saat ini tersedia ${documentVersionsCount} versi dokumen. Versi terbaru ${latestDocumentSummary}.`
+                      : "Belum ada versi dokumen yang tersimpan untuk kontrak ini."}
+                  </AlertDescription>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/documents`}>
+                    <FileTextIcon className="mr-2 h-4 w-4" />
+                    {canManageContracts ? "Kelola Dokumen" : "Lihat Dokumen"}
+                  </Link>
+                  <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/compare`}>
+                    <GitCompareArrowsIcon className="mr-2 h-4 w-4" />
+                    Komparasi
+                  </Link>
+                  <Link className={buttonVariants({ variant: "outline" })} href={`/app/contracts/${contract.id}/history`}>
+                    <HistoryIcon className="mr-2 h-4 w-4" />
+                    Riwayat
+                  </Link>
+                </div>
+              </div>
+            </Alert>
+          </TabsContent>
+        ) : null}
+      </Tabs>
+
     </PageStack>
   )
 }

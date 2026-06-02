@@ -19,6 +19,13 @@ type DocumentUploadFormProps = {
   contractEditHref: string
 }
 
+function isRedirectError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return error.message.includes("NEXT_REDIRECT") || error.message.includes("redirect")
+  }
+  return false
+}
+
 export function DocumentUploadForm({ uploadAction, contractEditHref }: DocumentUploadFormProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +44,9 @@ export function DocumentUploadForm({ uploadAction, contractEditHref }: DocumentU
         formRef.current.reset()
       }
     } catch (err) {
+      if (isRedirectError(err)) {
+        throw err
+      }
       setError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengunggah dokumen.")
     } finally {
       setIsUploading(false)

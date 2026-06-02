@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const outfit = localFont({
   src: "./fonts/Outfit-Variable.ttf",
@@ -56,8 +57,10 @@ export default function RootLayout({
       <head />
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          {children}
-          <Toaster closeButton position="top-right" richColors />
+          <TooltipProvider delayDuration={0}>
+            {children}
+            <Toaster closeButton position="top-right" richColors />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

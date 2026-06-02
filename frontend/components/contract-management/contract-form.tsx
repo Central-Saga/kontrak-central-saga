@@ -25,36 +25,7 @@ import { format } from "date-fns";
 import { generateContractCode } from "@/app/(app)/app/access-management/contract-actions";
 import { RichTextEditor } from "./rich-text-editor";
 
-type ContractFormProps = {
-  action: (formData: FormData) => Promise<void>;
-  clients: Array<{ id: number; company_name: string; client_code: string }>;
-  mode: "create" | "edit";
-  values?: {
-    client_id?: number;
-    contract_number?: string;
-    contract_title?: string;
-    project_name?: string;
-    contract_date?: string;
-    start_date?: string;
-    end_date?: string;
-    contract_value?: string | number;
-    project_scope?: string;
-    payment_scheme_summary?: string | null;
-    contract_status?: string;
-    notes?: string | null;
-  };
-};
-
-const statusOptions = [
-  ["draft", "Draft"],
-  ["active", "Aktif"],
-  ["completed", "Selesai"],
-  ["terminated", "Dihentikan"],
-  ["expired", "Kedaluwarsa"],
-  ["cancelled", "Dibatalkan"],
-] as const;
-
-function DatePicker({
+export function DatePicker({
   id,
   label,
   value,
@@ -62,6 +33,7 @@ function DatePicker({
   disabledBefore,
   disabledAfter,
   onChange,
+  name: inputName,
 }: {
   id: string;
   label: string;
@@ -70,6 +42,7 @@ function DatePicker({
   disabledBefore?: Date;
   disabledAfter?: Date;
   onChange?: (date: Date | undefined) => void;
+  name?: string;
 }) {
   const [open, setOpen] = useState(false);
   const date = useMemo(() => (value ? new Date(value) : undefined), [value]);
@@ -87,7 +60,6 @@ function DatePicker({
     }
   };
 
-  // Sync selectedDate when date prop changes
   useEffect(() => {
     setSelectedDate(date);
   }, [date]);
@@ -127,13 +99,42 @@ function DatePicker({
       <input
         type="hidden"
         id={id}
-        name={id.replace(/-/g, "_")}
+        name={inputName ?? id.replace(/-/g, "_")}
         defaultValue={value}
         required={required}
       />
     </Field>
   );
 }
+
+type ContractFormProps = {
+  action: (formData: FormData) => Promise<void>;
+  clients: Array<{ id: number; company_name: string; client_code: string }>;
+  mode: "create" | "edit";
+  values?: {
+    client_id?: number;
+    contract_number?: string;
+    contract_title?: string;
+    project_name?: string;
+    contract_date?: string;
+    start_date?: string;
+    end_date?: string;
+    contract_value?: string | number;
+    project_scope?: string;
+    payment_scheme_summary?: string | null;
+    contract_status?: string;
+    notes?: string | null;
+  };
+};
+
+const statusOptions = [
+  ["draft", "Draft"],
+  ["active", "Aktif"],
+  ["completed", "Selesai"],
+  ["terminated", "Dihentikan"],
+  ["expired", "Kedaluwarsa"],
+  ["cancelled", "Dibatalkan"],
+] as const;
 
 export function ContractForm({ action, clients, mode, values }: ContractFormProps) {
   const isCreate = mode === "create";
