@@ -19,6 +19,8 @@ export NEXT_PUBLIC_API_BASE_URL="$BACKEND_APP_URL"
 export LOCAL_TLS_ENABLED="false"
 export PROXY_HTTP_PORT="8080"
 export PROXY_HTTPS_PORT="8443"
+export BACKEND_FILESYSTEM_DISK="public"
+export BACKEND_MEDIA_DISK="public"
 export SANCTUM_STATEFUL_DOMAINS="localhost,127.0.0.1,${FRONTEND_APP_DOMAIN}"
 
 cd "$project_root"
@@ -32,6 +34,7 @@ case "$action" in
   rebuild|restart)
     make tls-dev-cert
     make dev-build
+    podman compose -f docker-compose.dev.yml down
     podman compose -f docker-compose.dev.yml up -d --force-recreate
     ;;
   down)

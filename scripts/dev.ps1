@@ -24,6 +24,180 @@ function Assert-LastExitCode {
     }
 }
 
+function Invoke-NativeSilently {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Executable,
+
+        [string[]] $CommandArgs = @()
+    )
+
+    $stdout = New-TemporaryFile
+    $stderr = New-TemporaryFile
+
+    try {
+        $process = Start-Process `
+            -FilePath $Executable `
+            -ArgumentList $CommandArgs `
+            -NoNewWindow `
+            -Wait `
+            -PassThru `
+            -RedirectStandardOutput $stdout.FullName `
+            -RedirectStandardError $stderr.FullName
+
+        return $process.ExitCode
+    }
+    catch {
+        return 1
+    }
+    finally {
+        Remove-Item -LiteralPath $stdout.FullName, $stderr.FullName -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Invoke-NativeCommand {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Executable,
+
+        [string[]] $CommandArgs = @()
+    )
+
+    try {
+        $process = Start-Process `
+            -FilePath $Executable `
+            -ArgumentList $CommandArgs `
+            -NoNewWindow `
+            -Wait `
+            -PassThru
+
+        return $process.ExitCode
+    }
+    catch {
+        Write-Host $_.Exception.Message -ForegroundColor Red
+        return 1
+    }
+}
+
+function Test-PodmanReady {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Podman
+    )
+
+    return (Invoke-NativeSilently -Executable $Podman -CommandArgs @("info")) -eq 0
+}
+
+function Assert-PodmanReady {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Podman
+    )
+
+    if (Test-PodmanReady -Podman $Podman) {
+        return
+    }
+
+    Write-Host "Podman is installed, but its machine/socket is not ready. Trying: podman machine start" -ForegroundColor Yellow
+    $exitCode = Invoke-NativeCommand -Executable $Podman -CommandArgs @("machine", "start")
+
+    if ($exitCode -ne 0) {
+        throw @"
+Podman is installed, but its machine is not running or has not been initialized.
+
+Run these once from PowerShell:
+  podman machine init
+  podman machine start
+
+Then open a new PowerShell and run:
+  .\scripts\dev.cmd rebuild
+"@
+    }
+
+    if (-not (Test-PodmanReady -Podman $Podman)) {
+        throw "Podman machine started, but the Podman socket is still not reachable. Open a new PowerShell and run '.\scripts\dev.cmd rebuild' again."
+    }
+}
+
+function Test-TcpPortAvailable {
+    param(
+        [Parameter(Mandatory = $true)]
+        [int] $Port
+    )
+
+    $listener = $null
+
+    try {
+        $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any, $Port)
+        $listener.Start()
+
+        return $true
+    }
+    catch {
+        return $false
+    }
+    finally {
+        if ($listener) {
+            $listener.Stop()
+        }
+    }
+}
+
+function Get-AvailableTcpPort {
+    param(
+        [Parameter(Mandatory = $true)]
+        [int] $PreferredPort,
+
+        [Parameter(Mandatory = $true)]
+        [int] $FallbackStart,
+
+        [Parameter(Mandatory = $true)]
+        [int] $FallbackEnd
+    )
+
+    if (Test-TcpPortAvailable -Port $PreferredPort) {
+        return $PreferredPort
+    }
+
+    for ($port = $FallbackStart; $port -le $FallbackEnd; $port++) {
+        if (Test-TcpPortAvailable -Port $port) {
+            return $port
+        }
+    }
+
+    throw "No available TCP port found from $PreferredPort or $FallbackStart-$FallbackEnd."
+}
+
+function Set-PodmanDevEnvironment {
+    $env:CONTAINERS_CONF = Join-Path $RepoRoot "docker\podman\containers.conf"
+
+    if ([string]::IsNullOrWhiteSpace($env:PROXY_HTTP_PORT)) {
+        $env:PROXY_HTTP_PORT = [string] (Get-AvailableTcpPort -PreferredPort 18080 -FallbackStart 18081 -FallbackEnd 18099)
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:PROXY_HTTPS_PORT)) {
+        $env:PROXY_HTTPS_PORT = [string] (Get-AvailableTcpPort -PreferredPort 18443 -FallbackStart 18444 -FallbackEnd 18499)
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:FRONTEND_APP_URL)) {
+        $env:FRONTEND_APP_URL = "https://app.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:BACKEND_APP_URL)) {
+        $env:BACKEND_APP_URL = "https://api.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:NEXT_PUBLIC_API_BASE_URL)) {
+        $env:NEXT_PUBLIC_API_BASE_URL = "https://api.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:SANCTUM_STATEFUL_DOMAINS)) {
+        $env:SANCTUM_STATEFUL_DOMAINS = "localhost,127.0.0.1,app.kontrak-centralsaga.site,app.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
+    }
+
+    Write-Host "Podman dev ports: HTTP $($env:PROXY_HTTP_PORT), HTTPS $($env:PROXY_HTTPS_PORT)"
+}
+
 function New-DevCertificate {
     $certDir = Join-Path $RepoRoot "docker\proxy\certs"
     $crtPath = Join-Path $certDir "local-dev.crt"
@@ -85,7 +259,9 @@ function New-DevCertificate {
 function Invoke-DevCompose {
     param(
         [Parameter(Mandatory = $true)]
-        [string[]] $ComposeArgs
+        [string[]] $ComposeArgs,
+
+        [switch] $IgnoreExitCode
     )
 
     $composeCommand = Assert-ComposeCommand
@@ -101,30 +277,17 @@ function Invoke-DevCompose {
 
     try {
         if ($composeCommand.Runtime -like "*podman*") {
-            $env:CONTAINERS_CONF = Join-Path $RepoRoot "docker\podman\containers.conf"
-            if ([string]::IsNullOrWhiteSpace($env:PROXY_HTTP_PORT)) {
-                $env:PROXY_HTTP_PORT = "8080"
-            }
-            if ([string]::IsNullOrWhiteSpace($env:PROXY_HTTPS_PORT)) {
-                $env:PROXY_HTTPS_PORT = "8443"
-            }
-            if ([string]::IsNullOrWhiteSpace($env:FRONTEND_APP_URL)) {
-                $env:FRONTEND_APP_URL = "https://app.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
-            }
-            if ([string]::IsNullOrWhiteSpace($env:BACKEND_APP_URL)) {
-                $env:BACKEND_APP_URL = "https://api.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
-            }
-            if ([string]::IsNullOrWhiteSpace($env:NEXT_PUBLIC_API_BASE_URL)) {
-                $env:NEXT_PUBLIC_API_BASE_URL = "https://api.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
-            }
-            if ([string]::IsNullOrWhiteSpace($env:SANCTUM_STATEFUL_DOMAINS)) {
-                $env:SANCTUM_STATEFUL_DOMAINS = "localhost,127.0.0.1,app.kontrak-centralsaga.site,app.kontrak-centralsaga.site:$($env:PROXY_HTTPS_PORT)"
-            }
+            Assert-PodmanReady -Podman $composeCommand.Runtime
+            Set-PodmanDevEnvironment
         }
 
-        & $executable @arguments
-        if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
+        $exitCode = Invoke-NativeCommand -Executable $executable -CommandArgs $arguments
+        if ($exitCode -ne 0) {
+            if ($IgnoreExitCode) {
+                return
+            }
+
+            exit $exitCode
         }
     }
     finally {
@@ -142,14 +305,16 @@ function Invoke-DevBuild {
     $composeCommand = Assert-ComposeCommand
 
     if ($composeCommand.Runtime -like "*podman*") {
-        & $composeCommand.Runtime build -t "kontrak-central-saga-frontend-dev" -f "frontend/Dockerfile.dev" "frontend"
-        if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
+        Assert-PodmanReady -Podman $composeCommand.Runtime
+
+        $frontendBuildExitCode = Invoke-NativeCommand -Executable $composeCommand.Runtime -CommandArgs @("build", "-t", "kontrak-central-saga-frontend-dev", "-f", "frontend/Dockerfile.dev", "frontend")
+        if ($frontendBuildExitCode -ne 0) {
+            exit $frontendBuildExitCode
         }
 
-        & $composeCommand.Runtime build -t "kontrak-central-saga-backend-dev" -f "backend/Dockerfile" "backend"
-        if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
+        $backendBuildExitCode = Invoke-NativeCommand -Executable $composeCommand.Runtime -CommandArgs @("build", "-t", "kontrak-central-saga-backend-dev", "-f", "backend/Dockerfile", "backend")
+        if ($backendBuildExitCode -ne 0) {
+            exit $backendBuildExitCode
         }
 
         return
@@ -171,8 +336,7 @@ function Test-CommandSuccess {
         return $false
     }
 
-    & $resolvedExecutable @CommandArgs | Out-Null
-    return $LASTEXITCODE -eq 0
+    return (Invoke-NativeSilently -Executable $resolvedExecutable -CommandArgs $CommandArgs) -eq 0
 }
 
 function Resolve-Executable {
@@ -266,6 +430,7 @@ switch ($Action) {
     }
     "rebuild" {
         New-DevCertificate
+        Invoke-DevCompose -ComposeArgs @("down") -IgnoreExitCode
         Invoke-DevBuild
         Invoke-DevCompose -ComposeArgs @("up", "-d", "--force-recreate")
     }

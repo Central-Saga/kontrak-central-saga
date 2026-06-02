@@ -24,14 +24,17 @@ RUN apt-get update \
 WORKDIR /var/www/html
 
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/entrypoint.sh /usr/local/bin/backend-entrypoint
 COPY . .
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=assets /app/public/build ./public/build
 
 RUN mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views \
     && chown -R www-data:www-data storage bootstrap/cache \
-    && ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
+    && ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage \
+    && chmod +x /usr/local/bin/backend-entrypoint
 
 EXPOSE 80
 
+ENTRYPOINT ["/usr/local/bin/backend-entrypoint"]
 CMD ["apache2-foreground"]
