@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.dokploy.example
 
 # root tool caches
 node_modules/

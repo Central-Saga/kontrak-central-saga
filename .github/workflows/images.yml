@@ -24,6 +24,8 @@ jobs:
           - name: frontend
             context: ./frontend
             image: ghcr.io/${{ github.repository_owner }}/kontrak-central-saga-frontend
+            build_args: |
+              NEXT_PUBLIC_API_BASE_URL=https://api.kontrak-centralsaga.web.id
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,3 +56,28 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ matrix.build_args || '' }}
+
+  deploy:
+    name: Trigger Dokploy Redeploy
+    runs-on: ubuntu-latest
+    needs: publish
+
+    steps:
+      - name: Redeploy Dokploy backend
+        run: |
+          curl -sS -X POST \
+            "${{ secrets.DOKPLOY_URL }}/api/application.deploy" \
+            -H "accept: application/json" \
+            -H "x-api-key: ${{ secrets.DOKPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"applicationId":"${{ secrets.DOKPLOY_BACKEND_APP_ID }}"}'
+
+      - name: Redeploy Dokploy frontend
+        run: |
+          curl -sS -X POST \
+            "${{ secrets.DOKPLOY_URL }}/api/application.deploy" \
+            -H "accept: application/json" \
+            -H "x-api-key: ${{ secrets.DOKPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"applicationId":"${{ secrets.DOKPLOY_FRONTEND_APP_ID }}"}'
