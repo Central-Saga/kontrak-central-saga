@@ -1,5 +1,7 @@
 # kontrak-central-saga
 
+![Build and Deploy](https://github.com/Central-Saga/kontrak-central-saga/actions/workflows/images.yml/badge.svg)
+
 Web-based system for managing client contracts, payment validation, project progress, reporting, and client portal for PT Central Saga Mandala.
 
 ## Local Access
