@@ -18,11 +18,11 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-const BRAND_LOGO_PATH = "/brand/logo.png";
+const BRAND_LOGO_PATH = "/brand/logo.svg";
 
 async function hasBrandLogoAsset() {
   try {
-    await access(join(process.cwd(), "public", "brand", "logo.png"));
+    await access(join(process.cwd(), "public", "brand", "logo.svg"));
     return true;
   } catch {
     return false;
