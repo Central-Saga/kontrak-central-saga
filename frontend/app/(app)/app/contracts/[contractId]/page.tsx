@@ -91,6 +91,12 @@ function getDaysUntil(dateStr: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
+function shouldShowPaymentTermDueAlert(term: { due_date: string; status: string }): boolean {
+  const days = getDaysUntil(term.due_date)
+
+  return days <= 30 && !["paid", "cancelled"].includes(term.status)
+}
+
 function formatDueDateAlert(dateStr: string, label: string): { message: string; variant: "default" | "destructive" | "warning" } | null {
   const days = getDaysUntil(dateStr)
   if (days < 0) {
@@ -106,10 +112,6 @@ function formatDueDateAlert(dateStr: string, label: string): { message: string; 
     return { message: `${label} tinggal ${days} hari lagi.`, variant: "default" }
   }
   return null
-}
-
-function formatTermAmount(value: number | string): string {
-  return formatCurrency(value)
 }
 
 function DetailItem({
@@ -252,10 +254,19 @@ export default async function ContractDetailPage({
       })()}
 
       {contract.payment_terms?.length ? (() => {
-        const overdueTerms = contract.payment_terms.filter((term) => {
-          const days = getDaysUntil(term.due_date)
-          return days <= 7
-        })
+        const overdueTerms = contract.payment_terms
+          .filter(shouldShowPaymentTermDueAlert)
+          .sort((first, second) => {
+            const firstDue = new Date(first.due_date).getTime()
+            const secondDue = new Date(second.due_date).getTime()
+
+            if (firstDue !== secondDue) {
+              return firstDue - secondDue
+            }
+
+            return first.term_number - second.term_number
+          })
+
         return overdueTerms.length ? (
           <Alert variant="warning">
             <AlertTitle>Termin Mendekati / Melewati Jatuh Tempo</AlertTitle>

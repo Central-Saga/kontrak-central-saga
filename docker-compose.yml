@@ -36,7 +36,7 @@ services:
       - "3000"
     healthcheck:
       test:
-        ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000 || exit 1"]
+        ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -82,9 +82,18 @@ services:
       APP_FAKER_LOCALE: en_US
       BCRYPT_ROUNDS: 12
       BROADCAST_CONNECTION: log
-      MAIL_MAILER: log
-      MAIL_FROM_ADDRESS: hello@example.com
-      MAIL_FROM_NAME: ${BACKEND_APP_NAME:-Kontrak Central Saga API}
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      MAIL_HOST: ${MAIL_HOST:-127.0.0.1}
+      MAIL_PORT: ${MAIL_PORT:-2525}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-null}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@example.com}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Kontrak Central Saga API}
+      NOTIFY_ENABLED: ${NOTIFY_ENABLED:-true}
+      NOTIFY_INTERNAL_EMAILS: ${NOTIFY_INTERNAL_EMAILS:-}
+      NOTIFY_PAYMENT_TERM_REMIND_DAYS: ${NOTIFY_PAYMENT_TERM_REMIND_DAYS:-7,1}
+      NOTIFY_CONTRACT_ENDING_REMIND_DAYS: ${NOTIFY_CONTRACT_ENDING_REMIND_DAYS:-30,7,1}
     expose:
       - "80"
     healthcheck:
