@@ -560,7 +560,7 @@ export async function listUsers(options: {
   const query = buildQueryString({
     search: options.search,
     role_id: options.roleId,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
   });
 
   return requestBackend<PaginatedCollection<UserRecord>>(`/api/v1/users${query}`, {
@@ -610,7 +610,7 @@ export async function listRoles(options: {
     page: options.page,
     search: options.search,
     permission_id: options.permissionId,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
   });
 
   return requestBackend<PaginatedCollection<RoleRecord>>(`/api/v1/roles${query}`, {
@@ -662,7 +662,7 @@ async function listPermissions(options: {
     search: options.search,
     action: options.action,
     module: options.module,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
   });
 
   return requestBackend<PaginatedCollection<PermissionRecord>>(`/api/v1/permissions${query}`, {
@@ -752,7 +752,7 @@ export async function listContracts(options: {
     client_id: options.clientId,
     search: options.search,
     status: options.status,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
   });
 
   return requestBackend<PaginatedCollection<ContractRecord>>(`/api/v1/contracts${query}`);
@@ -807,7 +807,7 @@ export async function listPaymentTerms(options: {
     contract_id: options.contractId,
     status: options.status,
     overdue_only: options.overdueOnly ? "1" : undefined,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
     page: options.page,
   });
 
@@ -869,7 +869,7 @@ export async function listPayments(options: {
   const query = buildQueryString({
     payment_term_id: options.paymentTermId,
     status: options.status,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
     page: options.page,
   });
 
@@ -920,7 +920,7 @@ export async function listProjectProgress(options: {
   const query = buildQueryString({
     contract_id: options.contractId,
     status: options.status,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
     page: options.page,
   });
 
