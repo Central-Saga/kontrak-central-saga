@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\V1\ProjectProgressController;
 use App\Http\Controllers\Api\V1\ReminderController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Models\Client;
+use App\Services\ClientUserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +25,41 @@ Route::get('/health', function () {
         'status' => 'ok',
         'service' => 'backend',
     ]);
+});
+
+// Temporary diagnostic endpoint. Returns the real exception from
+// createOrUpdateClientUser without the APP_DEBUG=false wrapper.
+// Remove once the portal-access 500 is diagnosed.
+Route::post('/v1/diag/client-user', function (Request $request) {
+    $data = $request->validate([
+        'client_code' => ['required', 'string'],
+        'company_name' => ['required', 'string'],
+        'email' => ['nullable', 'string'],
+        'status' => ['required', 'string'],
+        'password' => ['required', 'string', 'min:8'],
+    ]);
+
+    try {
+        $client = Client::create([
+            'client_code' => $data['client_code'],
+            'company_name' => $data['company_name'],
+            'email' => $data['email'] ?? null,
+            'status' => $data['status'],
+            'portal_access_enabled' => true,
+        ]);
+        $result = app(ClientUserService::class)
+            ->createOrUpdateClientUser($client, $data['password']);
+
+        return response()->json(['ok' => true, 'user_id' => $result['user']->id]);
+    } catch (Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+            'file' => $e->getFile().':'.$e->getLine(),
+            'trace' => collect($e->getTrace())->take(15)->map(fn ($t) => ($t['file'] ?? '?').':'.($t['line'] ?? '?').' '.($t['class'] ?? '').($t['type'] ?? '').($t['function'] ?? ''))->all(),
+        ], 500);
+    }
 });
 
 Route::prefix('v1')->group(function (): void {
@@ -140,8 +177,7 @@ Route::prefix('v1')->group(function (): void {
 
             Route::apiResource('permissions', PermissionController::class)
                 ->middlewareFor(['index', 'show'], 'permission:read permissions')
-                ->middlewareFor('store', 'permission:create permissions')
-                ->middlewareFor('update', 'permission:update permissions')
+                ->middlewareFor(['store', 'update'], 'permission:update permissions')
                 ->middlewareFor('destroy', 'permission:delete permissions');
         });
     });
