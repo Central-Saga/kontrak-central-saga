@@ -9,7 +9,7 @@ type LoginPageProps = {
   }>;
 };
 
-const BRAND_LOGO_PATH = "/favicon_io/logo.svg";
+const BRAND_LOGO_PATH = "/favicon_io/logo-256.png";
 
 function getInitialLoginError(errorCode?: string) {
   if (errorCode === "invalid_credentials") {
@@ -41,7 +41,7 @@ function getInitialLoginError(errorCode?: string) {
 
 async function hasBrandLogoAsset() {
   try {
-    await access(join(process.cwd(), "public", "favicon_io", "logo.svg"));
+    await access(join(process.cwd(), "public", "favicon_io", "logo-256.png"));
     return true;
   } catch {
     return false;

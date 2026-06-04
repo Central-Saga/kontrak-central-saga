@@ -30,7 +30,7 @@ type LoginFormProps = React.ComponentProps<"div"> & {
   logoPath?: string;
 };
 
-const DEFAULT_BRAND_LOGO_PATH = "/favicon_io/logo.png";
+const DEFAULT_BRAND_LOGO_PATH = "/favicon_io/logo-256.png";
 
 const initialLoginFormState: LoginFormState = {
   message: "",
