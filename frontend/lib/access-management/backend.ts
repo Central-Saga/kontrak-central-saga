@@ -698,7 +698,7 @@ export async function listClients(options: {
   const query = buildQueryString({
     search: options.search,
     status: options.status,
-    per_page: options.perPage ?? 10,
+    per_page: options.perPage ?? 50,
   });
 
   return requestBackend<PaginatedCollection<ClientRecord>>(`/api/v1/clients${query}`);
