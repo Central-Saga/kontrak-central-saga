@@ -5,8 +5,9 @@ namespace App\Services;
 use App\Models\Client;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class ClientUserService
 {
@@ -21,82 +22,101 @@ class ClientUserService
      */
     public function createOrUpdateClientUser(Client $client, ?string $plainPassword = null): array
     {
-        return DB::transaction(function () use ($client, $plainPassword) {
-            // Refresh client data within transaction to avoid race conditions
-            $client = Client::lockForUpdate()->find($client->id);
+        try {
+            return DB::transaction(function () use ($client, $plainPassword) {
+                // Refresh client data within transaction to avoid race conditions
+                $client = Client::lockForUpdate()->find($client->id);
 
-            if (! $client) {
-                throw new \Exception('Client not found');
-            }
-
-            // Check if client already has a user
-            if ($client->user_id && $client->user) {
-                $existing = $client->user;
-
-                if ($plainPassword !== null && $plainPassword !== '') {
-                    $existing->forceFill(['password' => Hash::make($plainPassword)])->save();
+                if (! $client) {
+                    throw new \Exception('Client not found');
                 }
 
-                return [
-                    'user' => $existing->fresh(),
-                    'password' => null,
-                    'is_new' => false,
-                ];
-            }
+                // Check if client already has a user
+                if ($client->user_id && $client->user) {
+                    $existing = $client->user;
 
-            $email = $client->email ?? $this->generateClientEmail($client);
-            $username = $this->generateUniqueUsername($client);
-            $isPasswordProvided = $plainPassword !== null && $plainPassword !== '';
-            $password = $isPasswordProvided ? $plainPassword : $this->generatePassword();
+                    if ($plainPassword !== null && $plainPassword !== '') {
+                        // User model has 'password' => 'hashed' cast which auto-hashes.
+                        // Assigning raw plaintext is enough; do NOT pre-hash.
+                        $existing->forceFill(['password' => $plainPassword])->save();
+                    }
 
-            // Check if user already exists with this email
-            $existingUser = User::where('email', $email)->first();
+                    return [
+                        'user' => $existing->fresh(),
+                        'password' => null,
+                        'is_new' => false,
+                    ];
+                }
 
-            if ($existingUser) {
-                // Update existing user with unique username
-                $attributes = [
+                $email = $client->email ?: $this->generateClientEmail($client);
+                $username = $this->generateUniqueUsername($client);
+                $isPasswordProvided = $plainPassword !== null && $plainPassword !== '';
+                $password = $isPasswordProvided ? $plainPassword : $this->generatePassword();
+
+                // Check if user already exists with this email
+                $existingUser = User::where('email', $email)->first();
+
+                if ($existingUser) {
+                    // Update existing user with unique username
+                    $attributes = [
+                        'name' => $client->company_name,
+                        'username' => $username,
+                    ];
+
+                    if ($isPasswordProvided) {
+                        // Auto-hashed by cast; pass plaintext, not pre-hashed value.
+                        $attributes['password'] = $plainPassword;
+                    }
+
+                    $existingUser->update($attributes);
+
+                    // Update client relation
+                    $client->update(['user_id' => $existingUser->id]);
+
+                    return [
+                        'user' => $existingUser->fresh(),
+                        'password' => null,
+                        'is_new' => false,
+                    ];
+                }
+
+                // Create new user. Cast 'password' => 'hashed' handles hashing.
+                $user = User::create([
                     'name' => $client->company_name,
                     'username' => $username,
-                ];
+                    'email' => $email,
+                    'password' => $password,
+                ]);
 
-                if ($isPasswordProvided) {
-                    $attributes['password'] = Hash::make($plainPassword);
+                // Assign client role if exists
+                if (method_exists($user, 'assignRole')) {
+                    $user->assignRole('client');
                 }
 
-                $existingUser->update($attributes);
-
                 // Update client relation
-                $client->update(['user_id' => $existingUser->id]);
+                $client->update(['user_id' => $user->id]);
 
                 return [
-                    'user' => $existingUser->fresh(),
-                    'password' => null,
-                    'is_new' => false,
+                    'user' => $user,
+                    'password' => $isPasswordProvided ? null : $password,
+                    'is_new' => true,
                 ];
-            }
-
-            // Create new user
-            $user = User::create([
-                'name' => $client->company_name,
-                'username' => $username,
-                'email' => $email,
-                'password' => Hash::make($password),
+            });
+        } catch (Throwable $e) {
+            // Surface the real error to Laravel's log so the failure is diagnosable
+            // even when APP_DEBUG=false hides it from the HTTP response.
+            Log::error('ClientUserService::createOrUpdateClientUser failed', [
+                'client_id' => $client->id ?? null,
+                'client_code' => $client->client_code ?? null,
+                'email' => $client->email ?? null,
+                'portal_access_enabled' => (bool) ($client->portal_access_enabled ?? false),
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile().':'.$e->getLine(),
             ]);
 
-            // Assign client role if exists
-            if (method_exists($user, 'assignRole')) {
-                $user->assignRole('client');
-            }
-
-            // Update client relation
-            $client->update(['user_id' => $user->id]);
-
-            return [
-                'user' => $user,
-                'password' => $isPasswordProvided ? null : $password,
-                'is_new' => true,
-            ];
-        });
+            throw $e;
+        }
     }
 
     /**
@@ -120,19 +140,30 @@ class ClientUserService
      */
     private function generateUsername(Client $client): string
     {
-        return strtolower(str_replace(['-', '_'], '', $client->client_code));
+        $code = (string) ($client->client_code ?? '');
+
+        if ($code === '') {
+            $code = 'client-'.($client->id ?? random_int(1, PHP_INT_MAX));
+        }
+
+        $base = strtolower(str_replace(['-', '_'], '', $code));
+
+        // Trim to leave room for optional suffix (_NNN) within 255-char limit.
+        return substr($base, 0, 240);
     }
 
     /**
-     * Generate unique username, append suffix if already exists
+     * Generate unique username, append suffix if already exists.
+     * Loops with bounded retries to avoid infinite loops on pathological data.
      */
     private function generateUniqueUsername(Client $client): string
     {
         $baseUsername = $this->generateUsername($client);
         $username = $baseUsername;
         $suffix = 1;
+        $maxAttempts = 1000;
 
-        while (User::where('username', $username)->exists()) {
+        while ($suffix <= $maxAttempts && User::where('username', $username)->exists()) {
             $username = $baseUsername.'_'.$suffix;
             $suffix++;
         }
