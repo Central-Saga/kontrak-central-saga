@@ -132,7 +132,16 @@ Access the app through:
 
 ## Brand Assets
 
-Upload the final logo to `frontend/public/brand/logo.svg` (preferred) or replace it with a PNG file at the same path you choose in the frontend branding component.
+Brand and favicon assets are stored in `frontend/public/favicon_io/`:
+
+- `logo.svg` — primary brand logo (used in sidebar and login page)
+- `logo.png` — high-resolution raster logo
+- `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png` — tab favicons
+- `apple-touch-icon.png` — iOS home screen icon
+- `android-chrome-192x192.png`, `android-chrome-512x512.png` — Android/PWA icons
+- `site.webmanifest` — PWA manifest source
+
+Next.js auto-detects `app/favicon.ico`, `app/apple-icon.png`, `app/icon.png`, and `app/manifest.webmanifest` for metadata. Update those files in `frontend/app/` when replacing brand assets.
 
 ## Structure
 
