@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Throwable;
 
 class ClientUserService
@@ -88,9 +89,18 @@ class ClientUserService
                     'password' => $password,
                 ]);
 
-                // Assign client role if exists
+                // Assign client role if it exists.
+                // Catch RoleDoesNotExist so a missing role does not block
+                // client user creation (the role may not be seeded yet).
                 if (method_exists($user, 'assignRole')) {
-                    $user->assignRole('client');
+                    try {
+                        $user->assignRole('client');
+                    } catch (RoleDoesNotExist $e) {
+                        Log::warning('ClientUserService: client role not found, skipping', [
+                            'user_id' => $user->id,
+                            'client_id' => $client->id,
+                        ]);
+                    }
                 }
 
                 // Update client relation
