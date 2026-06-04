@@ -17,7 +17,9 @@ use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Models\Client;
 use App\Services\ClientUserService;
+use Database\Seeders\ModuleStarterSeeder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -58,6 +60,27 @@ Route::post('/v1/diag/client-user', function (Request $request) {
             'message' => $e->getMessage(),
             'file' => $e->getFile().':'.$e->getLine(),
             'trace' => collect($e->getTrace())->take(15)->map(fn ($t) => ($t['file'] ?? '?').':'.($t['line'] ?? '?').' '.($t['class'] ?? '').($t['type'] ?? '').($t['function'] ?? ''))->all(),
+        ], 500);
+    }
+});
+
+// Temporary: run ModuleStarterSeeder to create missing roles/permissions.
+// Remove once production DB is seeded.
+Route::post('/v1/diag/seed-roles', function () {
+    try {
+        Artisan::call('db:seed', [
+            '--class' => ModuleStarterSeeder::class,
+            '--force' => true,
+        ]);
+        $output = Artisan::output();
+
+        return response()->json(['ok' => true, 'output' => trim($output)]);
+    } catch (Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+            'file' => $e->getFile().':'.$e->getLine(),
         ], 500);
     }
 });
