@@ -472,6 +472,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
   const contractId = contract.id;
   const paymentTerms = contract.payment_terms ?? [];
   const progressUpdates = contract.project_progress ?? [];
+  const latestProgress = progressUpdates.length > 0 ? progressUpdates.sort((a, b) => new Date(b.progress_date).getTime() - new Date(a.progress_date).getTime())[0] : null;
   const createPaymentTerm = createPaymentTermAction.bind(null, contractId);
   const createPayment = createPaymentAction.bind(null, contractId);
   const createProgress = createProjectProgressAction.bind(null, contractId);
@@ -502,7 +503,9 @@ export function ContractOperationsSections({ contract, permissions }: { contract
             <CardDescription>Catatan perkembangan proyek berdasarkan tanggal laporan, persentase capaian, dan milestone terkait.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {progressUpdates.length ? progressUpdates.map((progress) => <ProgressCard key={progress.id} contractId={contractId} progress={progress} permissions={permissions} />) : (
+            {latestProgress ? (
+              <ProgressCard contractId={contractId} progress={latestProgress} permissions={permissions} />
+            ) : (
               <Alert>
                 <AlertTitle>Belum ada progres proyek</AlertTitle>
                 <AlertDescription>Tambahkan laporan progres agar kondisi eksekusi proyek terbaca langsung dari halaman kontrak.</AlertDescription>
@@ -615,8 +618,8 @@ export function ContractOperationsSections({ contract, permissions }: { contract
           {permissions.canCreateProgress ? (
             <Card>
               <CardHeader>
-                <CardTitle>Tambah progres proyek</CardTitle>
-                <CardDescription>Masukkan perkembangan pekerjaan proyek sesuai tahapan yang sedang berjalan.</CardDescription>
+                <CardTitle>{latestProgress ? "Update progres proyek" : "Tambah progres proyek"}</CardTitle>
+                <CardDescription>Masukkan perkembangan pekerjaan proyek sesuai tahapan yang sedang berjalan. 1 kontrak = 1 data progres — input baru akan memperbarui data yang sudah ada.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form action={createProgress} className="flex flex-col gap-6">

@@ -44,9 +44,11 @@ function ContractStatusPill({ status }: { status: string }) {
       ? "border-primary/20 bg-primary/10 text-primary"
       : status === "completed"
         ? "border-highlight/20 bg-accent-soft text-secondary-foreground"
-        : status === "terminated" || status === "cancelled"
-          ? "border-destructive/20 bg-destructive/10 text-destructive"
-          : "border-line bg-card-strong text-muted"
+        : status === "draft" || status === "expired"
+          ? "border-line bg-background text-foreground"
+          : status === "terminated" || status === "cancelled"
+            ? "border-destructive/20 bg-destructive/10 text-destructive"
+            : "border-line bg-card-strong text-muted"
 
   return <span className={`${statusPillClassName} ${palette}`}>{contractStatusLabels[status] ?? status}</span>
 }

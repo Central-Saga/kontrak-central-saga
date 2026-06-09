@@ -46,11 +46,13 @@ class ProjectProgressController extends Controller
 
         abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
 
-        $projectProgress = ProjectProgress::create($data);
+        // 1 kontrak = 1 data progres. Update existing or create new.
+        $projectProgress = ProjectProgress::updateOrCreate(
+            ['contract_id' => $contract->id],
+            $data
+        );
 
-        return (new ProjectProgressResource($projectProgress->load('contract:id,client_id,contract_number,contract_title')))
-            ->response()
-            ->setStatusCode(201);
+        return new ProjectProgressResource($projectProgress->load('contract:id,client_id,contract_number,contract_title'));
     }
 
     public function show(Request $request, ProjectProgress $projectProgress): ProjectProgressResource
