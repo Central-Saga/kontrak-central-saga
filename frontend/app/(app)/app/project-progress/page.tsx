@@ -33,16 +33,7 @@ const progressStatusLabels: Record<string, string> = {
 const statusPillClassName = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
 
 function ProgressStatusPill({ status }: { status: string }) {
-  const palette =
-    status === "completed"
-      ? "border-primary/20 bg-primary/10 text-primary"
-      : status === "in_progress"
-        ? "border-highlight/20 bg-accent-soft text-secondary-foreground"
-        : status === "delayed" || status === "on_hold"
-          ? "border-destructive/20 bg-destructive/10 text-destructive"
-          : "border-line bg-card-strong text-muted"
-
-  return <span className={`${statusPillClassName} ${palette}`}>{progressStatusLabels[status] ?? status}</span>
+  return <span className={`${statusPillClassName} border-line bg-white text-foreground`}>{progressStatusLabels[status] ?? status}</span>
 }
 
 function formatDate(value?: string | null) {

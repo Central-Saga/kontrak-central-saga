@@ -12,7 +12,7 @@ import { DatePicker } from "@/components/contract-management/contract-form"
 import { listContracts } from "@/lib/access-management/backend"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 
-const selectClassName = "h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+const selectClassName = "h-10 rounded-md border border-input bg-white px-3 py-2 text-sm text-foreground"
 
 const progressStatusOptions = [
   ["not_started", "Belum mulai"],
