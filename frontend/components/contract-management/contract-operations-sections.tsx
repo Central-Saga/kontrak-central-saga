@@ -195,10 +195,7 @@ function PaymentEditForm({ contractId, payment, paymentTerms }: { contractId: nu
               ))}
             </select>
           </Field>
-          <Field>
-            <FieldLabel htmlFor={`payment-date-${payment.id}`}>Tanggal bayar</FieldLabel>
-            <DatePicker id={`payment-date-${payment.id}`} label="Tanggal bayar" value={payment.payment_date} required name="payment_date" disabledBefore={new Date()} />
-          </Field>
+          <DatePicker id={`payment-date-${payment.id}`} label="Tanggal bayar" value={payment.payment_date} required name="payment_date" disabledBefore={new Date()} />
           <Field>
             <FieldLabel htmlFor={`payment-amount-${payment.id}`}>Nominal bayar</FieldLabel>
             <CurrencyInput id={`payment-amount-${payment.id}`} name="amount" defaultValue={String(payment.amount)} required />
@@ -238,10 +235,7 @@ function PaymentTermEditForm({ contractId, term }: { contractId: number; term: P
             <FieldLabel htmlFor={`payment-term-title-${term.id}`}>Judul termin</FieldLabel>
             <Input id={`payment-term-title-${term.id}`} name="term_title" defaultValue={term.term_title} required />
           </Field>
-          <Field>
-            <FieldLabel htmlFor={`payment-term-due-date-${term.id}`}>Tanggal jatuh tempo</FieldLabel>
-            <DatePicker id={`payment-term-due-date-${term.id}`} label="Tanggal jatuh tempo" value={term.due_date} required name="due_date" disabledBefore={new Date()} />
-          </Field>
+          <DatePicker id={`payment-term-due-date-${term.id}`} label="Tanggal jatuh tempo" value={term.due_date} required name="due_date" disabledBefore={new Date()} />
           <Field>
             <FieldLabel htmlFor={`payment-term-amount-${term.id}`}>Nilai termin</FieldLabel>
             <CurrencyInput id={`payment-term-amount-${term.id}`} name="amount" defaultValue={String(term.amount)} required />
@@ -280,10 +274,7 @@ function ProjectProgressEditForm({ contractId, progress }: { contractId: number;
       <summary className="cursor-pointer text-sm font-medium text-foreground">Ubah progres proyek</summary>
       <form action={updateAction} className="mt-4 flex flex-col gap-4">
         <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor={`project-progress-date-${progress.id}`}>Tanggal laporan</FieldLabel>
-            <DatePicker id={`project-progress-date-${progress.id}`} label="Tanggal laporan" value={progress.progress_date} required name="progress_date" disabledBefore={new Date()} />
-          </Field>
+          <DatePicker id={`project-progress-date-${progress.id}`} label="Tanggal laporan" value={progress.progress_date} required name="progress_date" disabledBefore={new Date()} />
           <Field>
             <FieldLabel htmlFor={`project-progress-title-${progress.id}`}>Judul progres</FieldLabel>
             <Input id={`project-progress-title-${progress.id}`} name="progress_title" defaultValue={progress.progress_title} required />
@@ -524,10 +515,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                       <FieldLabel htmlFor="create-payment-term-title">Judul termin</FieldLabel>
                       <Input id="create-payment-term-title" name="term_title" placeholder="DP proyek, Termin 1, Final payment" required />
                     </Field>
-                    <Field>
-                      <FieldLabel htmlFor="create-payment-term-due-date">Tanggal jatuh tempo</FieldLabel>
-                      <DatePicker id="create-payment-term-due-date" label="Tanggal jatuh tempo" required name="due_date" disabledBefore={new Date()} />
-                    </Field>
+                    <DatePicker id="create-payment-term-due-date" label="Tanggal jatuh tempo" required name="due_date" disabledBefore={new Date()} />
                     <Field>
                       <FieldLabel htmlFor="create-payment-term-amount">Nilai termin</FieldLabel>
                       <CurrencyInput id="create-payment-term-amount" name="amount" placeholder="5.000.000" required />
@@ -577,10 +565,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                         ))}
                       </select>
                     </Field>
-                    <Field>
-                      <FieldLabel htmlFor="create-payment-date">Tanggal bayar</FieldLabel>
-                      <DatePicker id="create-payment-date" label="Tanggal bayar" required name="payment_date" disabledBefore={new Date()} />
-                    </Field>
+                    <DatePicker id="create-payment-date" label="Tanggal bayar" required name="payment_date" disabledBefore={new Date()} />
                     <Field>
                       <FieldLabel htmlFor="create-payment-amount">Nominal bayar</FieldLabel>
                       <CurrencyInput id="create-payment-amount" name="amount" placeholder="5.000.000" required />
@@ -614,10 +599,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
               <CardContent>
                 <form action={createProgress} className="flex flex-col gap-6">
                   <FieldGroup>
-                    <Field>
-                      <FieldLabel htmlFor="create-project-progress-date">Tanggal laporan</FieldLabel>
-                      <DatePicker id="create-project-progress-date" label="Tanggal laporan" required name="progress_date" disabledBefore={new Date()} />
-                    </Field>
+                    <DatePicker id="create-project-progress-date" label="Tanggal laporan" required name="progress_date" disabledBefore={new Date()} />
                     <Field>
                       <FieldLabel htmlFor="create-project-progress-title">Judul progres</FieldLabel>
                       <Input id="create-project-progress-title" name="progress_title" placeholder="Pondasi selesai, instalasi dimulai" required />
