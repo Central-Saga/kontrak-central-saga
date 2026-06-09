@@ -45,7 +45,7 @@ function ContractStatusPill({ status }: { status: string }) {
       : status === "completed"
         ? "border-highlight/20 bg-accent-soft text-secondary-foreground"
         : status === "draft" || status === "expired"
-          ? "border-line bg-background text-foreground"
+          ? "border-line bg-white text-foreground"
           : status === "terminated" || status === "cancelled"
             ? "border-destructive/20 bg-destructive/10 text-destructive"
             : "border-line bg-card-strong text-muted"
