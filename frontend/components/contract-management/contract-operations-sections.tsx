@@ -105,17 +105,7 @@ function statusPillClass(status: string, kind: "term" | "payment" | "progress") 
   }
 
   if (kind === "progress") {
-    if (status === "completed") {
-      return "border-primary/20 bg-primary/10 text-primary";
-    }
-
-    if (status === "in_progress") {
-      return "border-highlight/20 bg-accent-soft text-secondary-foreground";
-    }
-
-    if (status === "delayed" || status === "on_hold") {
-      return "border-destructive/20 bg-destructive/10 text-destructive";
-    }
+    return "border-line bg-background text-foreground";
   }
 
   return "border-line bg-card-strong text-muted";
