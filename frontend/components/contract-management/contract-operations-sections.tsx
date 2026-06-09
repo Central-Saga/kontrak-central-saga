@@ -304,7 +304,7 @@ function ProjectProgressEditForm({ contractId, progress }: { contractId: number;
           </Field>
           <Field>
             <FieldLabel htmlFor={`project-progress-status-${progress.id}`}>Status progres</FieldLabel>
-            <select id={`project-progress-status-${progress.id}`} name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue={progress.status}>
+            <select id={`project-progress-status-${progress.id}`} name="status" className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" defaultValue={progress.status}>
               <option value="not_started">Belum mulai</option>
               <option value="in_progress">Berjalan</option>
               <option value="on_hold">Tertahan</option>
@@ -638,7 +638,7 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-project-progress-status">Status progres</FieldLabel>
-                      <select id="create-project-progress-status" name="status" className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm" defaultValue="in_progress">
+                      <select id="create-project-progress-status" name="status" className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" defaultValue="in_progress">
                         <option value="not_started">Belum mulai</option>
                         <option value="in_progress">Berjalan</option>
                         <option value="on_hold">Tertahan</option>
