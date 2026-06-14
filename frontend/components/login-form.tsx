@@ -16,6 +16,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 
 type LoginFormState = {
@@ -215,7 +216,7 @@ export function LoginForm({
 
           <Field data-invalid={isInvalid || undefined}>
             <FieldLabel htmlFor="login-password-input">Password</FieldLabel>
-            <Input
+            <PasswordInput
               aria-describedby={isInvalid ? "auth-error" : undefined}
               aria-invalid={isInvalid}
               autoComplete="current-password"
@@ -226,7 +227,6 @@ export function LoginForm({
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Masukkan password Anda"
               required
-              type="password"
               value={password}
             />
           </Field>

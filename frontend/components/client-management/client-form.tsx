@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Select,
   SelectContent,
@@ -215,7 +216,7 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
                   <FieldLabel htmlFor="client-password">
                     {alreadyHasPortal ? "Atur ulang password (opsional)" : "Password akses portal"}
                   </FieldLabel>
-                  <Input
+                  <PasswordInput
                     autoComplete="new-password"
                     data-testid="client-form-password"
                     id="client-password"
@@ -223,7 +224,6 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
                     name="password"
                     placeholder={alreadyHasPortal ? "Kosongkan jika tidak diubah" : "Minimal 8 karakter"}
                     required={passwordRequired}
-                    type="password"
                   />
                   <FieldDescription>
                     {alreadyHasPortal
@@ -234,7 +234,7 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
 
                 <Field>
                   <FieldLabel htmlFor="client-password-confirmation">Konfirmasi password</FieldLabel>
-                  <Input
+                  <PasswordInput
                     autoComplete="new-password"
                     data-testid="client-form-password-confirmation"
                     id="client-password-confirmation"
@@ -242,7 +242,6 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
                     name="password_confirmation"
                     placeholder="Ulangi password yang sama"
                     required={passwordRequired}
-                    type="password"
                   />
                 </Field>
               </>

@@ -14,6 +14,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { PageHeaderCard, PageStack } from "@/components/access-management/shared";
 import { AvatarUploadCard } from "@/components/settings/avatar-upload-card";
+import { ChangePasswordForm } from "@/components/settings/change-password-form";
 import { ThemePreferenceCard } from "@/components/settings/theme-preference-card";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -135,62 +136,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pag
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={passwordAction} className="flex flex-col gap-6">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="settings-current-password">Password saat ini</FieldLabel>
-                  <Input
-                    autoComplete="current-password"
-                    data-testid="settings-current-password-input"
-                    id="settings-current-password"
-                    name="current_password"
-                    required
-                    type="password"
-                  />
-                  <FieldDescription>
-                    Masukkan password aktif untuk memastikan perubahan dilakukan oleh pemilik akun yang sah.
-                  </FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="settings-password">Password baru</FieldLabel>
-                  <Input
-                    autoComplete="new-password"
-                    data-testid="settings-password-input"
-                    id="settings-password"
-                    minLength={8}
-                    name="password"
-                    required
-                    type="password"
-                  />
-                  <FieldDescription>
-                    Gunakan kombinasi minimal delapan karakter dengan huruf besar, huruf kecil, angka, atau simbol agar lebih kuat.
-                  </FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="settings-password-confirmation">Konfirmasi password baru</FieldLabel>
-                  <Input
-                    autoComplete="new-password"
-                    data-testid="settings-password-confirmation-input"
-                    id="settings-password-confirmation"
-                    minLength={8}
-                    name="password_confirmation"
-                    required
-                    type="password"
-                  />
-                  <FieldDescription>
-                    Ulangi password baru yang sama agar perubahan tidak tersimpan dengan salah ketik.
-                  </FieldDescription>
-                </Field>
-              </FieldGroup>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <Button data-testid="settings-password-submit" size="lg" type="submit">
-                  Ganti password
-                </Button>
-              </div>
-            </form>
+            <ChangePasswordForm action={passwordAction} />
           </CardContent>
         </Card>
 

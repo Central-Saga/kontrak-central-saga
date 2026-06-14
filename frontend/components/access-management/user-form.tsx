@@ -4,6 +4,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { SelectionGroup } from "@/components/access-management/shared";
 
 type UserFormProps = {
@@ -55,14 +56,13 @@ export function UserForm({ action, mode, roles, values }: UserFormProps) {
 
             <Field>
               <FieldLabel htmlFor="user-password">Password {isCreate ? "awal" : "baru (opsional)"}</FieldLabel>
-              <Input
+              <PasswordInput
                 data-testid="user-form-password"
                 id="user-password"
                 minLength={8}
                 name="password"
                 placeholder={isCreate ? "Minimal 8 karakter" : "Kosongkan bila tidak ingin mengubah password"}
                 required={isCreate}
-                type="password"
               />
               <FieldDescription>
                 {isCreate
