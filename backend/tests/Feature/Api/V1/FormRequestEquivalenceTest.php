@@ -525,3 +525,40 @@ it('PROJECT PROGRESS: POST kedua untuk kontrak sama → UPDATE, bukan row baru',
     expect($record->progress_title)->toBe('Update Kedua');
     expect((int) $record->percentage)->toBe(50);
 });
+
+// =========================================================================
+// 8. DATE FORMAT REGRESSION TESTS — DEFECT-001
+//    Rule `date` Laravel pakai strtotime() yang lenient → terima dd-mm-yyyy.
+//    5 field di bawah pakai rule identik → diprediksi FAIL semua.
+//    Setelah fix `date_format:Y-m-d`, semua harus PASS.
+// =========================================================================
+
+it('CONTRACT: start_date format invalid (01-07-2026) → 422 [DEFECT-001]', function (): void {
+    $this->postJson('/api/v1/contracts', validContractPayload(['start_date' => '01-07-2026']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['start_date']);
+});
+
+it('CONTRACT: end_date format invalid (01-07-2026) → 422 [DEFECT-001]', function (): void {
+    $this->postJson('/api/v1/contracts', validContractPayload(['end_date' => '01-07-2026']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['end_date']);
+});
+
+it('PAYMENT TERM: due_date format invalid (01-07-2026) → 422 [DEFECT-001]', function (): void {
+    $this->postJson('/api/v1/payment-terms', validPaymentTermPayload(['due_date' => '01-07-2026']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['due_date']);
+});
+
+it('PAYMENT: payment_date format invalid (01-07-2026) → 422 [DEFECT-001]', function (): void {
+    $this->postJson('/api/v1/payments', validPaymentPayload(['payment_date' => '01-07-2026']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['payment_date']);
+});
+
+it('PROJECT PROGRESS: progress_date format invalid (01-07-2026) → 422 [DEFECT-001]', function (): void {
+    $this->postJson('/api/v1/project-progress', validProjectProgressPayload(['progress_date' => '01-07-2026']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['progress_date']);
+});
