@@ -25,7 +25,7 @@ class UpdatePaymentRequest extends FormRequest
     {
         return [
             'payment_term_id' => ['sometimes', 'required', 'integer', 'exists:payment_terms,id'],
-            'payment_date' => ['sometimes', 'required', 'date'],
+            'payment_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
             'amount' => ['sometimes', 'required', 'numeric', 'min:0'],
             'method' => ['sometimes', 'required', 'string', 'max:50'],
             'status' => ['sometimes', 'required', 'string', Rule::in(Payment::STATUSES)],

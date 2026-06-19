@@ -41,7 +41,7 @@ class UpdatePaymentTermRequest extends FormRequest
                     ),
             ],
             'term_title' => ['sometimes', 'required', 'string', 'max:255'],
-            'due_date' => ['sometimes', 'required', 'date'],
+            'due_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
             'amount' => ['sometimes', 'required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'status' => ['sometimes', 'required', 'string', Rule::in(PaymentTerm::STATUSES)],

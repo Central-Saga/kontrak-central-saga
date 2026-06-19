@@ -35,7 +35,7 @@ class StorePaymentTermRequest extends FormRequest
                 ),
             ],
             'term_title' => ['required', 'string', 'max:255'],
-            'due_date' => ['required', 'date'],
+            'due_date' => ['required', 'date_format:Y-m-d'],
             'amount' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'status' => ['required', 'string', Rule::in(PaymentTerm::STATUSES)],

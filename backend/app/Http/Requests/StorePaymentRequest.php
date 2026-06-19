@@ -25,7 +25,7 @@ class StorePaymentRequest extends FormRequest
     {
         return [
             'payment_term_id' => ['required', 'integer', 'exists:payment_terms,id'],
-            'payment_date' => ['required', 'date'],
+            'payment_date' => ['required', 'date_format:Y-m-d'],
             'amount' => ['required', 'numeric', 'min:0'],
             'method' => ['required', 'string', 'max:50'],
             'status' => ['required', 'string', Rule::in(Payment::STATUSES)],

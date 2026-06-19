@@ -25,7 +25,7 @@ class UpdateProjectProgressRequest extends FormRequest
     {
         return [
             'contract_id' => ['sometimes', 'required', 'integer', 'exists:contracts,id'],
-            'progress_date' => ['sometimes', 'required', 'date'],
+            'progress_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
             'progress_title' => ['sometimes', 'required', 'string', 'max:255'],
             'progress_description' => ['sometimes', 'required', 'string'],
             'percentage' => ['sometimes', 'required', 'integer', 'between:0,100'],

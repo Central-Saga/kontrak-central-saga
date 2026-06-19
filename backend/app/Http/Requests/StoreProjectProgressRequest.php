@@ -25,7 +25,7 @@ class StoreProjectProgressRequest extends FormRequest
     {
         return [
             'contract_id' => ['required', 'integer', 'exists:contracts,id'],
-            'progress_date' => ['required', 'date'],
+            'progress_date' => ['required', 'date_format:Y-m-d'],
             'progress_title' => ['required', 'string', 'max:255'],
             'progress_description' => ['required', 'string'],
             'percentage' => ['required', 'integer', 'between:0,100'],
