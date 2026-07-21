@@ -654,13 +654,13 @@ export async function sendUserPasswordResetLinkAction(userId: number) {
   redirect(appendMessage(`/app/users/${userId}/edit`, "status", "reset_link_sent"));
 }
 
-export async function sendClientPasswordResetLinkAction(clientId: number) {
+export async function sendClientPasswordResetLinkAction(clientId: number, returnPath?: string) {
   try {
     await sendClientPasswordResetLink(clientId);
   } catch (error) {
     redirectForUnauthorized(error);
-    redirect(appendMessage(`/app/clients/${clientId}/edit`, "error", getFallbackErrorMessage(error)));
+    redirect(appendMessage(returnPath ?? `/app/clients/${clientId}/edit`, "error", getFallbackErrorMessage(error)));
   }
 
-  redirect(appendMessage(`/app/clients/${clientId}/edit`, "status", "reset_link_sent"));
+  redirect(appendMessage(returnPath ?? `/app/clients/${clientId}/edit`, "status", "reset_link_sent"));
 }

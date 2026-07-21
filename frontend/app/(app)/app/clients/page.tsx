@@ -1,4 +1,4 @@
-import { deleteClientAction } from "@/app/(app)/app/access-management/actions"
+import { deleteClientAction, sendClientPasswordResetLinkAction } from "@/app/(app)/app/access-management/actions"
 import { RowActionButtons } from "@/components/access-management/row-action-buttons"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
@@ -16,6 +16,7 @@ const statusMessages = {
   created: "Klien baru berhasil ditambahkan.",
   updated: "Data klien berhasil diperbarui.",
   deleted: "Klien berhasil dihapus.",
+  reset_link_sent: "Link reset password portal berhasil dikirim ke email klien.",
 }
 
 function ClientStatusPill({ status }: { status: string }) {
@@ -83,6 +84,9 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                   <tbody>
                     {clients.data.map((client) => {
                       const deleteAction = deleteClientAction.bind(null, client.id)
+                      const resetAction = client.portal_access_enabled
+                        ? sendClientPasswordResetLinkAction.bind(null, client.id, "/app/clients")
+                        : undefined
                       return (
                         <tr key={client.id}>
                           <td className="border border-line px-4 py-3.5 align-top font-medium text-foreground">{client.client_code}</td>
@@ -108,12 +112,16 @@ export default async function ClientsPage({ searchParams }: { searchParams: Page
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <RowActionButtons
+                              canReset={client.portal_access_enabled}
                               deleteAction={deleteAction}
                               deleteLabel={`Hapus ${client.company_name}`}
                               deleteTestId={`client-delete-${client.id}`}
                               editHref={`/app/clients/${client.id}/edit`}
                               editLabel={`Ubah ${client.company_name}`}
                               editTestId={`client-edit-${client.id}`}
+                              resetAction={resetAction}
+                              resetLabel={`Kirim link reset password portal untuk ${client.company_name}`}
+                              resetTestId={`client-reset-password-${client.id}`}
                               viewHref={`/app/clients/${client.id}`}
                               viewLabel={`Lihat detail ${client.company_name}`}
                               viewTestId={`client-view-${client.id}`}

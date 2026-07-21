@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { EyeIcon, HistoryIcon, PencilLineIcon, Trash2Icon } from "lucide-react"
+import { EyeIcon, HistoryIcon, MailIcon, PencilLineIcon, Trash2Icon } from "lucide-react"
 
 import { DeleteConfirmationDialog } from "@/components/access-management/delete-confirmation-dialog"
 import { buttonVariants } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { buttonVariants } from "@/components/ui/button"
 type RowActionButtonsProps = {
   canDelete?: boolean
   canEdit?: boolean
+  canReset?: boolean
   deleteAction: () => Promise<void>
   deleteLabel: string
   deleteTestId: string
@@ -20,6 +21,9 @@ type RowActionButtonsProps = {
   historyHref?: string
   historyLabel?: string
   historyTestId?: string
+  resetAction?: () => Promise<void>
+  resetLabel?: string
+  resetTestId?: string
   viewHref?: string
   viewLabel?: string
   viewTestId?: string
@@ -50,6 +54,7 @@ function ActionLinkButton({ href, icon, label, testId, tooltipLabel }: ActionLin
 export function RowActionButtons({
   canDelete = true,
   canEdit = true,
+  canReset = true,
   deleteAction,
   deleteLabel,
   deleteTestId,
@@ -60,6 +65,9 @@ export function RowActionButtons({
   historyHref,
   historyLabel,
   historyTestId,
+  resetAction,
+  resetLabel,
+  resetTestId,
   viewHref,
   viewLabel,
   viewTestId,
@@ -104,6 +112,20 @@ export function RowActionButtons({
         >
           <Trash2Icon aria-hidden data-icon="inline-start" />
         </DeleteConfirmationDialog>
+      ) : null}
+
+      {canReset && resetAction ? (
+        <form action={resetAction} className="contents">
+          <button
+            aria-label={resetLabel ?? "Kirim link reset password portal"}
+            className={buttonVariants({ size: "icon-sm", variant: "outline" })}
+            data-testid={resetTestId}
+            title="Kirim link reset password portal"
+            type="submit"
+          >
+            <MailIcon aria-hidden data-icon="inline-start" />
+          </button>
+        </form>
       ) : null}
 
       {historyHref && historyLabel ? (
