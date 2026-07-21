@@ -359,6 +359,7 @@ export type ProjectProgressRecord = {
   progress_title: string;
   progress_description: string;
   percentage: number;
+  accumulated_percentage: number;
   status: string;
   milestone_reference?: string | null;
   notes?: string | null;
@@ -600,6 +601,12 @@ export async function deleteUser(userId: number): Promise<void> {
   });
 }
 
+export async function sendUserPasswordResetLink(userId: number): Promise<{ message: string }> {
+  return requestBackend<{ message: string }>(`/api/v1/users/${userId}/send-reset-link`, {
+    method: "POST",
+  });
+}
+
 export async function listRoles(options: {
   page?: number;
   search?: string;
@@ -731,6 +738,12 @@ export async function updateClient(clientId: number, input: ClientMutationInput)
 export async function deleteClient(clientId: number): Promise<void> {
   await requestBackend<void>(`/api/v1/clients/${clientId}`, {
     method: "DELETE",
+  });
+}
+
+export async function sendClientPasswordResetLink(clientId: number): Promise<{ message: string }> {
+  return requestBackend<{ message: string }>(`/api/v1/clients/${clientId}/send-reset-link`, {
+    method: "POST",
   });
 }
 

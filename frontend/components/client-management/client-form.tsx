@@ -22,6 +22,7 @@ import { generateClientCode } from "@/app/(app)/app/access-management/client-act
 type ClientFormProps = {
   action: (formData: FormData) => Promise<void>;
   mode: "create" | "edit";
+  resetAction?: () => Promise<void>;
   values?: {
     address?: string | null;
     client_code?: string;
@@ -39,7 +40,7 @@ const statusOptions = [
   { label: "Tidak aktif", value: "inactive" },
 ];
 
-export function ClientForm({ action, mode, values }: ClientFormProps) {
+export function ClientForm({ action, mode, resetAction, values }: ClientFormProps) {
   const isCreate = mode === "create";
   const [clientCode, setClientCode] = useState(values?.client_code ?? "");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -252,6 +253,13 @@ export function ClientForm({ action, mode, values }: ClientFormProps) {
             <Button data-testid="client-form-submit" size="lg" type="submit">
               {isCreate ? "Simpan klien" : "Simpan perubahan"}
             </Button>
+            {!isCreate && alreadyHasPortal && resetAction ? (
+              <form action={resetAction} className="contents">
+                <Button size="lg" type="submit" variant="outline">
+                  Kirim link reset password portal
+                </Button>
+              </form>
+            ) : null}
             <Link className={buttonVariants({ size: "lg", variant: "outline" })} href="/app/clients">
               Batal
             </Link>

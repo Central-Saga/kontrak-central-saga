@@ -10,6 +10,7 @@ import { SelectionGroup } from "@/components/access-management/shared";
 type UserFormProps = {
   action: (formData: FormData) => Promise<void>;
   mode: "create" | "edit";
+  resetAction?: () => Promise<void>;
   roles: Array<{
     id: number;
     name: string;
@@ -22,7 +23,7 @@ type UserFormProps = {
   };
 };
 
-export function UserForm({ action, mode, roles, values }: UserFormProps) {
+export function UserForm({ action, mode, resetAction, roles, values }: UserFormProps) {
   const isCreate = mode === "create";
 
   return (
@@ -91,6 +92,13 @@ export function UserForm({ action, mode, roles, values }: UserFormProps) {
             <Button data-testid="user-form-submit" size="lg" type="submit">
               {isCreate ? "Simpan pengguna" : "Simpan perubahan"}
             </Button>
+            {!isCreate && resetAction ? (
+              <form action={resetAction} className="contents">
+                <Button size="lg" type="submit" variant="outline">
+                  Kirim link reset password
+                </Button>
+              </form>
+            ) : null}
             <Link className={buttonVariants({ size: "lg", variant: "outline" })} href="/app/users">
               Batal
             </Link>

@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\UpdateAuthenticatedPasswordRequest;
 use App\Http\Requests\UpdateAuthenticatedProfileRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\ValidationException;
@@ -108,6 +111,35 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logged out successfully.',
+        ]);
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        Password::broker('users')->sendResetLink(['email' => $request->validated('email')]);
+
+        return response()->json([
+            'message' => 'Jika email terdaftar, link reset password telah dikirim.',
+        ]);
+    }
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $status = Password::broker('users')->reset(
+            $request->validated(),
+            function (User $user, string $password): void {
+                $user->forceFill(['password' => $password])->save();
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'Password berhasil direset. Silakan login dengan password baru.',
+            ]);
+        }
+
+        throw ValidationException::withMessages([
+            'email' => [__($status)],
         ]);
     }
 

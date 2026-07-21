@@ -23,7 +23,7 @@ class ContractFactory extends Factory
 
         return [
             'client_id' => Client::factory(),
-            'contract_number' => fake()->unique()->bothify('KCS-2026-###'),
+            'contract_number' => 'KCS-'.strtoupper(uniqid()),
             'contract_title' => 'Kontrak '.fake()->bs(),
             'project_name' => fake()->catchPhrase(),
             'contract_date' => fake()->dateTimeBetween('-3 months', 'now'),

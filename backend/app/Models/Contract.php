@@ -95,7 +95,10 @@ class Contract extends Model implements HasMedia
 
     public function latestProgress(): HasOne
     {
-        return $this->hasOne(ProjectProgress::class)->latestOfMany('progress_date');
+        return $this->hasOne(ProjectProgress::class)->ofMany([
+            'progress_date' => 'max',
+            'id' => 'max',
+        ]);
     }
 
     public function documentVersions(): HasMany

@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProjectProgressResource;
 use App\Http\Requests\StoreProjectProgressRequest;
 use App\Http\Requests\UpdateProjectProgressRequest;
+use App\Http\Resources\ProjectProgressResource;
 use App\Models\Contract;
 use App\Models\ProjectProgress;
 use App\Models\User;
+use App\Services\ProjectProgressAccumulationService;
 use App\Support\OperationalDataAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,11 +47,15 @@ class ProjectProgressController extends Controller
 
         abort_unless(OperationalDataAccess::canAccessContract($contract, $user), 403);
 
-        // 1 kontrak = 1 data progres. Update existing or create new.
-        $projectProgress = ProjectProgress::updateOrCreate(
-            ['contract_id' => $contract->id],
-            $data
-        );
+        $previousAccumulated = (int) ProjectProgress::where('contract_id', $contract->id)
+            ->latest('progress_date')
+            ->latest('created_at')
+            ->latest('id')
+            ->value('accumulated_percentage');
+
+        $data['accumulated_percentage'] = min(100, $previousAccumulated + (int) $data['percentage']);
+
+        $projectProgress = ProjectProgress::create($data);
 
         return new ProjectProgressResource($projectProgress->load('contract:id,client_id,contract_number,contract_title'));
     }
@@ -77,6 +82,8 @@ class ProjectProgressController extends Controller
 
         $projectProgress->update($data);
 
+        (new ProjectProgressAccumulationService)->recomputeForContract($projectProgress->contract_id);
+
         return new ProjectProgressResource($projectProgress->fresh()->load('contract:id,client_id,contract_number,contract_title'));
     }
 
@@ -87,7 +94,10 @@ class ProjectProgressController extends Controller
 
         abort_unless(OperationalDataAccess::canAccessProjectProgress($projectProgress, $user), 403);
 
+        $contractId = $projectProgress->contract_id;
         $projectProgress->delete();
+
+        (new ProjectProgressAccumulationService)->recomputeForContract($contractId);
 
         return response()->json([], 204);
     }

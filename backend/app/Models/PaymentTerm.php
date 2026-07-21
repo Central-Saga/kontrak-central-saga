@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Database\Factories\PaymentTermFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -24,7 +25,7 @@ use Spatie\Activitylog\Support\LogOptions;
 ])]
 class PaymentTerm extends Model
 {
-    /** @use HasFactory<\Database\Factories\PaymentTermFactory> */
+    /** @use HasFactory<PaymentTermFactory> */
     use HasFactory, LogsActivity;
 
     public const array STATUSES = [

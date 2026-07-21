@@ -13,6 +13,7 @@ use App\Support\OperationalDataAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Password;
 
 class ClientController extends Controller
 {
@@ -145,6 +146,28 @@ class ClientController extends Controller
         $client->delete();
 
         return response()->json([], 204);
+    }
+
+    public function sendResetLink(Request $request, Client $client): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless(OperationalDataAccess::canAccessClient($client, $user), 403);
+
+        $portalUser = $client->user;
+
+        if (! $portalUser || ! filter_var($portalUser->email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json([
+                'message' => 'Klien tidak memiliki akun portal dengan email valid.',
+            ], 422);
+        }
+
+        Password::broker('users')->sendResetLink(['email' => $portalUser->email]);
+
+        return response()->json([
+            'message' => 'Link reset password portal berhasil dikirim ke '.$portalUser->email.'.',
+        ]);
     }
 
     /**

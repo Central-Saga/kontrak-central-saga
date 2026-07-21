@@ -319,7 +319,7 @@ export default async function ContractDetailPage({
           <div className="grid gap-4 md:grid-cols-3">
             <DetailItem label="Jumlah termin" value={String(contract.payment_terms_count ?? contract.payment_terms?.length ?? 0)} />
             <DetailItem label="Jumlah update progres" value={String(contract.project_progress_updates_count ?? contract.project_progress?.length ?? 0)} />
-            <DetailItem label="Progres terbaru" value={latestProgress ? `${latestProgress.percentage}% • ${latestProgress.progress_title}` : "Belum ada laporan progres"} />
+            <DetailItem label="Progres terbaru" value={latestProgress ? `${latestProgress.accumulated_percentage}% • ${latestProgress.progress_title}` : "Belum ada laporan progres"} />
           </div>
 
           {latestProgress ? (
@@ -328,7 +328,7 @@ export default async function ContractDetailPage({
               <ProgressBar
                 label={latestProgress.progress_title}
                 size="lg"
-                value={Number(latestProgress.percentage) || 0}
+                value={Number(latestProgress.accumulated_percentage) || 0}
                 variant={latestProgress.status as never}
               />
             </div>

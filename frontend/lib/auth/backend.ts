@@ -183,3 +183,22 @@ export async function updateCurrentUserPassword(
     body: JSON.stringify(input),
   })
 }
+
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
+  return requestBackend<{ message: string }>("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function resetPassword(input: {
+  email: string
+  token: string
+  password: string
+  password_confirmation: string
+}): Promise<{ message: string }> {
+  return requestBackend<{ message: string }>("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
+}

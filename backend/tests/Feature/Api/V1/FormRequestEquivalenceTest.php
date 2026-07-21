@@ -20,7 +20,6 @@ use Laravel\Sanctum\Sanctum;
  * Bukan 1-skenario-per-kasus — tapi 1-skenario-per-kelas equivalence.
  * Coverage setara dengan tabel 73-skenario, tapi test hanya ~50 case.
  */
-
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
@@ -37,7 +36,7 @@ function validClientPayload(array $overrides = []): array
         'client_code' => 'CLT-EQV-001',
         'company_name' => 'PT Equivalence Testing',
         'contact_person' => 'Budi Santoso',
-        'email' => 'eqv-' . uniqid() . '@contoh.co.id',
+        'email' => 'eqv-'.uniqid().'@contoh.co.id',
         'phone' => '081234567890',
         'address' => 'Jl. Testing No. 1',
         'status' => 'active',
@@ -48,9 +47,10 @@ function validClientPayload(array $overrides = []): array
 function validContractPayload(array $overrides = []): array
 {
     $client = Client::factory()->create();
+
     return array_merge([
         'client_id' => $client->id,
-        'contract_number' => 'KTR-EQV-' . uniqid(),
+        'contract_number' => 'KTR-EQV-'.uniqid(),
         'contract_title' => 'Kontrak Equivalence Testing',
         'project_name' => 'Proyek Eqv Test',
         'contract_date' => '2026-07-01',
@@ -65,6 +65,7 @@ function validContractPayload(array $overrides = []): array
 function validPaymentTermPayload(array $overrides = []): array
 {
     $contract = Contract::factory()->create();
+
     return array_merge([
         'contract_id' => $contract->id,
         'term_number' => 1,
@@ -78,6 +79,7 @@ function validPaymentTermPayload(array $overrides = []): array
 function validPaymentPayload(array $overrides = []): array
 {
     $term = PaymentTerm::factory()->create();
+
     return array_merge([
         'payment_term_id' => $term->id,
         'payment_date' => '2026-07-15',
@@ -90,6 +92,7 @@ function validPaymentPayload(array $overrides = []): array
 function validProjectProgressPayload(array $overrides = []): array
 {
     $contract = Contract::factory()->create();
+
     return array_merge([
         'contract_id' => $contract->id,
         'progress_date' => '2026-07-15',
@@ -507,7 +510,7 @@ it('PROJECT PROGRESS: body kosong {} → 422 minimal 6 error', function (): void
 // 7. PROJECT PROGRESS UPSERT (Revisi #2 — business rule)
 // =========================================================================
 
-it('PROJECT PROGRESS: POST kedua untuk kontrak sama → UPDATE, bukan row baru', function (): void {
+it('PROJECT PROGRESS: POST kedua untuk kontrak sama → BARIS BARU dengan akumulasi', function (): void {
     $payload = validProjectProgressPayload([
         'progress_title' => 'Update Pertama',
         'percentage' => 25,
@@ -516,14 +519,15 @@ it('PROJECT PROGRESS: POST kedua untuk kontrak sama → UPDATE, bukan row baru',
 
     $payload['progress_title'] = 'Update Kedua';
     $payload['percentage'] = 50;
-    $this->postJson('/api/v1/project-progress', $payload)->assertStatus(200);
+    $this->postJson('/api/v1/project-progress', $payload)->assertStatus(201);
 
     $count = ProjectProgress::query()->where('contract_id', $payload['contract_id'])->count();
-    expect($count)->toBe(1);
+    expect($count)->toBe(2);
 
-    $record = ProjectProgress::query()->where('contract_id', $payload['contract_id'])->first();
-    expect($record->progress_title)->toBe('Update Kedua');
-    expect((int) $record->percentage)->toBe(50);
+    $latest = ProjectProgress::query()->where('contract_id', $payload['contract_id'])->latest('progress_date')->latest('id')->first();
+    expect($latest->progress_title)->toBe('Update Kedua');
+    expect((int) $latest->percentage)->toBe(50);
+    expect((int) $latest->accumulated_percentage)->toBe(75);
 });
 
 // =========================================================================

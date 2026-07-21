@@ -22,8 +22,10 @@ import {
   getAccessManagementErrorMessage,
   getFirstValidationError,
   isAccessManagementError,
+  sendClientPasswordResetLink,
   sendPaymentTermReminder,
   sendProjectProgressReminder,
+  sendUserPasswordResetLink,
   updateClient,
   updateContract,
   updatePayment,
@@ -639,4 +641,26 @@ export async function sendProjectProgressReminderAction(contractId: number, prog
 
   revalidateAccessManagementPaths([`/app/contracts/${contractId}`]);
   redirect(appendMessage(`/app/contracts/${contractId}`, "status", "progress_reminder_sent"));
+}
+
+export async function sendUserPasswordResetLinkAction(userId: number) {
+  try {
+    await sendUserPasswordResetLink(userId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/users/${userId}/edit`, "error", getFallbackErrorMessage(error)));
+  }
+
+  redirect(appendMessage(`/app/users/${userId}/edit`, "status", "reset_link_sent"));
+}
+
+export async function sendClientPasswordResetLinkAction(clientId: number) {
+  try {
+    await sendClientPasswordResetLink(clientId);
+  } catch (error) {
+    redirectForUnauthorized(error);
+    redirect(appendMessage(`/app/clients/${clientId}/edit`, "error", getFallbackErrorMessage(error)));
+  }
+
+  redirect(appendMessage(`/app/clients/${clientId}/edit`, "status", "reset_link_sent"));
 }

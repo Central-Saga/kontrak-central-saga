@@ -88,6 +88,8 @@ Route::post('/v1/diag/seed-roles', function () {
 Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->group(function (): void {
         Route::post('login', [AuthController::class, 'login']);
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('me', [AuthController::class, 'me']);
@@ -191,6 +193,12 @@ Route::prefix('v1')->group(function (): void {
                 ->middlewareFor('store', 'permission:create users')
                 ->middlewareFor('update', 'permission:update users')
                 ->middlewareFor('destroy', 'permission:delete users');
+
+            Route::post('users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
+                ->middleware('permission:update users');
+
+            Route::post('clients/{client}/send-reset-link', [ClientController::class, 'sendResetLink'])
+                ->middleware('permission:manage clients');
 
             Route::apiResource('roles', RoleController::class)
                 ->middlewareFor(['index', 'show'], 'permission:read roles')

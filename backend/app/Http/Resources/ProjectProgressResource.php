@@ -27,6 +27,7 @@ class ProjectProgressResource extends JsonResource
             'progress_title' => $this->progress_title,
             'progress_description' => $this->progress_description,
             'percentage' => $this->percentage,
+            'accumulated_percentage' => $this->accumulated_percentage,
             'status' => $this->status,
             'milestone_reference' => $this->milestone_reference,
             'notes' => $this->notes,

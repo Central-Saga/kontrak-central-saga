@@ -229,6 +229,12 @@ export function LoginForm({
               required
               value={password}
             />
+            <a
+              className="mt-1 text-right text-sm text-primary underline-offset-4 hover:underline"
+              href="/forgot-password"
+            >
+              Lupa password?
+            </a>
           </Field>
 
           <Field>

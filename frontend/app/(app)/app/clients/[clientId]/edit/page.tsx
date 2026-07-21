@@ -1,4 +1,4 @@
-import { updateClientAction } from "@/app/(app)/app/access-management/actions"
+import { sendClientPasswordResetLinkAction, updateClientAction } from "@/app/(app)/app/access-management/actions"
 import { StatusToastBridge } from "@/components/access-management/status-toast-bridge"
 import { ClientForm } from "@/components/client-management/client-form"
 import { PageHeaderCard, PageStack, StatusBanner } from "@/components/access-management/shared"
@@ -39,6 +39,7 @@ export default async function EditClientPage({
   }
 
   const action = updateClientAction.bind(null, client.id)
+  const resetAction = sendClientPasswordResetLinkAction.bind(null, client.id)
 
   return (
     <PageStack>
@@ -46,10 +47,11 @@ export default async function EditClientPage({
         description="Perbarui identitas perusahaan, kontak utama, dan status operasional klien dari satu halaman edit yang ringkas."
         title={`Ubah klien: ${client.company_name}`}
       />
-      <StatusToastBridge error={error ?? undefined} />
+      <StatusToastBridge error={error ?? undefined} messages={{ reset_link_sent: "Link reset password portal berhasil dikirim ke email klien." }} />
       <ClientForm
         action={action}
         mode="edit"
+        resetAction={resetAction}
         values={{
           address: client.address,
           client_code: client.client_code,

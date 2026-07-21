@@ -411,10 +411,11 @@ function ProgressCard({ contractId, progress, permissions }: { contractId: numbe
           <p className="text-base font-semibold text-foreground">{progress.progress_title}</p>
 
           <ProgressBar
-            label={`Progres ${progress.status === "completed" ? "akhir" : "saat ini"}`}
-            value={Number(progress.percentage) || 0}
+            label={`Akumulasi progres ${progress.status === "completed" ? "akhir" : "sampai periode ini"}`}
+            value={Number(progress.accumulated_percentage) || 0}
             variant={progress.status as never}
           />
+          <p className="text-sm text-muted">Penambahan periode ini: {Number(progress.percentage) || 0}%</p>
 
           <p className="text-sm leading-7 text-muted">{progress.progress_description}</p>
           {progress.milestone_reference ? <p className="text-xs text-muted">Milestone: {progress.milestone_reference}</p> : null}
@@ -453,7 +454,6 @@ export function ContractOperationsSections({ contract, permissions }: { contract
   const contractId = contract.id;
   const paymentTerms = contract.payment_terms ?? [];
   const progressUpdates = contract.project_progress ?? [];
-  const latestProgress = progressUpdates.length > 0 ? progressUpdates.sort((a, b) => new Date(b.progress_date).getTime() - new Date(a.progress_date).getTime())[0] : null;
   const createPaymentTerm = createPaymentTermAction.bind(null, contractId);
   const createPayment = createPaymentAction.bind(null, contractId);
   const createProgress = createProjectProgressAction.bind(null, contractId);
@@ -480,12 +480,15 @@ export function ContractOperationsSections({ contract, permissions }: { contract
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Data progres proyek</CardTitle>
-            <CardDescription>Catatan perkembangan proyek berdasarkan tanggal laporan, persentase capaian, dan milestone terkait.</CardDescription>
+            <CardTitle className="text-2xl">Riwayat progres proyek</CardTitle>
+            <CardDescription>Setiap simpan menambahkan laporan progress baru. Persentase tiap periode diakumulasi secara otomatis.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {latestProgress ? (
-              <ProgressCard contractId={contractId} progress={latestProgress} permissions={permissions} />
+            {progressUpdates.length ? (
+              progressUpdates
+                .slice()
+                .sort((a, b) => new Date(b.progress_date).getTime() - new Date(a.progress_date).getTime())
+                .map((progress) => <ProgressCard key={progress.id} contractId={contractId} progress={progress} permissions={permissions} />)
             ) : (
               <Alert>
                 <AlertTitle>Belum ada progres proyek</AlertTitle>
@@ -593,8 +596,8 @@ export function ContractOperationsSections({ contract, permissions }: { contract
           {permissions.canCreateProgress ? (
             <Card>
               <CardHeader>
-                <CardTitle>{latestProgress ? "Update progres proyek" : "Tambah progres proyek"}</CardTitle>
-                <CardDescription>Masukkan perkembangan pekerjaan proyek sesuai tahapan yang sedang berjalan. 1 kontrak = 1 data progres — input baru akan memperbarui data yang sudah ada.</CardDescription>
+                <CardTitle>{progressUpdates.length ? "Update progres proyek" : "Tambah progres proyek"}</CardTitle>
+                <CardDescription>Masukkan perkembangan pekerjaan proyek sesuai tahapan yang sedang berjalan. Setiap simpan menambahkan laporan progress baru. Persentase tiap periode diakumulasi secara otomatis.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form action={createProgress} className="flex flex-col gap-6">
@@ -605,8 +608,9 @@ export function ContractOperationsSections({ contract, permissions }: { contract
                       <Input id="create-project-progress-title" name="progress_title" placeholder="Pondasi selesai, instalasi dimulai" required />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="create-project-progress-percentage">Persentase progres</FieldLabel>
+                      <FieldLabel htmlFor="create-project-progress-percentage">Persentase penambahan progres</FieldLabel>
                       <Input id="create-project-progress-percentage" name="percentage" type="number" min="0" max="100" required />
+                      <FieldDescription>Masukkan tambahan persentase yang dicapai pada periode ini. Sistem akan menjumlahkannya dengan laporan sebelumnya.</FieldDescription>
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="create-project-progress-status">Status progres</FieldLabel>

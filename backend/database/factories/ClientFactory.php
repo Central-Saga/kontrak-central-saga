@@ -18,10 +18,10 @@ class ClientFactory extends Factory
     public function definition(): array
     {
         return [
-            'client_code' => 'CL-'.fake()->unique()->numerify('###'),
+            'client_code' => 'CL-'.strtoupper(uniqid()),
             'company_name' => fake()->company(),
             'contact_person' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'email' => 'fake-'.uniqid().'@example.test',
             'phone' => fake()->phoneNumber(),
             'address' => fake()->address(),
             'status' => fake()->randomElement(Client::STATUSES),

@@ -1,4 +1,4 @@
-import { updateUserAction } from "@/app/(app)/app/access-management/actions";
+import { sendUserPasswordResetLinkAction, updateUserAction } from "@/app/(app)/app/access-management/actions";
 import { getUser, listRoleOptions } from "@/lib/access-management/backend";
 import {
   handleModulePageError,
@@ -53,6 +53,9 @@ export default async function EditUserPage({
   }
 
   const updateAction = updateUserAction.bind(null, numericUserId);
+  const resetAction = sendUserPasswordResetLinkAction.bind(null, numericUserId);
+
+  const status = readSearchParam(resolvedSearchParams, "status");
 
   return (
     <PageStack>
@@ -61,10 +64,11 @@ export default async function EditUserPage({
         title={`Ubah pengguna: ${user.name}`}
       />
 
-      <StatusToastBridge error={error ?? undefined} />
+      <StatusToastBridge error={error ?? undefined} messages={{ reset_link_sent: "Link reset password berhasil dikirim ke email pengguna." }} status={status ?? undefined} />
       <UserForm
         action={updateAction}
         mode="edit"
+        resetAction={resetAction}
         roles={roles}
         values={{
           email: user.email,

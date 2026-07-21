@@ -11,6 +11,7 @@ use Database\Seeders\ModuleStarterSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
@@ -85,5 +86,14 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json([], 204);
+    }
+
+    public function sendResetLink(Request $request, User $user): JsonResponse
+    {
+        Password::broker('users')->sendResetLink(['email' => $user->email]);
+
+        return response()->json([
+            'message' => 'Link reset password berhasil dikirim ke '.$user->email.'.',
+        ]);
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PaymentTermResource;
 use App\Http\Requests\StorePaymentTermRequest;
 use App\Http\Requests\UpdatePaymentTermRequest;
+use App\Http\Resources\PaymentTermResource;
 use App\Models\Contract;
 use App\Models\PaymentTerm;
 use App\Models\User;
