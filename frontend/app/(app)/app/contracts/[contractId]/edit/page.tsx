@@ -11,6 +11,7 @@ import {
   getContract,
   listClients,
 } from "@/lib/access-management/backend"
+import { formatDateTime } from "@/lib/date-format"
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
 
 const statusMessages = {
@@ -21,23 +22,6 @@ const versionStatusLabels: Record<string, string> = {
   draft: "Draft",
   final: "Final",
   review: "Review",
-}
-
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return null
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
 }
 
 export default async function EditContractPage({

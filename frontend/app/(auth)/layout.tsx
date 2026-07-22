@@ -14,6 +14,8 @@ type AuthLayoutProps = {
 export default async function AuthLayout({ children }: AuthLayoutProps) {
   const session = await readSessionState();
 
+  // Reset password intentionally lives outside this group so it can be opened
+  // while already logged in (e.g. an admin following a client reset link).
   if (session.status === "authenticated") {
     redirect(APP_HOME_PATH);
   }

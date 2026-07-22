@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\PaymentTerm;
 use App\Models\ProjectProgress;
 use App\Models\User;
+use App\Services\ProjectProgressAccumulationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Spatie\Permission\Models\Permission;
@@ -245,6 +246,34 @@ class ModuleStarterSeeder extends Seeder
                 'contract_status' => 'completed',
                 'notes' => 'Project selesai dan menjadi referensi laporan.',
             ],
+            [
+                'contract_number' => 'KCS-2026-004',
+                'client_code' => 'CL-001',
+                'contract_title' => 'Portal klien self-service',
+                'project_name' => 'Portal Klien',
+                'contract_date' => '2026-04-01',
+                'start_date' => '2026-04-05',
+                'end_date' => '2026-08-30',
+                'contract_value' => 275000000,
+                'project_scope' => 'Portal klien untuk melihat kontrak, termin, dan unduh dokumen.',
+                'payment_scheme_summary' => '30%-40%-30%',
+                'contract_status' => 'active',
+                'notes' => 'Kontrak baru, progres masih awal.',
+            ],
+            [
+                'contract_number' => 'KCS-2026-005',
+                'client_code' => 'CL-003',
+                'contract_title' => 'Notifikasi otomatis dan reminder',
+                'project_name' => 'Notifikasi Otomatis',
+                'contract_date' => '2026-05-10',
+                'start_date' => '2026-05-12',
+                'end_date' => '2026-09-15',
+                'contract_value' => 190000000,
+                'project_scope' => 'Pengembangan pengingat email untuk termin jatuh tempo dan kontrak berakhir.',
+                'payment_scheme_summary' => '50%-50%',
+                'contract_status' => 'active',
+                'notes' => 'Kontrak aktif, baru memulai development.',
+            ],
         ])->mapWithKeys(function (array $attributes) use ($clients, $admin, $projectManager): array {
             $operationalOwner = in_array($attributes['contract_number'], ['KCS-2026-001', 'KCS-2026-002'], true)
                 ? $projectManager
@@ -352,9 +381,11 @@ class ModuleStarterSeeder extends Seeder
 
         $progressUpdates = [
             ['contract' => 'KCS-2026-001', 'progress_date' => '2026-02-01', 'progress_title' => 'Setup modul kontrak', 'progress_description' => 'Struktur data kontrak dan relasi inti selesai.', 'percentage' => 35, 'status' => 'in_progress'],
-            ['contract' => 'KCS-2026-001', 'progress_date' => '2026-03-10', 'progress_title' => 'Dashboard awal', 'progress_description' => 'Dashboard internal dan ringkasan progres mulai stabil.', 'percentage' => 78, 'status' => 'in_progress'],
+            ['contract' => 'KCS-2026-001', 'progress_date' => '2026-03-10', 'progress_title' => 'Dashboard awal', 'progress_description' => 'Dashboard internal dan ringkasan progres mulai stabil.', 'percentage' => 43, 'status' => 'in_progress'],
             ['contract' => 'KCS-2026-002', 'progress_date' => '2026-03-05', 'progress_title' => 'Alur validasi finance', 'progress_description' => 'Upload bukti bayar dan alur review finance sedang diuji.', 'percentage' => 52, 'status' => 'delayed'],
             ['contract' => 'KCS-2026-003', 'progress_date' => '2026-01-18', 'progress_title' => 'Laporan final', 'progress_description' => 'Dashboard manajemen selesai dan sudah dipresentasikan.', 'percentage' => 100, 'status' => 'completed'],
+            ['contract' => 'KCS-2026-004', 'progress_date' => '2026-04-10', 'progress_title' => 'Wireframe portal klien', 'progress_description' => 'Desain awal halaman login dan dashboard klien.', 'percentage' => 30, 'status' => 'in_progress'],
+            ['contract' => 'KCS-2026-005', 'progress_date' => '2026-05-20', 'progress_title' => 'Setup job queue reminder', 'progress_description' => 'Konfigurasi scheduler dan template email pengingat.', 'percentage' => 25, 'status' => 'in_progress'],
         ];
 
         foreach ($progressUpdates as $progressUpdate) {
@@ -375,6 +406,11 @@ class ModuleStarterSeeder extends Seeder
                     'updated_by' => $progressOwner->id,
                 ],
             );
+        }
+
+        $accumulator = new ProjectProgressAccumulationService();
+        foreach ($contracts as $contract) {
+            $accumulator->recomputeForContract($contract->id);
         }
     }
 }

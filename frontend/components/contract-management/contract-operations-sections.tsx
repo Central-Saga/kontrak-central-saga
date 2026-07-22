@@ -23,6 +23,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "./contract-form";
 import type { ContractRecord, PaymentRecord, PaymentTermRecord, ProjectProgressRecord } from "@/lib/access-management/backend";
+import { formatDate } from "@/lib/date-format";
 
 const paymentTermStatusLabels: Record<string, string> = {
   pending: "Menunggu",
@@ -59,20 +60,6 @@ function formatCurrency(value: number | string) {
     currency: "IDR",
     maximumFractionDigits: 0,
   }).format(amount);
-}
-
-function formatDate(value?: string | null) {
-  if (!value) {
-    return "-";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date);
 }
 
 function statusPillClass(status: string, kind: "term" | "payment" | "progress") {
@@ -326,7 +313,7 @@ function PaymentTermCard({ contractId, term, paymentTerms, permissions }: { cont
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">{term.term_title}</p>
-            <p className="text-sm text-muted">Jatuh tempo {formatDate(term.due_date)} • {formatCurrency(term.amount)}</p>
+            <p className="text-sm text-muted">Jatuh tempo {formatDate(term.due_date) ?? "-"} • {formatCurrency(term.amount)}</p>
           </div>
           {term.description ? <p className="text-sm leading-7 text-muted">{term.description}</p> : null}
           {term.payable_after_condition ? <p className="text-xs text-muted">Syarat bayar: {term.payable_after_condition}</p> : null}
@@ -362,7 +349,7 @@ function PaymentTermCard({ contractId, term, paymentTerms, permissions }: { cont
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <SectionPill label={paymentStatusLabels[payment.status] ?? payment.status} status={payment.status} kind="payment" />
-                  <span className="text-xs text-muted">{formatDate(payment.payment_date)}</span>
+                  <span className="text-xs text-muted">{formatDate(payment.payment_date) ?? "-"}</span>
                 </div>
                 <p className="text-sm font-medium text-foreground">{formatCurrency(payment.amount)} • {payment.method}</p>
                 {payment.proof_files?.length ? (
@@ -406,7 +393,7 @@ function ProgressCard({ contractId, progress, permissions }: { contractId: numbe
         <div className="flex flex-1 flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <SectionPill label={progressStatusLabels[progress.status] ?? progress.status} status={progress.status} kind="progress" />
-            <span className="text-xs text-muted">{formatDate(progress.progress_date)}</span>
+            <span className="text-xs text-muted">{formatDate(progress.progress_date) ?? "-"}</span>
           </div>
           <p className="text-base font-semibold text-foreground">{progress.progress_title}</p>
 

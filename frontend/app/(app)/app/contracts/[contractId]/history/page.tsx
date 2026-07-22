@@ -9,6 +9,7 @@ import {
   getContract,
   listContractDocumentVersions,
 } from "@/lib/access-management/backend";
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page";
 
 const statusMessages = {
@@ -26,25 +27,6 @@ const statusColors: Record<string, string> = {
   review: "bg-accent-soft text-secondary-foreground border-highlight/20",
   final: "bg-primary/10 text-primary border-primary/20",
 };
-
-function formatDateTime(value?: string | null) {
-  if (!value) return "Belum tercatat";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "Belum tercatat";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-  }).format(date);
-}
 
 function formatBytes(value: number) {
   if (!Number.isFinite(value) || value <= 0) return "0 B";

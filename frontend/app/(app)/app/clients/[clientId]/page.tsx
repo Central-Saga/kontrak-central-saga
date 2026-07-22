@@ -5,6 +5,7 @@ import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/compo
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getClient } from "@/lib/access-management/backend"
+import { formatDate } from "@/lib/date-format"
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
 
 const statusMessages = {
@@ -20,20 +21,6 @@ const contractStatusLabels: Record<string, string> = {
   draft: "Draft",
   expired: "Kedaluwarsa",
   terminated: "Dihentikan",
-}
-
-function formatDate(value?: string | null) {
-  if (!value) {
-    return "-"
-  }
-
-  const parsedDate = new Date(value)
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(parsedDate)
 }
 
 function formatCurrency(value: number | string) {

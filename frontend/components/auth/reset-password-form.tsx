@@ -122,22 +122,26 @@ export function ResetPasswordForm({
           }
         | null;
 
-      if (!response.ok) {
-        const nextState = {
-          message: payload?.message ?? "Reset password gagal. Silakan coba lagi.",
-          success: false,
-        };
+      if (response.ok) {
+        const message = payload?.message ?? "Password berhasil direset. Silakan login dengan password baru.";
 
         startTransition(() => {
-          rememberSubmissionState(nextState);
+          rememberSubmissionState({ message, success: true });
         });
+
+        window.location.href = "/login?status=password-reset";
         return;
       }
 
-      const form = event.currentTarget;
-      form.action = "/auth/reset-password";
-      form.method = "POST";
-      form.submit();
+      const nextState = {
+        message: payload?.message ?? "Reset password gagal. Silakan coba lagi.",
+        success: false,
+      };
+
+      startTransition(() => {
+        rememberSubmissionState(nextState);
+      });
+      return;
     } catch {
       const nextState = {
         message: "Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.",
@@ -225,14 +229,23 @@ export function ResetPasswordForm({
           <Field>
             <div
               aria-live="polite"
-              className={cn("hidden", isInvalid && !isPending && "block")}
-              id="reset-password-error"
+              className={cn(
+                "hidden",
+                ((isInvalid && !isPending) || (submissionState.success && !isPending)) && "block",
+              )}
+              id="reset-password-message"
               role={isInvalid ? "alert" : undefined}
             >
-              <FieldError className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2">
-                <span className="font-medium">Reset password belum berhasil.</span>
-                <span className="mt-1 block text-sm text-muted-foreground">{submissionState.message}</span>
-              </FieldError>
+              {submissionState.success ? (
+                <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-emerald-600">
+                  <span className="font-medium">{submissionState.message}</span>
+                </div>
+              ) : (
+                <FieldError className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2">
+                  <span className="font-medium">Reset password belum berhasil.</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{submissionState.message}</span>
+                </FieldError>
+              )}
             </div>
           </Field>
         </FieldGroup>

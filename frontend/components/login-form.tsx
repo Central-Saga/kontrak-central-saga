@@ -27,6 +27,7 @@ type LoginFormState = {
 
 type LoginFormProps = React.ComponentProps<"div"> & {
   initialError?: LoginFormState | null;
+  initialSuccess?: LoginFormState | null;
   hasLogoAsset?: boolean;
   logoPath?: string;
 };
@@ -69,6 +70,7 @@ export function LoginForm({
   className,
   hasLogoAsset = false,
   initialError = null,
+  initialSuccess = null,
   logoPath = DEFAULT_BRAND_LOGO_PATH,
   ...props
 }: LoginFormProps) {
@@ -78,8 +80,10 @@ export function LoginForm({
   const [submissionState, rememberSubmissionState] = useActionState(resolveLoginState, initialLoginFormState);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<LoginFormState>(initialError ?? initialLoginFormState);
+  const [success, setSuccess] = useState<LoginFormState>(initialSuccess ?? initialLoginFormState);
 
   const isInvalid = !error.success && Boolean(error.message);
+  const isSuccess = success.success && Boolean(success.message);
   const errorTitle =
     error.code === "invalid_credentials"
       ? "Email atau password tidak cocok."
@@ -117,6 +121,7 @@ export function LoginForm({
 
     setIsPending(true);
     setError(initialLoginFormState);
+    setSuccess(initialLoginFormState);
 
     try {
       const response = await fetch("/auth/login", {
@@ -255,7 +260,7 @@ export function LoginForm({
           <Field>
             <div
               aria-live="polite"
-              className={cn("hidden", isInvalid && !isPending && "block")}
+              className={cn("hidden", (isInvalid && !isPending) && "block")}
               data-testid="auth-error"
               id="auth-error"
               role={isInvalid ? "alert" : undefined}
@@ -266,6 +271,16 @@ export function LoginForm({
               </FieldError>
             </div>
 
+            <div
+              aria-live="polite"
+              className={cn("hidden", isSuccess && !isPending && "block")}
+              data-testid="auth-success"
+              id="auth-success"
+            >
+              <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-emerald-600">
+                <span className="font-medium">{success.message}</span>
+              </div>
+            </div>
           </Field>
         </FieldGroup>
       </form>

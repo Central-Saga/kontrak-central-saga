@@ -7,6 +7,7 @@ import { EmptyStateCard, PageHeaderCard, PageStack, StatusBanner } from "@/compo
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { listClients, listContracts, type ContractRecord } from "@/lib/access-management/backend"
+import { formatDateTime } from "@/lib/date-format"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 import { hasAnyPermission } from "@/lib/auth/permissions"
 import { readSessionState } from "@/lib/auth/session"
@@ -51,23 +52,6 @@ function ContractStatusPill({ status }: { status: string }) {
             : "border-line bg-card-strong text-muted"
 
   return <span className={`${statusPillClassName} ${palette}`}>{contractStatusLabels[status] ?? status}</span>
-}
-
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return null
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
 }
 
 function formatCurrency(value: number | string) {

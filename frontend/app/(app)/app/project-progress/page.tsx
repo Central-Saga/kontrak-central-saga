@@ -10,6 +10,7 @@ import {
   deleteProjectProgressStandaloneAction,
 } from "@/app/(app)/app/access-management/actions"
 import { listContracts, listProjectProgress, type ProjectProgressRecord } from "@/lib/access-management/backend"
+import { formatDate } from "@/lib/date-format"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 import { hasAnyPermission } from "@/lib/auth/permissions"
 import { readSessionState } from "@/lib/auth/session"
@@ -34,13 +35,6 @@ const statusPillClassName = "inline-flex items-center rounded-full border px-3 p
 
 function ProgressStatusPill({ status }: { status: string }) {
   return <span className={`${statusPillClassName} border-line bg-white text-foreground`}>{progressStatusLabels[status] ?? status}</span>
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date)
 }
 
 export default async function ProjectProgressPage({ searchParams }: { searchParams: PageSearchParams }) {
@@ -106,7 +100,7 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                       <th className="w-[15%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Kontrak</th>
                       <th className="w-[12%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Tanggal</th>
                       <th className="w-[22%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Judul Progres</th>
-                      <th className="w-[10%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Persentase</th>
+                      <th className="w-[10%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Akumulasi</th>
                       <th className="w-[12%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Status</th>
                       <th className="w-[29%] border border-line bg-card-strong px-4 py-3 font-medium text-foreground">Aksi</th>
                     </tr>
@@ -125,7 +119,7 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                             </div>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
-                            <p className="text-sm text-foreground">{formatDate(progress.progress_date)}</p>
+                            <p className="text-sm text-foreground">{formatDate(progress.progress_date) ?? "-"}</p>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <p className="font-medium text-foreground">{progress.progress_title}</p>
@@ -136,11 +130,12 @@ export default async function ProjectProgressPage({ searchParams }: { searchPara
                               <div className="h-2 w-16 overflow-hidden rounded-full bg-muted/15 ring-1 ring-line dark:bg-[rgba(238,248,241,0.12)]">
                                 <div
                                   className="h-full rounded-full bg-primary"
-                                  style={{ width: `${progress.percentage}%` }}
+                                  style={{ width: `${progress.accumulated_percentage}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-medium text-foreground">{progress.percentage}%</span>
+                              <span className="text-xs font-medium text-foreground">{progress.accumulated_percentage}%</span>
                             </div>
+                            <p className="mt-1 text-xs text-muted">+{progress.percentage}% periode ini</p>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <ProgressStatusPill status={progress.status} />

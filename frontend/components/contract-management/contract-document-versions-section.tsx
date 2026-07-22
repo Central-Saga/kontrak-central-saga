@@ -29,6 +29,7 @@ import type {
   ContractDocumentVersionRecord,
   DocumentVersionContentDiffRecord,
 } from "@/lib/access-management/backend"
+import { formatDateTime } from "@/lib/date-format"
 
 type ContractDocumentVersionsSectionProps = {
   compare: ContractDocumentVersionCompareRecord | null
@@ -73,23 +74,6 @@ const statusLabels: Record<string, string> = {
 
 const selectClassName =
   "flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return "Belum tercatat"
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
-}
 
 function formatBytes(value: number) {
   if (!Number.isFinite(value) || value <= 0) {
@@ -176,7 +160,7 @@ export function ContractDocumentVersionsSection({
     compareSelection?.fromVersionId ?? sortedVersions.find((version) => version.id !== suggestedToVersionId)?.id
   const nextVersionNumber = (latestVersion?.version_number ?? 0) + 1
   const selectedVersionIds = new Set([compareSelection?.fromVersionId, compareSelection?.toVersionId].filter(Boolean))
-  const latestUploadLabel = latestVersion ? formatDateTime(latestVersion.uploaded_at ?? latestVersion.created_at) : "Belum ada arsip"
+  const latestUploadLabel = latestVersion ? (formatDateTime(latestVersion.uploaded_at ?? latestVersion.created_at) ?? "Belum ada arsip") : "Belum ada arsip"
   const compareReady = sortedVersions.length >= 2
 
   return (

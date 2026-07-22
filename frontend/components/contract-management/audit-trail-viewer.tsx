@@ -13,28 +13,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import type { DocumentVersionAuditLogRecord, ContractDocumentVersionRecord } from "@/lib/access-management/backend"
+import { formatDateTime } from "@/lib/date-format"
 
 interface AuditTrailViewerProps {
   version: ContractDocumentVersionRecord
   auditLogs?: DocumentVersionAuditLogRecord[]
   auditLogsError?: string | null
-}
-
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return "Belum tercatat"
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
 }
 
 const actionLabels: Record<string, string> = {

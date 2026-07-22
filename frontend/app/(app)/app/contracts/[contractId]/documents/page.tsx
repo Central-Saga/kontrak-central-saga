@@ -13,6 +13,7 @@ import {
   getContract,
   listContractDocumentVersions,
 } from "@/lib/access-management/backend";
+import { formatDateTime } from "@/lib/date-format";
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page";
 import { hasAnyPermission } from "@/lib/auth/permissions";
 import { readSessionState } from "@/lib/auth/session";
@@ -37,16 +38,6 @@ const documentTypeLabels: Record<string, string> = {
 
 const selectClassName =
   "flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
-
-function formatDateTime(value?: string | null) {
-  if (!value) return "Belum tercatat";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 function formatBytes(value: number) {
   if (!Number.isFinite(value) || value <= 0) return "0 B";
@@ -264,7 +255,7 @@ export default async function ContractDocumentsPage({
                     <div className="mt-3 grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
                       <div>
                         <span className="text-xs uppercase">Diunggah: </span>
-                        {formatDateTime(version.uploaded_at)}
+                        {formatDateTime(version.uploaded_at) ?? "Belum tercatat"}
                       </div>
                       <div>
                         <span className="text-xs uppercase">Pengunggah: </span>

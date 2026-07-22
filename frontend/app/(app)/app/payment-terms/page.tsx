@@ -10,6 +10,7 @@ import {
   deletePaymentTermStandaloneAction,
 } from "@/app/(app)/app/access-management/actions"
 import { listContracts, listPaymentTerms, type PaymentTermRecord } from "@/lib/access-management/backend"
+import { formatDate } from "@/lib/date-format"
 import { handleModulePageError, readSearchParam, type PageSearchParams } from "@/lib/access-management/page"
 import { hasAnyPermission } from "@/lib/auth/permissions"
 import { readSessionState } from "@/lib/auth/session"
@@ -44,13 +45,6 @@ function PaymentTermStatusPill({ status }: { status: string }) {
           : "border-line bg-card-strong text-muted"
 
   return <span className={`${statusPillClassName} ${palette}`}>{paymentTermStatusLabels[status] ?? status}</span>
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date)
 }
 
 function formatCurrency(value: number | string) {
@@ -151,7 +145,7 @@ export default async function PaymentTermsPage({ searchParams }: { searchParams:
                             {term.description ? <p className="text-xs text-muted">{term.description}</p> : null}
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
-                            <p className="text-sm text-foreground">{formatDate(term.due_date)}</p>
+                            <p className="text-sm text-foreground">{formatDate(term.due_date) ?? "-"}</p>
                           </td>
                           <td className="border border-line px-4 py-3.5 align-top">
                             <p className="text-sm font-medium text-foreground">{formatCurrency(term.amount)}</p>

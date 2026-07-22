@@ -68,6 +68,8 @@ services:
       APP_DEBUG: ${BACKEND_APP_DEBUG:-true}
       APP_KEY: ${BACKEND_APP_KEY:-}
       APP_URL: ${BACKEND_APP_URL:-https://api.kontrak-centralsaga.site}
+      FRONTEND_APP_URL: ${FRONTEND_APP_URL:-https://app.kontrak-centralsaga.site:8443}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Makassar}
       LOG_CHANNEL: stack
       LOG_STACK: single
       LOG_LEVEL: ${BACKEND_LOG_LEVEL:-debug}
@@ -148,6 +150,8 @@ services:
       APP_DEBUG: ${BACKEND_APP_DEBUG:-true}
       APP_KEY: ${BACKEND_APP_KEY:-}
       APP_URL: ${BACKEND_APP_URL:-https://api.kontrak-centralsaga.site}
+      FRONTEND_APP_URL: ${FRONTEND_APP_URL:-https://app.kontrak-centralsaga.site:8443}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Makassar}
       LOG_CHANNEL: stack
       LOG_STACK: single
       LOG_LEVEL: ${BACKEND_LOG_LEVEL:-debug}

@@ -6,6 +6,7 @@ import { LoginForm } from "@/components/auth/login-form";
 type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
+    status?: string;
   }>;
 };
 
@@ -39,6 +40,18 @@ function getInitialLoginError(errorCode?: string) {
   return null;
 }
 
+function getInitialLoginSuccess(status?: string) {
+  if (status === "password-reset") {
+    return {
+      code: status,
+      message: "Password berhasil direset. Silakan login dengan password baru.",
+      success: true,
+    };
+  }
+
+  return null;
+}
+
 async function hasBrandLogoAsset() {
   try {
     await access(join(process.cwd(), "public", "favicon_io", "logo-256.png"));
@@ -57,6 +70,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <LoginForm
           hasLogoAsset={hasLogoAsset}
           initialError={getInitialLoginError(params.error)}
+          initialSuccess={getInitialLoginSuccess(params.status)}
           logoPath={BRAND_LOGO_PATH}
         />
       </div>

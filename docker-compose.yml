@@ -58,6 +58,8 @@ services:
       APP_DEBUG: ${BACKEND_APP_DEBUG:-true}
       APP_KEY: ${BACKEND_APP_KEY:-}
       APP_URL: ${BACKEND_APP_URL:-https://kontrak-centralsaga.test/api}
+      FRONTEND_APP_URL: ${FRONTEND_APP_URL:-https://kontrak-centralsaga.test}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Makassar}
       LOG_CHANNEL: stack
       LOG_STACK: single
       LOG_LEVEL: ${BACKEND_LOG_LEVEL:-debug}

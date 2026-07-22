@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProgressBar } from "@/components/ui/progress-bar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getContract } from "@/lib/access-management/backend"
+import { formatDate, formatDateTime } from "@/lib/date-format"
 import { handleModulePageError, readSearchParam, type PageRouteParams, type PageSearchParams } from "@/lib/access-management/page"
 import { hasAnyPermission } from "@/lib/auth/permissions"
 import { readSessionState } from "@/lib/auth/session"
@@ -35,39 +36,6 @@ const versionStatusLabels: Record<string, string> = {
   draft: "Draft",
   final: "Final",
   review: "Review",
-}
-
-function formatDate(value?: string | null) {
-  if (!value) {
-    return "-"
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-  }).format(date)
-}
-
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return null
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
 }
 
 function formatCurrency(value: number | string) {
@@ -236,9 +204,9 @@ export default async function ContractDetailPage({
           <DetailItem label="Klien" value={contract.client?.company_name ?? "-"} />
           <DetailItem label="Nama proyek" value={contract.project_name} />
           <DetailItem label="Nilai kontrak" value={formatCurrency(contract.contract_value)} />
-          <DetailItem label="Tanggal kontrak" value={formatDate(contract.contract_date)} />
-          <DetailItem label="Mulai kerja" value={formatDate(contract.start_date)} />
-          <DetailItem label="Selesai kerja" value={formatDate(contract.end_date)} />
+          <DetailItem label="Tanggal kontrak" value={formatDate(contract.contract_date) ?? "-"} />
+          <DetailItem label="Mulai kerja" value={formatDate(contract.start_date) ?? "-"} />
+          <DetailItem label="Selesai kerja" value={formatDate(contract.end_date) ?? "-"} />
           <DetailItem label="Skema pembayaran" value={contract.payment_scheme_summary || "-"} />
         </CardContent>
       </Card>
@@ -278,7 +246,7 @@ export default async function ContractDetailPage({
                   const isToday = days === 0
                   return (
                     <li key={term.id} className={isOverdue || isToday ? "font-medium text-destructive" : ""}>
-                      Termin {term.term_number} — {term.term_title}: jatuh tempo {formatDate(term.due_date)} ({isOverdue ? `terlambat ${Math.abs(days)} hari` : isToday ? "hari ini" : `${days} hari lagi`}) — {formatCurrency(term.amount)}
+                      Termin {term.term_number} — {term.term_title}: jatuh tempo {formatDate(term.due_date) ?? "-"} ({isOverdue ? `terlambat ${Math.abs(days)} hari` : isToday ? "hari ini" : `${days} hari lagi`}) — {formatCurrency(term.amount)}
                     </li>
                   )
                 })}
