@@ -6,6 +6,7 @@ import { DocumentPreview } from './document-preview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { formatDateTime } from '@/lib/date-format'
 
 interface DocumentVersion {
   id: number
@@ -68,23 +69,6 @@ const fieldLabels: Record<string, string> = {
 
 const selectClassName =
   'flex h-11 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
-
-function formatDateTime(value?: string | null) {
-  if (!value) return 'Belum tercatat'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  // Use UTC to ensure deterministic output between server and client,
-  // avoiding hydration mismatches caused by different local timezones.
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  const month = months[date.getUTCMonth()]
-  const year = date.getUTCFullYear()
-  const hours = String(date.getUTCHours()).padStart(2, '0')
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
-
-  return `${day} ${month} ${year}, ${hours}.${minutes}`
-}
 
 function formatBytes(value: number) {
   if (!Number.isFinite(value) || value <= 0) return '0 B'
